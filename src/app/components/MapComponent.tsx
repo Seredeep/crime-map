@@ -188,8 +188,12 @@ export default function MapComponent({
       // If we have incidents and are in incidents mode, center the map to show all incidents
       if (incidents.length === 1) {
         // If there's only one incident, center on it
+        // Validate coordinates to avoid Invalid LatLng error
+        const latitude = typeof incidents[0].latitude === 'number' ? incidents[0].latitude : defaultCenter[0];
+        const longitude = typeof incidents[0].longitude === 'number' ? incidents[0].longitude : defaultCenter[1];
+        
         return {
-          center: [incidents[0].latitude, incidents[0].longitude] as L.LatLngExpression,
+          center: [latitude, longitude] as L.LatLngExpression,
           zoom: 15
         };
       } else {

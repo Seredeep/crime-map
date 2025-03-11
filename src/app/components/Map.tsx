@@ -108,8 +108,14 @@ export default function Map({
   return (
     <div className="rounded-lg overflow-hidden shadow-lg">
       <MapComponentWithNoSSR 
-        markerPosition={markerPosition}
-        incidents={incidents}
+        markerPosition={markerPosition && Array.isArray(markerPosition) && 
+          typeof markerPosition[0] === 'number' && 
+          typeof markerPosition[1] === 'number' ? 
+          markerPosition : undefined}
+        incidents={incidents.filter(incident => 
+          typeof incident.latitude === 'number' && 
+          typeof incident.longitude === 'number'
+        )}
         onMarkerPositionChange={handleMarkerChange}
         onIncidentSelect={onIncidentSelect}
         onMapCenterChange={onMapCenterChange}
