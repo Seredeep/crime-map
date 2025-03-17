@@ -12,4 +12,5 @@ export interface Incident {
   longitude: number;
   createdAt: string;
   status?: 'pending' | 'verified' | 'resolved';
+  tags?: string[];
 } 
