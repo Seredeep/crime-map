@@ -52,7 +52,6 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
   // Handle neighborhood selection change
   const handleNeighborhoodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    console.log('Barrio seleccionado:', value);
     onFiltersChange({
       ...filters,
       neighborhoodId: value || undefined
@@ -62,17 +61,13 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
   // Handle date change
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
-    console.log('Fecha seleccionada:', date, 'Formato válido:', /^\d{4}-\d{2}-\d{2}$/.test(date));
     
     if (date) {
-      // Aseguramos que la fecha se guarde exactamente en el formato YYYY-MM-DD
-      // sin conversiones UTC que puedan cambiar el día
       onFiltersChange({
         ...filters,
         date
       });
     } else {
-      // Si no hay fecha, la eliminamos de los filtros
       const { date, ...restFilters } = filters;
       onFiltersChange(restFilters);
     }
@@ -101,7 +96,6 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
       : [...selectedTags, tag];
     
     setSelectedTags(newSelectedTags);
-    console.log('Etiquetas seleccionadas:', newSelectedTags);
     
     onFiltersChange({
       ...filters,
@@ -116,22 +110,43 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4">
-      <div className="p-3 bg-gray-100 mb-2 rounded-md">
-        <p className="text-sm text-gray-700">Filtros activos: {Object.keys(filters).length > 0 ? 
-          Object.entries(filters).map(([key, value]) => `${key}: ${value}`).join(', ') : 
-          'Ninguno'}</p>
-      </div>
-      {/* Main filters in grid */}
+    <div className="space-y-4 bg-gray-900/50 p-4 rounded-lg backdrop-blur-sm">
+      {/* Filtros activos */}
+      {Object.keys(filters).length > 0 && (
+        <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+          <p className="text-sm text-gray-300">
+            Filtros activos: {
+              Object.entries(filters).map(([key, value]) => {
+                const label = {
+                  neighborhoodId: 'Barrio',
+                  date: 'Fecha',
+                  time: 'Hora',
+                  status: 'Estado',
+                  tags: 'Etiquetas'
+                }[key];
+                return `${label}: ${Array.isArray(value) ? value.join(', ') : value}`;
+              }).join(' • ')
+            }
+          </p>
+          <button
+            onClick={handleClearFilters}
+            className="text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+      )}
+
+      {/* Grid de filtros principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Neighborhood filter */}
+        {/* Filtro de barrio */}
         <div>
-          <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-300 mb-1">
             Barrio
           </label>
           <select
             id="neighborhood"
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={filters.neighborhoodId || ''}
             onChange={handleNeighborhoodChange}
             disabled={loading}
@@ -151,28 +166,28 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
           </select>
         </div>
 
-        {/* Date filter */}
+        {/* Filtro de fecha */}
         <div>
-          <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="date" className="block text-sm font-medium text-gray-300 mb-1">
             Fecha
           </label>
           <input
             type="date"
             id="date"
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={filters.date || ''}
             onChange={handleDateChange}
           />
         </div>
 
-        {/* Time filter */}
+        {/* Filtro de hora */}
         <div>
-          <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="time" className="block text-sm font-medium text-gray-300 mb-1">
             Hora
           </label>
           <select
             id="time"
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={filters.time || ''}
             onChange={handleTimeChange}
           >
@@ -184,14 +199,14 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
           </select>
         </div>
 
-        {/* Status filter */}
+        {/* Filtro de estado */}
         <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-1">
             Estado
           </label>
           <select
             id="status"
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={filters.status || ''}
             onChange={handleStatusChange}
           >
@@ -203,9 +218,9 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
         </div>
       </div>
 
-      {/* Tags section */}
-      <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      {/* Sección de etiquetas */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
           Etiquetas
         </label>
         <div className="flex flex-wrap gap-2">
@@ -213,26 +228,16 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
             <button
               key={tag}
               onClick={() => handleTagToggle(tag)}
-              className={`px-3 py-1.5 text-sm rounded-full transition-colors ${
+              className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
                 selectedTags.includes(tag)
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                  : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'
               }`}
             >
               {tag}
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Clear filters button */}
-      <div className="mt-4">
-        <button
-          onClick={handleClearFilters}
-          className="w-full md:w-auto px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-700 transition-colors"
-        >
-          Limpiar filtros
-        </button>
       </div>
     </div>
   );
