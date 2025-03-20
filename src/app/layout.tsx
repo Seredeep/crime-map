@@ -1,5 +1,7 @@
-import type { Metadata, Viewport } from "next";
+'use client';
 import { Geist, Geist_Mono } from "next/font/google";
+import { ImageModalProvider } from "@/lib/ImageModalContext";
+import ImageModal from "./components/ImageModal";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,20 +15,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
 });
-
-export const metadata: Metadata = {
-  title: "Crime Map - Report and Track Incidents",
-  description: "Interactive crime map application to report and track local incidents",
-  manifest: "/manifest.json",
-};
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#111827",
-};
 
 export default function RootLayout({
   children,
@@ -45,7 +33,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full`}
         suppressHydrationWarning
       >
-        {children}
+        <ImageModalProvider>
+          {children}
+          <ImageModal />
+        </ImageModalProvider>
       </body>
     </html>
   );

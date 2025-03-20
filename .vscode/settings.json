@@ -1,0 +1,6 @@
+{
+  "workbench.colorCustomizations": {},
+  "terminal.integrated.env.windows": {
+    "Path": "${env:Path};C:\\Users\\${env:USERNAME}\\AppData\\Roaming\\npm"
+  }
+}
