@@ -1,6 +1,6 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents, useMap, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import L from 'leaflet';
@@ -52,6 +52,8 @@ interface MapComponentProps {
   setMarkerOnClick?: boolean;
   // Mode of the map: 'form' for report form or 'incidents' for viewing incidents
   mode?: 'form' | 'incidents';
+  // Selected neighborhood data (GeoJSON)
+  selectedNeighborhood?: any;
 }
 
 // This component handles map click events
@@ -111,6 +113,31 @@ function MapEventHandler({
   return null;
 }
 
+// Componente para hacer zoom al barrio seleccionado
+function NeighborhoodFitBounds({ neighborhood }: { neighborhood: any }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (neighborhood && neighborhood.geometry && neighborhood.geometry.coordinates) {
+      try {
+        // Crear un objeto GeoJSON para calcular los límites
+        const geoJsonLayer = L.geoJSON({
+          type: 'Feature',
+          geometry: neighborhood.geometry
+        } as any);
+        
+        // Obtener los límites del polígono y ajustar el mapa
+        const bounds = geoJsonLayer.getBounds();
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } catch (error) {
+        console.error('Error al ajustar el mapa al barrio:', error);
+      }
+    }
+  }, [neighborhood, map]);
+  
+  return null;
+}
+
 export default function MapComponent({
   markerPosition,
   incidents = [],
@@ -121,6 +148,7 @@ export default function MapComponent({
   draggable = true,
   setMarkerOnClick = true,
   mode = 'form',
+  selectedNeighborhood
 }: MapComponentProps) {
   useEffect(() => {
     fixLeafletIcons();
@@ -241,6 +269,36 @@ export default function MapComponent({
       
       {mode === 'form' && (
         <MapClickHandler onMapClick={handleMapClick} setMarkerOnClick={setMarkerOnClick} />
+      )}
+      
+      {/* Ajustar zoom al barrio si está seleccionado */}
+      {selectedNeighborhood && (
+        <NeighborhoodFitBounds neighborhood={selectedNeighborhood} />
+      )}
+      
+      {/* Renderizar barrio seleccionado con GeoJSON */}
+      {selectedNeighborhood && (
+        <GeoJSON 
+          data={{
+            type: 'Feature',
+            geometry: selectedNeighborhood.geometry
+          } as any}
+          style={() => ({
+            color: '#3B82F6',
+            weight: 3,
+            opacity: 0.8,
+            fillColor: '#3B82F6',
+            fillOpacity: 0.2,
+            dashArray: '5, 5'
+          })}
+        >
+          <Popup>
+            <div className="p-2">
+              <h3 className="font-semibold">{selectedNeighborhood.properties?.name || 'Barrio'}</h3>
+              <p className="text-sm text-gray-600">{selectedNeighborhood.properties?.description || ''}</p>
+            </div>
+          </Popup>
+        </GeoJSON>
       )}
       
       {/* Form mode marker */}

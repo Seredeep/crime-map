@@ -15,6 +15,7 @@ interface MapProps {
   draggable?: boolean;
   setMarkerOnClick?: boolean;
   mode?: 'form' | 'incidents';
+  selectedNeighborhood?: any;
 }
 
 // Dynamically import the Map components with ssr disabled
@@ -42,7 +43,8 @@ export default function Map({
   onZoomChange,
   draggable = true,
   setMarkerOnClick = true,
-  mode = 'form'
+  mode = 'form',
+  selectedNeighborhood
 }: MapProps) {
   // Keep track of the last geocoded position to prevent redundant calls
   const [lastGeocodedPosition, setLastGeocodedPosition] = useState<[number, number] | null>(null);
@@ -123,6 +125,7 @@ export default function Map({
         draggable={draggable}
         setMarkerOnClick={setMarkerOnClick}
         mode={mode}
+        selectedNeighborhood={selectedNeighborhood}
       />
     </div>
   );

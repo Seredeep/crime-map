@@ -7,6 +7,7 @@ import { IncidentFilters as FiltersType } from '@/lib/incidentService';
 interface IncidentFiltersProps {
   filters: FiltersType;
   onFiltersChange: (filters: FiltersType) => void;
+  onNeighborhoodSelect?: (neighborhood: any | null) => void;
 }
 
 // Ejemplo de etiquetas comunes (en una implementación real se cargarían desde el backend)
@@ -20,7 +21,7 @@ const COMMON_TAGS = [
   'violencia'
 ];
 
-export default function IncidentFilters({ filters, onFiltersChange }: IncidentFiltersProps) {
+export default function IncidentFilters({ filters, onFiltersChange, onNeighborhoodSelect }: IncidentFiltersProps) {
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +33,15 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
       setLoading(true);
       try {
         const data = await fetchNeighborhoods();
-        setNeighborhoods(data);
+        
+        // Ordenar los barrios alfabéticamente por el nombre
+        const sortedNeighborhoods = [...data].sort((a, b) => {
+          const nameA = a.properties.soc_fomen?.toLowerCase() || '';
+          const nameB = b.properties.soc_fomen?.toLowerCase() || '';
+          return nameA.localeCompare(nameB, 'es');
+        });
+        
+        setNeighborhoods(sortedNeighborhoods);
       } catch (err) {
         console.error('Error loading neighborhoods:', err);
         setError('No se pudieron cargar los barrios');
@@ -52,10 +61,24 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
   // Handle neighborhood selection change
   const handleNeighborhoodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
+    
+    // Actualizar filtros
     onFiltersChange({
       ...filters,
       neighborhoodId: value || undefined
     });
+    
+    // Buscar y pasar el objeto completo del barrio si hay un callback
+    if (onNeighborhoodSelect) {
+      if (value) {
+        const selectedNeighborhood = neighborhoods.find(
+          n => n.properties.id.toString() === value
+        );
+        onNeighborhoodSelect(selectedNeighborhood || null);
+      } else {
+        onNeighborhoodSelect(null);
+      }
+    }
   };
 
   // Handle date change
@@ -107,6 +130,11 @@ export default function IncidentFilters({ filters, onFiltersChange }: IncidentFi
   const handleClearFilters = () => {
     setSelectedTags([]);
     onFiltersChange({});
+    
+    // Limpiar también el barrio seleccionado
+    if (onNeighborhoodSelect) {
+      onNeighborhoodSelect(null);
+    }
   };
 
   return (
