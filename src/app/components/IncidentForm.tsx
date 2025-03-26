@@ -6,6 +6,17 @@ import GeocodeSearch from './GeocodeSearch';
 import { GeocodingResult } from '@/lib/geocoding';
 import Map from './Map';
 
+// Lista de etiquetas comunes para incidents
+const COMMON_TAGS = [
+  'robo',
+  'asalto',
+  'vandalismo',
+  'disturbio',
+  'amenaza', 
+  'sospechoso',
+  'violencia'
+];
+
 interface IncidentFormData {
   description: string;
   address: string;
@@ -14,6 +25,7 @@ interface IncidentFormData {
   evidence: File[];
   latitude: number | null;
   longitude: number | null;
+  tags: string[];
 }
 
 export default function IncidentForm() {
@@ -25,6 +37,7 @@ export default function IncidentForm() {
     evidence: [],
     latitude: null,
     longitude: null,
+    tags: [],
   });
 
   useEffect(() => {
@@ -56,7 +69,6 @@ export default function IncidentForm() {
   };
 
   const handleLocationSelect = (result: GeocodingResult) => {
-    // Extract coordinates [longitude, latitude] from the result
     const [longitude, latitude] = result.geometry.coordinates;
     setFormData((prev) => ({
       ...prev,
@@ -66,18 +78,28 @@ export default function IncidentForm() {
     }));
   };
 
-  // Handle marker position changes from the map
   const handleMapMarkerChange = (position: [number, number], address?: string) => {
-    // Map component uses [lat, lng] format but our form uses lat/lng as separate properties
     const [latitude, longitude] = position;
     
     setFormData((prev) => ({
       ...prev,
       latitude,
       longitude,
-      // Only update address if provided from reverse geocoding
       ...(address ? { address } : {})
     }));
+  };
+
+  const handleTagToggle = (tag: string) => {
+    setFormData((prev) => {
+      const newTags = prev.tags.includes(tag)
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag];
+      
+      return {
+        ...prev,
+        tags: newTags
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,44 +107,42 @@ export default function IncidentForm() {
     setIsSubmitting(true);
     setSubmitMessage(null);
     
-    // Validate that we have location data
     if (!formData.latitude || !formData.longitude) {
       setSubmitMessage({
         type: 'error',
-        message: 'Please select a valid location using the search box'
+        message: 'Por favor selecciona una ubicación válida'
       });
       setIsSubmitting(false);
       return;
     }
     
     try {
-      // Create a FormData instance to handle file uploads
       const formDataToSend = new FormData();
       formDataToSend.append('description', formData.description);
       formDataToSend.append('address', formData.address);
       formDataToSend.append('time', formData.time);
       formDataToSend.append('date', formData.date);
       
-      // Add latitude and longitude
       formDataToSend.append('latitude', formData.latitude.toString());
       formDataToSend.append('longitude', formData.longitude.toString());
       
-      // Append each file to the FormData
+      formData.tags.forEach(tag => {
+        formDataToSend.append('tags[]', tag);
+      });
+      
       formData.evidence.forEach((file) => {
         formDataToSend.append(`evidence`, file);
       });
 
-      // Send the data to your API endpoint
       const response = await fetch('/api/incidents', {
         method: 'POST',
         body: formDataToSend,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit incident');
+        throw new Error('Error al enviar el incidente');
       }
 
-      // Clear the form after successful submission
       setFormData({
         description: '',
         address: '',
@@ -131,19 +151,19 @@ export default function IncidentForm() {
         evidence: [],
         latitude: null,
         longitude: null,
+        tags: [],
       });
 
-      // Success message
       setSubmitMessage({
         type: 'success',
-        message: 'Incident reported successfully'
+        message: 'Incidente reportado correctamente'
       });
       
     } catch (error) {
-      console.error('Error submitting incident:', error);
+      console.error('Error al enviar el incidente:', error);
       setSubmitMessage({
         type: 'error',
-        message: 'Failed to submit incident. Please try again.'
+        message: 'No se pudo enviar el incidente. Por favor, inténtalo de nuevo.'
       });
     } finally {
       setIsSubmitting(false);
@@ -165,9 +185,7 @@ export default function IncidentForm() {
         </div>
       )}
       
-      {/* Responsive layout container */}
       <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
-        {/* Map container - left on desktop, top on mobile */}
         <div className="md:w-1/2 w-full">
           <Map
             markerPosition={
@@ -181,11 +199,10 @@ export default function IncidentForm() {
           />
         </div>
 
-        {/* Form fields - right on desktop, bottom on mobile */}
         <div className="md:w-1/2 w-full space-y-4">
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1">
-              Description
+              Descripción
             </label>
             <textarea
               id="description"
@@ -194,18 +211,18 @@ export default function IncidentForm() {
               onChange={handleInputChange}
               className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400"
               rows={3}
-              placeholder="Describe what happened"
+              placeholder="Describe lo que ocurrió"
               required
             />
           </div>
 
           <div>
             <label htmlFor="address" className="block text-sm font-medium mb-1">
-              Location
+              Ubicación
             </label>
             <GeocodeSearch 
               onLocationSelect={handleLocationSelect}
-              placeholder="Search for an address or place"
+              placeholder="Busca una dirección o lugar"
               className="w-full"
               selectedAddress={formData.address}
               selectedCoordinates={
@@ -219,7 +236,7 @@ export default function IncidentForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="time" className="block text-sm font-medium mb-1">
-                Time
+                Hora
               </label>
               <input
                 type="time"
@@ -234,7 +251,7 @@ export default function IncidentForm() {
 
             <div>
               <label htmlFor="date" className="block text-sm font-medium mb-1">
-                Date
+                Fecha
               </label>
               <input
                 type="date"
@@ -249,8 +266,30 @@ export default function IncidentForm() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium mb-1">
+              Etiquetas
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {COMMON_TAGS.map((tag) => (
+                <button
+                  type="button"
+                  key={tag}
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                    formData.tags.includes(tag)
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <label htmlFor="evidence" className="block text-sm font-medium mb-1">
-              Evidence
+              Evidencia
             </label>
             <div className="flex items-center justify-center w-full">
               <label
@@ -259,9 +298,9 @@ export default function IncidentForm() {
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <p className="mb-1 text-sm text-gray-300">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
+                    <span className="font-semibold">Haz clic para subir</span> o arrastra y suelta
                   </p>
-                  <p className="text-xs text-gray-400">Images, PDFs, DOCs (MAX. 10MB)</p>
+                  <p className="text-xs text-gray-400">Imágenes, PDFs, DOCs (MÁX. 10MB)</p>
                 </div>
                 <input
                   type="file"
@@ -275,10 +314,9 @@ export default function IncidentForm() {
               </label>
             </div>
             
-            {/* Display uploaded files */}
             {formData.evidence.length > 0 && (
               <div className="mt-3">
-                <h4 className="text-sm font-medium mb-2">Uploaded files:</h4>
+                <h4 className="text-sm font-medium mb-2">Archivos subidos:</h4>
                 <ul className="space-y-2">
                   {formData.evidence.map((file, index) => (
                     <li key={index} className="flex items-center justify-between bg-gray-700 p-2 rounded-md">
@@ -287,7 +325,7 @@ export default function IncidentForm() {
                         type="button"
                         onClick={() => removeFile(index)}
                         className="text-red-400 hover:text-red-300"
-                        aria-label="Remove file"
+                        aria-label="Eliminar archivo"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -308,7 +346,7 @@ export default function IncidentForm() {
           disabled={isSubmitting}
           className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Submitting...' : 'Report Incident'}
+          {isSubmitting ? 'Enviando...' : 'Reportar Incidente'}
         </button>
       </div>
     </form>

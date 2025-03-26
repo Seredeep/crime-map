@@ -104,14 +104,6 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
     });
   };
 
-  // Handle status change
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onFiltersChange({
-      ...filters,
-      status: e.target.value || undefined
-    });
-  };
-
   // Handle tag selection
   const handleTagToggle = (tag: string) => {
     const newSelectedTags = selectedTags.includes(tag)
@@ -149,7 +141,6 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
                   neighborhoodId: 'Barrio',
                   date: 'Fecha',
                   time: 'Hora',
-                  status: 'Estado',
                   tags: 'Etiquetas'
                 }[key];
                 return `${label}: ${Array.isArray(value) ? value.join(', ') : value}`;
@@ -166,7 +157,7 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
       )}
 
       {/* Grid de filtros principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Filtro de barrio */}
         <div>
           <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-300 mb-1">
@@ -224,24 +215,6 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
             <option value="afternoon">Tarde (12:00 - 18:00)</option>
             <option value="evening">Noche (18:00 - 00:00)</option>
             <option value="night">Madrugada (00:00 - 6:00)</option>
-          </select>
-        </div>
-
-        {/* Filtro de estado */}
-        <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-1">
-            Estado
-          </label>
-          <select
-            id="status"
-            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={filters.status || ''}
-            onChange={handleStatusChange}
-          >
-            <option value="">Cualquier estado</option>
-            <option value="pending">Pendiente</option>
-            <option value="verified">Verificado</option>
-            <option value="resolved">Resuelto</option>
           </select>
         </div>
       </div>
