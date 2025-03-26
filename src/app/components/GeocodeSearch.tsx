@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { geocodeAddress, GeocodingResult } from '@/lib/geocoding';
 
 interface GeocodeSearchProps {
@@ -23,6 +23,7 @@ export default function GeocodeSearch({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState<boolean>(false);
+  // Add a mounted state to prevent hydration mismatch
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   // Use useEffect to mark component as mounted on the client side
@@ -30,9 +31,8 @@ export default function GeocodeSearch({
     setIsMounted(true);
   }, []);
 
-  // Add debounce to reduce API calls
-  const handleSearch = useCallback(async () => {
-    if (!query.trim() || query.trim().length < 3) return;
+  const handleSearch = async () => {
+    if (!query.trim()) return;
     
     setIsLoading(true);
     setError(null);
@@ -48,56 +48,12 @@ export default function GeocodeSearch({
     } finally {
       setIsLoading(false);
     }
-  }, [query]);
-  
-  // Then in your useEffect
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (query.trim().length >= 3) {
-        handleSearch();
-      } else if (query.trim().length === 0) {
-        setResults([]);
-        setShowResults(false);
-      }
-    }, 1500); 
-  
-    return () => clearTimeout(debounceTimer);
-  }, [query, handleSearch]);
-  
-  const handleSelectResult = async (result: GeocodingResult) => {
-    // If the result doesn't have coordinates (which can happen with Places API),
-    // we need to get the full details first
-    if (result.geometry.coordinates[0] === 0 && result.geometry.coordinates[1] === 0) {
-      try {
-        setIsLoading(true);
-        // Fetch details for the selected place
-        const response = await fetch('/api/geocode', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ placeId: result.properties.id }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch place details');
-        }
-        
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          result = data.features[0];
-        }
-      } catch (err) {
-        console.error('Error fetching place details:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
+  };
+
+  const handleSelectResult = (result: GeocodingResult) => {
     if (onLocationSelect) {
       onLocationSelect(result);
     }
-    
     // Clear results after selection
     setResults([]);
     setQuery('');
@@ -106,6 +62,8 @@ export default function GeocodeSearch({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
+    // Hide results when input changes
+    if (showResults) setShowResults(false);
   };
 
   // If not mounted yet, render a placeholder with same dimensions to avoid layout shift
@@ -190,4 +148,4 @@ export default function GeocodeSearch({
       )}
     </div>
   );
-}
+} 
