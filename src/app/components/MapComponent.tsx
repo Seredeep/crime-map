@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import L from 'leaflet';
 import { Incident } from '@/lib/types';
-
+import {MapComponentProps} from '@/lib/Map';
 // Fix for default marker icons in Leaflet with Next.js
 const fixLeafletIcons = () => {
   // delete L.Icon.Default.prototype._getIconUrl;
@@ -32,27 +32,6 @@ const incidentMarkerIcon = createMarkerIcon('#EF4444', 15); // Red, smaller for 
 
 // Hover marker icon
 const hoverMarkerIcon = createMarkerIcon('#EF4444', 20); // Red, slightly larger for hover effect
-
-interface MapComponentProps {
-  // Single marker position [lat, lng] for form mode
-  markerPosition?: [number, number];
-  // Multiple markers for incidents display mode
-  incidents?: Incident[];
-  // Callback when marker position changes (for form mode)
-  onMarkerPositionChange?: (position: [number, number]) => void;
-  // Callback when an incident marker is clicked
-  onIncidentSelect?: (incident: Incident) => void;
-  // Callback when the map center changes
-  onMapCenterChange?: (position: [number, number]) => void;
-  // Callback when the map zoom changes
-  onZoomChange?: (zoom: number) => void;
-  // Whether the marker should be draggable (for form mode)
-  draggable?: boolean;
-  // Whether to allow setting marker by clicking on map (for form mode)
-  setMarkerOnClick?: boolean;
-  // Mode of the map: 'form' for report form or 'incidents' for viewing incidents
-  mode?: 'form' | 'incidents';
-}
 
 // This component handles map click events
 function MapClickHandler({ 
@@ -279,7 +258,7 @@ export default function MapComponent({
         </Marker>
       ))}
       
-      <div className="absolute bottom-0 right-0 z-[1000] bg-black bg-opacity-50 text-xs text-white p-1">
+      <div className="absolute bottom-0 right-0 z-[998] bg-black bg-opacity-50 text-xs text-white p-1">
         © <a href="https://www.openstreetmap.org/copyright" className="text-blue-300">OpenStreetMap</a> contributors
       </div>
     </MapContainer>
