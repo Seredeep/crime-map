@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import { createClient } from "@supabase/supabase-js";
 
-// Asegurarnos de que las variables de entorno existan
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
@@ -85,7 +84,7 @@ export async function GET(request: Request) {
   }
 }
 
-// Definir una interfaz para los archivos de evidencia
+// Interface for the response structure of the GET method
 interface EvidenceFile {
   name: string;
   type: string;
@@ -93,7 +92,7 @@ interface EvidenceFile {
   url: string | null;
 }
 
-// Definir una interfaz para los datos del incidente
+// Interface for incident data
 interface IncidentData {
   description: string;
   address: string;
@@ -117,7 +116,7 @@ export async function POST(request: Request) {
     const latitude = parseFloat(formData.get("latitude")?.toString() || "0");
     const longitude = parseFloat(formData.get("longitude")?.toString() || "0");
 
-    // Crear incidente en la base de datos
+    // Create evidence in database
     const evidenceData: IncidentData = {
       description: formData.get("description")?.toString() || "",
       address: formData.get("address")?.toString() || "",
@@ -137,7 +136,7 @@ export async function POST(request: Request) {
       .insertOne(evidenceData);
     const incidentId = result.insertedId.toString();
 
-    // Subir archivos a Supabase Storage
+    // Upload files to SUPABASE storage
     const evidenceFiles = formData.getAll("evidence");
     console.log(`Número de archivos encontrados: ${evidenceFiles.length}`);
 
@@ -171,10 +170,13 @@ export async function POST(request: Request) {
 
         console.log("Archivo subido exitosamente:", data);
 
-        // Obtener la URL pública del archivo
+        // Publico url of the file
         const { data: signedUrlData } = await supabase.storage
           .from("evidence")
           .createSignedUrl(fileName, 31536000); // Token válido por 1 año
+
+        // Note: The file itself will not be deleted or inaccessible after one year.
+        // Only the signed URL will expire after one year. You can generate a new signed URL if needed.
 
           if (signedUrlData) {
             const fileData: EvidenceFile = {
@@ -194,15 +196,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // Actualizar incidente con las URLs de los archivos
+    // Update incident with the file URLs
     if (evidenceData.evidenceFiles.length > 0) {
       console.log("Actualizando documento con evidenceFiles");
-      await db
-        .collection("incident_draft")
-        .updateOne(
-          { _id: result.insertedId },
-          { $set: { evidenceFiles: evidenceData.evidenceFiles } }
-        );
+      const finalEvidenceData = {
+        ...evidenceData,
+        evidenceFiles: evidenceData.evidenceFiles,
+      };
+
+      await db.collection("incident_draft").insertOne(finalEvidenceData);
     }
 
     return NextResponse.json({
