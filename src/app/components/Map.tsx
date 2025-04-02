@@ -115,8 +115,11 @@ export default function Map({
           typeof markerPosition[1] === 'number' ? 
           markerPosition : undefined}
         incidents={incidents.filter(incident => 
-          typeof incident.latitude === 'number' && 
-          typeof incident.longitude === 'number'
+          incident.location && 
+          incident.location.coordinates && 
+          Array.isArray(incident.location.coordinates) &&
+          typeof incident.location.coordinates[0] === 'number' && 
+          typeof incident.location.coordinates[1] === 'number'
         )}
         onMarkerPositionChange={handleMarkerChange}
         onIncidentSelect={onIncidentSelect}

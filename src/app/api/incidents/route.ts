@@ -153,9 +153,30 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db();
 
-    // Parse latitude and longitude
-    const latitude = parseFloat(formData.get('latitude') as string || '0');
-    const longitude = parseFloat(formData.get('longitude') as string || '0');
+    // Obtener y analizar el objeto location
+    let location;
+    try {
+      location = JSON.parse(formData.get('location') as string);
+    } catch (e) {
+      console.error('Error parsing location:', e);
+      return NextResponse.json(
+        { success: false, message: 'Invalid location format' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que las coordenadas sean números válidos
+    if (!location || 
+        !location.coordinates || 
+        !Array.isArray(location.coordinates) ||
+        location.coordinates.length !== 2 ||
+        typeof location.coordinates[0] !== 'number' ||
+        typeof location.coordinates[1] !== 'number') {
+      return NextResponse.json(
+        { success: false, message: 'Invalid coordinates format' },
+        { status: 400 }
+      );
+    }
 
     // Get tags from form data
     const tags = formData.getAll('tags[]').map(tag => tag.toString());
@@ -167,12 +188,7 @@ export async function POST(request: Request) {
       time: formData.get('time'),
       date: formData.get('date'),
       // Add location data
-      location: {
-        type: 'Point',
-        coordinates: [longitude, latitude] // GeoJSON format: [longitude, latitude]
-      },
-      latitude,
-      longitude,
+      location,
       createdAt: new Date(),
       status: 'pending',
       tags: tags.length > 0 ? tags : undefined,

@@ -8,8 +8,10 @@ export interface Incident {
   time: string;
   date: string;
   evidenceUrls?: string[];
-  latitude: number;
-  longitude: number;
+  location: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
+  };
   createdAt: string;
   status?: 'pending' | 'verified' | 'resolved';
   tags?: string[];

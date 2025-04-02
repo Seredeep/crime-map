@@ -8,6 +8,10 @@ export interface IncidentFilters {
   time?: string;
   status?: string;
   tags?: string[];
+  location?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
 }
 
 /**
@@ -40,6 +44,10 @@ export async function fetchIncidents(filters?: IncidentFilters): Promise<Inciden
       
       if (filters.tags && filters.tags.length > 0) {
         filters.tags.forEach(tag => params.append('tag', tag));
+      }
+
+      if (filters.location) {
+        params.append('location', JSON.stringify(filters.location));
       }
       
       // Add parameters to URL if there are any

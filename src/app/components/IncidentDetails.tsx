@@ -66,7 +66,7 @@ export default function IncidentDetails({ incident }: IncidentDetailsProps) {
             <p className="font-medium text-sm">Location:</p>
             <p className="text-sm text-gray-300 break-words">{incident.address}</p>
             <div className="mt-1 text-xs text-gray-400">
-              GPS: {incident.latitude.toFixed(6)}, {incident.longitude.toFixed(6)}
+              GPS: {incident.location.coordinates[1].toFixed(6)}, {incident.location.coordinates[0].toFixed(6)}
             </div>
           </div>
         </div>

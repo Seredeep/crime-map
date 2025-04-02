@@ -23,8 +23,10 @@ interface IncidentFormData {
   time: string;
   date: string;
   evidence: File[];
-  latitude: number | null;
-  longitude: number | null;
+  location: {
+    type: 'Point';
+    coordinates: [number, number];
+  } | null;
   tags: string[];
 }
 
@@ -35,8 +37,7 @@ export default function IncidentForm() {
     time: '',
     date: '',
     evidence: [],
-    latitude: null,
-    longitude: null,
+    location: null,
     tags: [],
   });
 
@@ -73,8 +74,10 @@ export default function IncidentForm() {
     setFormData((prev) => ({
       ...prev,
       address: result.properties.label,
-      latitude,
-      longitude,
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude]
+      },
     }));
   };
 
@@ -83,8 +86,10 @@ export default function IncidentForm() {
     
     setFormData((prev) => ({
       ...prev,
-      latitude,
-      longitude,
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude]
+      },
       ...(address ? { address } : {})
     }));
   };
@@ -107,7 +112,7 @@ export default function IncidentForm() {
     setIsSubmitting(true);
     setSubmitMessage(null);
     
-    if (!formData.latitude || !formData.longitude) {
+    if (!formData.location) {
       setSubmitMessage({
         type: 'error',
         message: 'Por favor selecciona una ubicación válida'
@@ -123,8 +128,7 @@ export default function IncidentForm() {
       formDataToSend.append('time', formData.time);
       formDataToSend.append('date', formData.date);
       
-      formDataToSend.append('latitude', formData.latitude.toString());
-      formDataToSend.append('longitude', formData.longitude.toString());
+      formDataToSend.append('location', JSON.stringify(formData.location));
       
       formData.tags.forEach(tag => {
         formDataToSend.append('tags[]', tag);
@@ -149,8 +153,7 @@ export default function IncidentForm() {
         time: '',
         date: DateTime.now().toFormat('yyyy-MM-dd'),
         evidence: [],
-        latitude: null,
-        longitude: null,
+        location: null,
         tags: [],
       });
 
@@ -189,13 +192,14 @@ export default function IncidentForm() {
         <div className="md:w-1/2 w-full">
           <Map
             markerPosition={
-              formData.latitude !== null && formData.longitude !== null
-                ? [formData.latitude, formData.longitude]
+              formData.location
+                ? [formData.location.coordinates[1], formData.location.coordinates[0]]
                 : undefined
             }
             onMarkerPositionChange={handleMapMarkerChange}
             draggable={true}
             setMarkerOnClick={true}
+            mode="form"
           />
         </div>
 
@@ -226,8 +230,8 @@ export default function IncidentForm() {
               className="w-full"
               selectedAddress={formData.address}
               selectedCoordinates={
-                formData.latitude !== null && formData.longitude !== null
-                  ? [formData.latitude, formData.longitude]
+                formData.location
+                  ? [formData.location.coordinates[1], formData.location.coordinates[0]]
                   : null
               }
             />

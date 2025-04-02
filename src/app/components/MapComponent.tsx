@@ -8,7 +8,8 @@ import { Incident } from '@/lib/types';
 
 // Fix for default marker icons in Leaflet with Next.js
 const fixLeafletIcons = () => {
-  // delete L.Icon.Default.prototype._getIconUrl;
+  // @ts-ignore - Leaflet's internal property
+  delete L.Icon.Default.prototype._getIconUrl;
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -64,9 +65,10 @@ function MapClickHandler({
   onMapClick: (e: L.LeafletMouseEvent) => void;
   setMarkerOnClick?: boolean;
 }) {
-  useMapEvents({
+  const map = useMapEvents({
     click: (e) => {
       if (setMarkerOnClick) {
+        console.log('Map clicked at:', e.latlng);
         onMapClick(e);
       }
     },
@@ -179,14 +181,17 @@ export default function MapComponent({
 
   // Handle map click (for form mode)
   const handleMapClick = useCallback((e: L.LeafletMouseEvent) => {
-    const newPosition: [number, number] = [e.latlng.lat, e.latlng.lng];
-    setPosition(newPosition);
-    prevPositionRef.current = newPosition;
-    
-    if (onMarkerPositionChange) {
-      onMarkerPositionChange(newPosition);
+    if (setMarkerOnClick) {
+      const newPosition: [number, number] = [e.latlng.lat, e.latlng.lng];
+      console.log('Map clicked at:', newPosition);
+      setPosition(newPosition);
+      prevPositionRef.current = newPosition;
+      
+      if (onMarkerPositionChange) {
+        onMarkerPositionChange(newPosition);
+      }
     }
-  }, [onMarkerPositionChange]);
+  }, [onMarkerPositionChange, setMarkerOnClick]);
   
   // Handle marker drag (for form mode)
   const handleMarkerDrag = useCallback((e: L.LeafletEvent) => {
@@ -217,8 +222,8 @@ export default function MapComponent({
       if (incidents.length === 1) {
         // If there's only one incident, center on it
         // Validate coordinates to avoid Invalid LatLng error
-        const latitude = typeof incidents[0].latitude === 'number' ? incidents[0].latitude : defaultCenter[0];
-        const longitude = typeof incidents[0].longitude === 'number' ? incidents[0].longitude : defaultCenter[1];
+        const latitude = typeof incidents[0].location.coordinates[1] === 'number' ? incidents[0].location.coordinates[1] : defaultCenter[0];
+        const longitude = typeof incidents[0].location.coordinates[0] === 'number' ? incidents[0].location.coordinates[0] : defaultCenter[1];
         
         return {
           center: [latitude, longitude] as L.LatLngExpression,
@@ -267,8 +272,12 @@ export default function MapComponent({
         />
       )}
       
-      {mode === 'form' && (
-        <MapClickHandler onMapClick={handleMapClick} setMarkerOnClick={setMarkerOnClick} />
+      {/* Click handler for form mode */}
+      {mode === 'form' && setMarkerOnClick && (
+        <MapClickHandler 
+          onMapClick={handleMapClick} 
+          setMarkerOnClick={true} 
+        />
       )}
       
       {/* Ajustar zoom al barrio si está seleccionado */}
@@ -322,9 +331,9 @@ export default function MapComponent({
       
       {/* Incidents mode markers */}
       {mode === 'incidents' && incidents && incidents.length > 0 && incidents.map((incident) => (
-        <Marker 
-          key={incident._id || `${incident.latitude}-${incident.longitude}-${incident.date}-${incident.time}`}
-          position={[incident.latitude, incident.longitude]}
+        <Marker
+          key={incident._id}
+          position={[incident.location.coordinates[1], incident.location.coordinates[0]]}
           icon={hoveredIncidentId === incident._id ? hoverMarkerIcon : incidentMarkerIcon}
           eventHandlers={{
             click: () => handleIncidentMarkerClick(incident),
