@@ -6,9 +6,10 @@ import { useEffect } from 'react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[];
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -33,12 +34,16 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Si el usuario está autenticado, mostramos el contenido protegido
-  if (status === 'authenticated') {
-    return <>{children}</>;
+  if (!session) {
+    return <div>No autorizado</div>;
   }
 
-  // Este return es solo para TypeScript, nunca se ejecuta realmente
-  // debido al redireccionamiento en el useEffect
-  return null;
-} 
+  if (allowedRoles && !allowedRoles.includes(session.user.role)) {
+    return <div>Acceso denegado</div>;
+  }
+
+  // Si el usuario está autenticado, mostramos el contenido protegido
+  return <>{children}</>;
+};
+
+export default ProtectedRoute; 

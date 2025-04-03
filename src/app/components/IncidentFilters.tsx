@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { fetchNeighborhoods, Neighborhood } from '@/lib/neighborhoodService';
-import { IncidentFilters as FiltersType } from '@/lib/incidentService';
+import { IncidentFilters as FiltersType } from '@/lib/types';
 
 interface IncidentFiltersProps {
   filters: FiltersType;
   onFiltersChange: (filters: FiltersType) => void;
-  onNeighborhoodSelect?: (neighborhood: any | null) => void;
+  onNeighborhoodSelect?: (neighborhood: Neighborhood | null) => void;
 }
 
 // Ejemplo de etiquetas comunes (en una implementación real se cargarían desde el backend)
@@ -83,17 +83,8 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
 
   // Handle date change
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = e.target.value;
-    
-    if (date) {
-      onFiltersChange({
-        ...filters,
-        date
-      });
-    } else {
-      const { date, ...restFilters } = filters;
-      onFiltersChange(restFilters);
-    }
+    const newDate = e.target.value;
+    onFiltersChange({ ...filters, date: newDate });
   };
 
   // Handle time period selection

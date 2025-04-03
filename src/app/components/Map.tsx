@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { reverseGeocode } from '@/lib/geocoding';
 import { Incident } from '@/lib/types';
+import { Neighborhood } from '@/lib/neighborhoodService';
 
 interface MapProps {
   markerPosition?: [number, number];
@@ -15,7 +16,8 @@ interface MapProps {
   draggable?: boolean;
   setMarkerOnClick?: boolean;
   mode?: 'form' | 'incidents';
-  selectedNeighborhood?: any;
+  selectedNeighborhood?: Neighborhood | null;
+  onMapClick?: (coordinates: [number, number]) => void;
 }
 
 // Dynamically import the Map components with ssr disabled
@@ -44,7 +46,8 @@ export default function Map({
   draggable = true,
   setMarkerOnClick = true,
   mode = 'form',
-  selectedNeighborhood
+  selectedNeighborhood,
+  onMapClick
 }: MapProps) {
   // Keep track of the last geocoded position to prevent redundant calls
   const [lastGeocodedPosition, setLastGeocodedPosition] = useState<[number, number] | null>(null);
@@ -107,6 +110,12 @@ export default function Map({
     return () => clearTimeout(timer);
   }, [debouncedPosition, onMarkerPositionChange, lastGeocodedPosition, isGeocoding, mode]);
 
+  const handleMapClick = (coordinates: [number, number]) => {
+    if (onMapClick) {
+      onMapClick(coordinates);
+    }
+  };
+
   return (
     <div className="rounded-lg overflow-hidden shadow-lg">
       <MapComponentWithNoSSR 
@@ -129,6 +138,7 @@ export default function Map({
         setMarkerOnClick={setMarkerOnClick}
         mode={mode}
         selectedNeighborhood={selectedNeighborhood}
+        onMapClick={handleMapClick}
       />
     </div>
   );

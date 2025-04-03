@@ -1,24 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Map from './Map';
 import IncidentDetails from './IncidentDetails';
-import { Incident } from '@/lib/types';
+import { Incident, IncidentFilters } from '@/lib/types';
 import { fetchIncidents } from '@/lib/incidentService';
-import IncidentFilters from './IncidentFilters';
+import IncidentFiltersComponent from './IncidentFilters';
 import IncidentCharts from './IncidentCharts';
+import { Neighborhood } from '@/lib/neighborhoodService';
 
 export default function IncidentsView() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<any>({});
+  const [filters, setFilters] = useState<IncidentFilters>({});
   const [showCharts, setShowCharts] = useState(false);
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState<any>(null);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
 
   // Function to load incidents based on filters
-  const loadIncidents = async () => {
+  const loadIncidents = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -31,33 +32,29 @@ export default function IncidentsView() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Load incidents on component mount and when filters change
   useEffect(() => {
     loadIncidents();
-  }, [filters]);
+  }, [loadIncidents]);
 
   const handleIncidentSelected = (incident: Incident) => {
     setSelectedIncident(incident);
-    setShowCharts(false); // Ocultar gráficos cuando se selecciona un incidente
+    setShowCharts(false);
   };
 
   // Handler for when filters change
-  const handleFiltersChange = (newFilters: any) => {
+  const handleFiltersChange = (newFilters: IncidentFilters) => {
     setFilters(newFilters);
-    // If there's a selected incident, deselect it when filters change
     if (selectedIncident) {
       setSelectedIncident(null);
     }
   };
 
   // Handler cuando se selecciona un barrio
-  const handleNeighborhoodSelect = (neighborhood: any | null) => {
-    // Primero limpiamos el barrio seleccionado actual (importante para que se actualice el mapa)
+  const handleNeighborhoodSelect = (neighborhood: Neighborhood | null) => {
     setSelectedNeighborhood(null);
-    
-    // Después de un pequeño retraso, establecemos el nuevo barrio seleccionado
     setTimeout(() => {
       setSelectedNeighborhood(neighborhood);
       console.log('Barrio seleccionado:', neighborhood?.properties?.soc_fomen);
@@ -69,7 +66,7 @@ export default function IncidentsView() {
       {/* Panel de Filtros */}
       <div className="bg-gray-900/50 p-4 rounded-lg backdrop-blur-sm">
         <h2 className="text-lg font-semibold mb-2 text-gray-200">Filtros</h2>
-        <IncidentFilters 
+        <IncidentFiltersComponent 
           filters={filters} 
           onFiltersChange={handleFiltersChange}
           onNeighborhoodSelect={handleNeighborhoodSelect}
@@ -145,7 +142,7 @@ export default function IncidentsView() {
           ) : (
             <div className="bg-gray-900/50 p-6 rounded-lg backdrop-blur-sm text-center">
               <p className="text-gray-300">
-                Selecciona un incidente en el mapa para ver sus detalles o haz clic en "Estadísticas" para ver gráficos.
+                Selecciona un incidente en el mapa para ver sus detalles o haz clic en &quot;Estadísticas&quot; para ver gráficos.
               </p>
             </div>
           )}

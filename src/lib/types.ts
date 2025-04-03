@@ -15,4 +15,11 @@ export interface Incident {
   createdAt: string;
   status?: 'pending' | 'verified' | 'resolved';
   tags?: string[];
+}
+
+export interface IncidentFilters {
+  neighborhoodId?: string;
+  date?: string;
+  time?: string;
+  tags?: string[];
 } 
