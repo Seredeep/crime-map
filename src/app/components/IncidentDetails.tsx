@@ -3,6 +3,7 @@ import { Incident } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
 import Image from 'next/image';
 import { useImageModal } from '@/lib/ImageModalContext';
+import { JSX } from 'react';
 
 interface IncidentDetailsProps {
   incident: Incident | null;
