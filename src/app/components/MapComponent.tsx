@@ -347,7 +347,7 @@ export default function MapComponent({
         >
           <Popup className="text-black">
             <div className="text-sm">
-              <strong>Selected Location</strong><br />
+              <strong>Ubicación seleccionada</strong><br />
               {position[0].toFixed(6)}, {position[1].toFixed(6)}
             </div>
           </Popup>
