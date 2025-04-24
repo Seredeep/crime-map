@@ -1,14 +1,20 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents, useMap, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useCallback, useRef } from 'react';
+/* eslint-disable */
 import L from 'leaflet';
+/* eslint-enable */
 import { Incident } from '@/lib/types';
-import {MapComponentProps} from '@/lib/Map';
+import { Neighborhood } from '@/lib/neighborhoodService';
+
 // Fix for default marker icons in Leaflet with Next.js
 const fixLeafletIcons = () => {
-  // delete L.Icon.Default.prototype._getIconUrl;
+  /* eslint-disable */
+  // @ts-ignore
+  delete L.Icon.Default.prototype._getIconUrl;
+  /* eslint-enable */
   L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -33,6 +39,33 @@ const incidentMarkerIcon = createMarkerIcon('#EF4444', 15); // Red, smaller for 
 // Hover marker icon
 const hoverMarkerIcon = createMarkerIcon('#EF4444', 20); // Red, slightly larger for hover effect
 
+interface MapComponentProps {
+  // Single marker position [lat, lng] for form mode
+  markerPosition?: [number, number];
+  // Multiple markers for incidents display mode
+  incidents: Incident[];
+  // Callback when marker position changes (for form mode)
+  onMarkerPositionChange?: (position: [number, number]) => void;
+  // Callback when an incident marker is clicked
+  onIncidentSelect?: (incident: Incident) => void;
+  // Callback when the map center changes
+  onMapCenterChange?: (position: [number, number]) => void;
+  // Callback when the map zoom changes
+  onZoomChange?: (zoom: number) => void;
+  // Callback when the map is clicked
+  onMapClick?: (coordinates: [number, number]) => void;
+  // Whether the marker should be draggable (for form mode)
+  draggable?: boolean;
+  // Whether to allow setting marker by clicking on map (for form mode)
+  setMarkerOnClick?: boolean;
+  // Mode of the map: 'form' for report form or 'incidents' for viewing incidents
+  mode?: 'form' | 'incidents';
+  // Selected neighborhood data (GeoJSON)
+  selectedNeighborhood?: Neighborhood | null;
+  // Whether the map is in form mode
+  isFormMode?: boolean;
+}
+
 // This component handles map click events
 function MapClickHandler({ 
   onMapClick, 
@@ -41,9 +74,10 @@ function MapClickHandler({
   onMapClick: (e: L.LeafletMouseEvent) => void;
   setMarkerOnClick?: boolean;
 }) {
-  useMapEvents({
+  const map = useMapEvents({
     click: (e) => {
       if (setMarkerOnClick) {
+        console.log('Map clicked at:', e.latlng);
         onMapClick(e);
       }
     },
@@ -90,6 +124,34 @@ function MapEventHandler({
   return null;
 }
 
+// Componente para hacer zoom al barrio seleccionado
+function NeighborhoodFitBounds({ neighborhood }: { neighborhood: Neighborhood }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (neighborhood && neighborhood.geometry && neighborhood.geometry.coordinates) {
+      try {
+        // Crear un objeto GeoJSON para calcular los límites
+        /* eslint-disable */
+        const geoJsonLayer = L.geoJSON({
+          type: 'Feature',
+          properties: {},
+          geometry: neighborhood.geometry
+        } as any);
+        /* eslint-enable */
+        
+        // Obtener los límites del polígono y ajustar el mapa
+        const bounds = geoJsonLayer.getBounds();
+        map.fitBounds(bounds, { padding: [20, 20] });
+      } catch (error) {
+        console.error('Error al ajustar el mapa al barrio:', error);
+      }
+    }
+  }, [neighborhood, map]);
+  
+  return null;
+}
+
 export default function MapComponent({
   markerPosition,
   incidents = [],
@@ -97,9 +159,12 @@ export default function MapComponent({
   onIncidentSelect,
   onMapCenterChange,
   onZoomChange,
+  onMapClick,
   draggable = true,
   setMarkerOnClick = true,
   mode = 'form',
+  selectedNeighborhood,
+  isFormMode
 }: MapComponentProps) {
   useEffect(() => {
     fixLeafletIcons();
@@ -117,6 +182,14 @@ export default function MapComponent({
   // Keep track of the previous position to prevent unnecessary rerenders
   const prevPositionRef = useRef<[number, number] | undefined>(position);
   
+  // Utilizamos onMapClick si está definido
+  useEffect(() => {
+    if (onMapClick && isFormMode) {
+      // Lógica para utilizar onMapClick
+      console.log('Map click handler ready');
+    }
+  }, [onMapClick, isFormMode]);
+
   // Update internal state when prop changes
   useEffect(() => {
     if (markerPosition && 
@@ -130,14 +203,17 @@ export default function MapComponent({
 
   // Handle map click (for form mode)
   const handleMapClick = useCallback((e: L.LeafletMouseEvent) => {
-    const newPosition: [number, number] = [e.latlng.lat, e.latlng.lng];
-    setPosition(newPosition);
-    prevPositionRef.current = newPosition;
-    
-    if (onMarkerPositionChange) {
-      onMarkerPositionChange(newPosition);
+    if (setMarkerOnClick) {
+      const newPosition: [number, number] = [e.latlng.lat, e.latlng.lng];
+      console.log('Map clicked at:', newPosition);
+      setPosition(newPosition);
+      prevPositionRef.current = newPosition;
+      
+      if (onMarkerPositionChange) {
+        onMarkerPositionChange(newPosition);
+      }
     }
-  }, [onMarkerPositionChange]);
+  }, [onMarkerPositionChange, setMarkerOnClick]);
   
   // Handle marker drag (for form mode)
   const handleMarkerDrag = useCallback((e: L.LeafletEvent) => {
@@ -167,8 +243,12 @@ export default function MapComponent({
       // If we have incidents and are in incidents mode, center the map to show all incidents
       if (incidents.length === 1) {
         // If there's only one incident, center on it
+        // Validate coordinates to avoid Invalid LatLng error
+        const latitude = typeof incidents[0].location.coordinates[1] === 'number' ? incidents[0].location.coordinates[1] : defaultCenter[0];
+        const longitude = typeof incidents[0].location.coordinates[0] === 'number' ? incidents[0].location.coordinates[0] : defaultCenter[1];
+        
         return {
-          center: [incidents[0].latitude, incidents[0].longitude] as L.LatLngExpression,
+          center: [latitude, longitude] as L.LatLngExpression,
           zoom: 15
         };
       } else {
@@ -214,8 +294,45 @@ export default function MapComponent({
         />
       )}
       
-      {mode === 'form' && (
-        <MapClickHandler onMapClick={handleMapClick} setMarkerOnClick={setMarkerOnClick} />
+      {/* Click handler for form mode */}
+      {mode === 'form' && setMarkerOnClick && (
+        <MapClickHandler 
+          onMapClick={handleMapClick} 
+          setMarkerOnClick={true} 
+        />
+      )}
+      
+      {/* Ajustar zoom al barrio si está seleccionado */}
+      {selectedNeighborhood && (
+        <NeighborhoodFitBounds neighborhood={selectedNeighborhood} />
+      )}
+      
+      {/* Renderizar barrio seleccionado con GeoJSON */}
+      {selectedNeighborhood && (
+        <GeoJSON 
+          /* eslint-disable */
+          data={{
+            type: 'Feature',
+            properties: {},
+            geometry: selectedNeighborhood.geometry
+          } as any}
+          /* eslint-enable */
+          style={() => ({
+            color: '#3B82F6',
+            weight: 3,
+            opacity: 0.8,
+            fillColor: '#3B82F6',
+            fillOpacity: 0.2,
+            dashArray: '5, 5'
+          })}
+        >
+          <Popup>
+            <div className="p-2">
+              <h3 className="font-semibold">{selectedNeighborhood.properties?.soc_fomen || 'Barrio'}</h3>
+              <p className="text-sm text-gray-600">{selectedNeighborhood.properties?.id || ''}</p>
+            </div>
+          </Popup>
+        </GeoJSON>
       )}
       
       {/* Form mode marker */}
@@ -230,7 +347,7 @@ export default function MapComponent({
         >
           <Popup className="text-black">
             <div className="text-sm">
-              <strong>Selected Location</strong><br />
+              <strong>Ubicación seleccionada</strong><br />
               {position[0].toFixed(6)}, {position[1].toFixed(6)}
             </div>
           </Popup>
@@ -239,9 +356,9 @@ export default function MapComponent({
       
       {/* Incidents mode markers */}
       {mode === 'incidents' && incidents && incidents.length > 0 && incidents.map((incident) => (
-        <Marker 
-          key={incident._id || `${incident.latitude}-${incident.longitude}-${incident.date}-${incident.time}`}
-          position={[incident.latitude, incident.longitude]}
+        <Marker
+          key={incident._id}
+          position={[incident.location.coordinates[1], incident.location.coordinates[0]]}
           icon={hoveredIncidentId === incident._id ? hoverMarkerIcon : incidentMarkerIcon}
           eventHandlers={{
             click: () => handleIncidentMarkerClick(incident),
@@ -258,7 +375,7 @@ export default function MapComponent({
         </Marker>
       ))}
       
-      <div className="absolute bottom-0 right-0 z-[998] bg-black bg-opacity-50 text-xs text-white p-1">
+      <div className="absolute bottom-0 right-0 z-[1000] bg-black bg-opacity-50 text-xs text-white p-1">
         © <a href="https://www.openstreetmap.org/copyright" className="text-blue-300">OpenStreetMap</a> contributors
       </div>
     </MapContainer>

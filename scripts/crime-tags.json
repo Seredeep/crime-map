@@ -1,0 +1,172 @@
+{
+    "violence_level": [
+      {
+        "slug": "theft",
+        "es": "Hurto",
+        "en": "Theft"
+      },
+      {
+        "slug": "robbery_with_violence",
+        "es": "Robo con violencia",
+        "en": "Robbery with violence"
+      },
+      {
+        "slug": "robbery_with_intimidation",
+        "es": "Robo con intimidación",
+        "en": "Robbery with intimidation"
+      },
+      {
+        "slug": "armed_robbery",
+        "es": "Robo a mano armada",
+        "en": "Armed robbery"
+      },
+      {
+        "slug": "robbery_with_injuries",
+        "es": "Robo con lesiones",
+        "en": "Robbery with injuries"
+      },
+      {
+        "slug": "homicide_during_robbery",
+        "es": "Homicidio en ocasión de robo",
+        "en": "Homicide during robbery"
+      }
+    ],
+    "location": [
+      {
+        "slug": "street_robbery",
+        "es": "Robo en la vía pública",
+        "en": "Street robbery"
+      },
+      {
+        "slug": "public_transport_robbery",
+        "es": "Robo en transporte público",
+        "en": "Public transport robbery"
+      },
+      {
+        "slug": "commercial_robbery",
+        "es": "Robo en comercios",
+        "en": "Commercial robbery"
+      },
+      {
+        "slug": "home_burglary",
+        "es": "Robo en viviendas",
+        "en": "Home burglary"
+      },
+      {
+        "slug": "vehicle_theft",
+        "es": "Robo a vehículos",
+        "en": "Vehicle theft"
+      },
+      {
+        "slug": "car_theft",
+        "es": "Robo de vehículos",
+        "en": "Car theft"
+      },
+      {
+        "slug": "institutional_robbery",
+        "es": "Robo en instituciones",
+        "en": "Institutional robbery"
+      }
+    ],
+    "method": [
+      {
+        "slug": "snatching",
+        "es": "Arrebato",
+        "en": "Snatching"
+      },
+      {
+        "slug": "home_invasion",
+        "es": "Entradera",
+        "en": "Home invasion robbery"
+      },
+      {
+        "slug": "bank_follow_home",
+        "es": "Salidera bancaria",
+        "en": "Bank follow-home robbery"
+      },
+      {
+        "slug": "burglary_empty_house",
+        "es": "Escruche",
+        "en": "Burglary in an empty house"
+      },
+      {
+        "slug": "scam_robbery",
+        "es": "Cuento del tío",
+        "en": "Scam robbery"
+      },
+      {
+        "slug": "motorcycle_robbery",
+        "es": "Motochorros",
+        "en": "Motorcycle robbery"
+      },
+      {
+        "slug": "organized_gang",
+        "es": "Banda organizada",
+        "en": "Organized gang robbery"
+      },
+      {
+        "slug": "tunnel_burglary",
+        "es": "Boqueteros",
+        "en": "Tunnel burglary"
+      }
+    ],
+    "stolen_items": [
+      {
+        "slug": "cash_theft",
+        "es": "Robo de dinero en efectivo",
+        "en": "Cash theft"
+      },
+      {
+        "slug": "electronics_theft",
+        "es": "Robo de celulares y electrónicos",
+        "en": "Cellphone and electronics theft"
+      },
+      {
+        "slug": "document_theft",
+        "es": "Robo de documentos personales",
+        "en": "Personal document theft"
+      },
+      {
+        "slug": "bicycle_theft",
+        "es": "Robo de bicicletas",
+        "en": "Bicycle theft"
+      },
+      {
+        "slug": "auto_parts_theft",
+        "es": "Robo de autopartes",
+        "en": "Auto parts theft"
+      },
+      {
+        "slug": "cargo_theft",
+        "es": "Robo de carga o mercadería",
+        "en": "Cargo or merchandise theft"
+      }
+    ],
+    "victim_type": [
+      {
+        "slug": "pedestrian_robbery",
+        "es": "Robo a transeúntes",
+        "en": "Pedestrian robbery"
+      },
+      {
+        "slug": "merchant_robbery",
+        "es": "Robo a comerciantes",
+        "en": "Merchant robbery"
+      },
+      {
+        "slug": "tourist_robbery",
+        "es": "Robo a turistas",
+        "en": "Tourist robbery"
+      },
+      {
+        "slug": "child_robbery",
+        "es": "Robo a menores de edad",
+        "en": "Child robbery"
+      },
+      {
+        "slug": "elderly_robbery",
+        "es": "Robo a personas mayores",
+        "en": "Elderly robbery"
+      }
+    ]
+  }

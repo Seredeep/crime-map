@@ -8,19 +8,18 @@ export interface Incident {
   time: string;
   date: string;
   evidenceUrls?: string[];
-  status?: "pending" | "verified" | "resolved";
-  location?: {
-    type: string;
-    coordinates: [number, number]; // [longitude, latitude] in GeoJSON format
+  location: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
   };
-  latitude: number;
-  longitude: number;
   createdAt: string;
-  // Support both formats
-  evidenceFiles?: Array<{
-    name: string;
-    type: string;
-    url: string;
-    size: number;
-  }>;
+  status?: 'pending' | 'verified' | 'resolved';
+  tags?: string[];
 }
+
+export interface IncidentFilters {
+  neighborhoodId?: string;
+  date?: string;
+  time?: string;
+  tags?: string[];
+} 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { reverseGeocode } from '@/lib/geocoding';
 import { Incident } from '@/lib/types';
+import { Neighborhood } from '@/lib/neighborhoodService';
 
 interface MapProps {
   markerPosition?: [number, number];
@@ -15,6 +16,8 @@ interface MapProps {
   draggable?: boolean;
   setMarkerOnClick?: boolean;
   mode?: 'form' | 'incidents';
+  selectedNeighborhood?: Neighborhood | null;
+  onMapClick?: (coordinates: [number, number]) => void;
 }
 
 // Dynamically import the Map components with ssr disabled
@@ -42,7 +45,9 @@ export default function Map({
   onZoomChange,
   draggable = true,
   setMarkerOnClick = true,
-  mode = 'form'
+  mode = 'form',
+  selectedNeighborhood,
+  onMapClick
 }: MapProps) {
   // Keep track of the last geocoded position to prevent redundant calls
   const [lastGeocodedPosition, setLastGeocodedPosition] = useState<[number, number] | null>(null);
@@ -105,11 +110,26 @@ export default function Map({
     return () => clearTimeout(timer);
   }, [debouncedPosition, onMarkerPositionChange, lastGeocodedPosition, isGeocoding, mode]);
 
+  const handleMapClick = (coordinates: [number, number]) => {
+    if (onMapClick) {
+      onMapClick(coordinates);
+    }
+  };
+
   return (
     <div className="rounded-lg overflow-hidden shadow-lg">
       <MapComponentWithNoSSR 
-        markerPosition={markerPosition}
-        incidents={incidents}
+        markerPosition={markerPosition && Array.isArray(markerPosition) && 
+          typeof markerPosition[0] === 'number' && 
+          typeof markerPosition[1] === 'number' ? 
+          markerPosition : undefined}
+        incidents={incidents.filter(incident => 
+          incident.location && 
+          incident.location.coordinates && 
+          Array.isArray(incident.location.coordinates) &&
+          typeof incident.location.coordinates[0] === 'number' && 
+          typeof incident.location.coordinates[1] === 'number'
+        )}
         onMarkerPositionChange={handleMarkerChange}
         onIncidentSelect={onIncidentSelect}
         onMapCenterChange={onMapCenterChange}
@@ -117,6 +137,8 @@ export default function Map({
         draggable={draggable}
         setMarkerOnClick={setMarkerOnClick}
         mode={mode}
+        selectedNeighborhood={selectedNeighborhood}
+        onMapClick={handleMapClick}
       />
     </div>
   );
