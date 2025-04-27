@@ -43,7 +43,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   }
 
   if (!session.user.enabled) {
-    return <div>Acceso denegado: Tu cuenta está pendiente de aprobación por un administrador.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-lg text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Acceso denegado</h2>
+          <div className="p-4 bg-yellow-500 text-white rounded-md">
+            Tu cuenta está pendiente de aprobación por un administrador.
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Si el usuario está autenticado, mostramos el contenido protegido
