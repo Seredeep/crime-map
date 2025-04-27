@@ -12,7 +12,7 @@ export default function Navbar() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = session?.user?.role === 'admin' && session?.user?.enabled;
 
   return (
     <nav className="bg-gray-800 shadow-md">
@@ -41,6 +41,9 @@ export default function Navbar() {
                 <span className="text-gray-300 text-sm">
                   Hola, {session.user?.name || 'Usuario'}
                 </span>
+                {status === 'authenticated' && session.user && !session.user.enabled && (
+                  <span className="text-yellow-400 text-xs ml-2">(Cuenta pendiente de aprobación)</span>
+                )}
                 <button
                   onClick={() => signOut({ callbackUrl: '/' })}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
@@ -125,6 +128,9 @@ export default function Navbar() {
               <div className="text-gray-300 block px-3 py-2 text-base font-medium">
                 Hola, {session.user?.name || 'Usuario'}
               </div>
+              {status === 'authenticated' && session.user && !session.user.enabled && (
+                <span className="text-yellow-400 text-xs ml-2">(Cuenta pendiente de aprobación)</span>
+              )}
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
