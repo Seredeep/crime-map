@@ -2,9 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import clientPromise from "@/lib/mongodb";
-import { compare } from "bcryptjs";
+import { verifyPassword } from "@/lib/utils";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { MongoClient } from "mongodb";
 
 // Extender los tipos de Next-Auth
 declare module 'next-auth' {
@@ -75,7 +74,7 @@ export const authOptions: NextAuthOptions = {
             email: credentials.email,
           });
           
-          if (!user || !(await compare(credentials.password, user.password))) {
+          if (!user || !(await verifyPassword(credentials.password, user.password))) {
             return null;
           }
 
