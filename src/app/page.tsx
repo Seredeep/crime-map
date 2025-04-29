@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import IncidentsView from './components/IncidentsView';
 import Tabs from './components/Tabs';
 import { useSession } from 'next-auth/react';
+import IncidentForm from './components/IncidentForm';
 import IncidentQueue from './components/IncidentQueue';
 
 export default function Home() {
@@ -11,10 +12,8 @@ export default function Home() {
   const { status } = useSession();
 
   const handleReportClick = () => {
-    if (status === 'authenticated') {
-      router.push('/report');
-    } else {
-      router.push('/auth/signin?callbackUrl=/report');
+    if (status !== 'authenticated') {
+      router.push('/auth/signin?callbackUrl=/');
     }
   };
 
@@ -29,14 +28,20 @@ export default function Home() {
       label: 'Reportar Incidente',
       content: (
         <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Reportar un Incidente</h2>
-          <p className="mb-4">Para reportar un incidente, necesitas estar autenticado.</p>
-          <button 
-            onClick={handleReportClick} 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-          >
-            {status === 'authenticated' ? 'Ir a reportar' : 'Iniciar sesión para reportar'}
-          </button>
+          {status === 'authenticated' ? (
+            <IncidentForm />
+          ) : (
+            <>
+              <h2 className="text-2xl font-semibold mb-4">Reportar un Incidente</h2>
+              <p className="mb-4">Para reportar un incidente, necesitas estar autenticado.</p>
+              <button 
+                onClick={handleReportClick} 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+              >
+                Iniciar sesión para reportar
+              </button>
+            </>
+          )}
         </div>
       )
     },
