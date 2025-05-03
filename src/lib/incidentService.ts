@@ -5,7 +5,11 @@ import { Incident } from './types';
 export interface IncidentFilters {
   neighborhoodId?: string;
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
   time?: string;
+  timeFrom?: string;
+  timeTo?: string;
   status?: string;
   tags?: string[];
   location?: {
@@ -14,24 +18,75 @@ export interface IncidentFilters {
   };
 }
 
+export interface StatisticsResults {
+  day?: {
+    dates: string[];
+    counts: number[];
+    rollingAverage: number[];
+  };
+  week?: {
+    weeks: string[];
+    counts: number[];
+    rollingAverage: number[];
+  };
+  month?: {
+    months: string[];
+    counts: number[];
+  };
+  weekdayDistribution?: {
+    weekdays: string[];
+    counts: number[];
+  };
+  hourDistribution?: {
+    hours: number[];
+    counts: number[];
+  };
+  tag?: {
+    tags: string[];
+    counts: number[];
+  };
+  heatMapDensity?: {
+    density: number;
+    totalIncidents: number;
+    area: number;
+  };
+  rate?: {
+    totalIncidents: number;
+  };
+}
+
 /**
  * Fetch incidents with optional filters
  */
 export async function fetchIncidents(filters?: IncidentFilters): Promise<Incident[]> {
   try {
-    // Build URL with query parameters based on filters
     let url = '/api/incidents';
     
     if (filters) {
-      console.log('Aplicando filtros:', filters);
       const params = new URLSearchParams();
       
       if (filters.neighborhoodId) {
         params.append('neighborhoodId', filters.neighborhoodId);
       }
       
+      if (filters.dateFrom) {
+        params.append('dateFrom', filters.dateFrom);
+      }
+      
+      if (filters.dateTo) {
+        params.append('dateTo', filters.dateTo);
+      }
+      
       if (filters.date) {
         params.append('date', filters.date);
+      }
+      
+      if (filters.timeFrom) {
+        params.append('timeFrom', filters.timeFrom);
+      }
+      
+      if (filters.timeTo) {
+        params.append('timeTo', filters.timeTo);
       }
       
       if (filters.time) {
@@ -50,14 +105,12 @@ export async function fetchIncidents(filters?: IncidentFilters): Promise<Inciden
         params.append('location', JSON.stringify(filters.location));
       }
       
-      // Add parameters to URL if there are any
       const queryString = params.toString();
       if (queryString) {
         url = `${url}?${queryString}`;
       }
     }
     
-    console.log('Consultando URL:', url);
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -65,10 +118,67 @@ export async function fetchIncidents(filters?: IncidentFilters): Promise<Inciden
     }
     
     const data = await response.json();
-    console.log(`Se encontraron ${data.length} incidentes`);
     return data as Incident[];
   } catch (error) {
     console.error('Error fetching incidents:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch statistics with optional filters
+ */
+export async function fetchStatistics(filters?: IncidentFilters): Promise<StatisticsResults> {
+  try {
+    let url = '/api/incidents/statistics';
+    const params = new URLSearchParams();
+
+    if (filters?.dateFrom) {
+      params.append('dateFrom', filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      params.append('dateTo', filters.dateTo);
+    }
+    if (filters?.neighborhoodId) {
+      params.append('neighborhoodId', filters.neighborhoodId);
+    }
+    if (filters?.timeFrom) {
+      params.append('timeFrom', filters.timeFrom);
+    }
+    if (filters?.timeTo) {
+      params.append('timeTo', filters.timeTo);
+    }
+    if (filters?.tags && filters.tags.length > 0) {
+      params.append('tag', filters.tags[0]); // For now, we only support one tag
+    }
+
+    const stats = [
+      'day',
+      'week',
+      'month',
+      'weekday-distribution',
+      'hour-distribution',
+      'tag',
+      'heat-map-density',
+      'rate'
+    ];
+    params.append('stats', stats.join(','));
+
+    const queryString = params.toString();
+    if (queryString) {
+      url = `${url}?${queryString}`;
+    }
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(JSON.stringify(errorData));
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching statistics:', error);
     throw error;
   }
 }
