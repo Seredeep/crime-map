@@ -133,9 +133,9 @@ export default function IncidentForm() {
       formData.tags.forEach(tag => {
         formDataToSend.append('tags[]', tag);
       });
-      
+
       formData.evidence.forEach((file) => {
-        formDataToSend.append(`evidence`, file);
+        formDataToSend.append('evidence', file);
       });
 
       const response = await fetch('/api/incidents', {

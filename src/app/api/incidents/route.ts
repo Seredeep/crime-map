@@ -258,13 +258,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: true, 
       message: 'Incident draft created successfully',
-      id: result.insertedId.toString()
+      id: result.insertedId.toString(),
+      evidenceUrls: [] // Inicializar el array de URLs de evidencia
     });
 
   } catch (error) {
     console.error('Error saving incident:', error);
     return NextResponse.json(
-      { success: false, message: 'Failed to save incident' },
+      { success: false, message: error instanceof Error ? error.message : 'Failed to save incident' },
       { status: 500 }
     );
   }
