@@ -268,6 +268,7 @@ export async function GET(request: NextRequest) {
     const autocompleteUrl = new URL(GOOGLE_PLACES_AUTOCOMPLETE_URL);
     autocompleteUrl.searchParams.append('input', query);
     autocompleteUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+    autocompleteUrl.searchParams.append('components', 'locality:Mar del Plata|country:AR');
     
     console.log(`Google Places Autocomplete request for query: "${query}"`);
     
@@ -298,6 +299,7 @@ export async function GET(request: NextRequest) {
     const geocodeUrl = new URL(GOOGLE_GEOCODING_URL);
     geocodeUrl.searchParams.append('address', query);
     geocodeUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+    geocodeUrl.searchParams.append('components', 'locality:Mar del Plata|country:AR');
     
     console.log(`Google Geocoding request for query: "${query}"`);
     
