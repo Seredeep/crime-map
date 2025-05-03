@@ -144,7 +144,14 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
   // Clear all filters
   const handleClearFilters = () => {
     setSelectedTags([]);
-    onFiltersChange({});
+    const today = new Date();
+    const defaultDate = new Date('2013-01-01');
+    
+    onFiltersChange({
+      dateFrom: defaultDate.toISOString().split('T')[0],
+      dateTo: today.toISOString().split('T')[0],
+      neighborhoodId: '83' // Bosque Peralta Ramos
+    });
     
     // Limpiar también el barrio seleccionado
     if (onNeighborhoodSelect) {

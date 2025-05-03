@@ -52,7 +52,7 @@ export default function IncidentStatistics({ filters }: IncidentStatisticsProps)
               errorMessage = errorData.error;
             }
             console.log('Error details:', errorData);
-          } catch (e) {
+          } catch {
             // If parsing fails, use the original error message
             errorMessage = err.message;
           }
@@ -191,7 +191,7 @@ export default function IncidentStatistics({ filters }: IncidentStatisticsProps)
           </h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.weekdayDistribution.weekdays.map((_: number, i: number) => ({
+              <BarChart data={stats.weekdayDistribution.weekdays.map((_: string, i: number) => ({
                 weekday: WEEKDAYS[i],
                 count: stats.weekdayDistribution?.counts[i]
               }))}>
