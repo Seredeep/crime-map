@@ -1,15 +1,6 @@
 import { MongoClient } from "mongodb";
 import * as fs from "fs";
-
-// CONFIGURACIÓN
-const MONGODB_URI = "mongodb+srv://admin:yuZZ2F3KwcBhFf2@mongodbcluster.wwxlb.gcp.mongodb.net/?retryWrites=true&w=majority&appName=MongoDBCluster";
-const DATABASE_NAME = "test";
-const COLLECTION_NAME = "incident_draft";
-
-const GOOGLE_GEOCODING_API_KEY = "AIzaSyBiyCHEjtssku8P63I4pqIztbS-jHYHJQ4";
-const GOOGLE_GEOCODING_URL = "https://maps.googleapis.com/maps/api/geocode/json";
-
-const BARRIO = "Bosque Peralta Ramos, Mar del Plata, Argentina";
+import { DB_CONFIG, EXTERNAL_SERVICES } from "../src/config/constants";
 
 // Tipado de incidente
 interface Incident {
@@ -20,213 +11,103 @@ interface Incident {
   incident_type: string;
 }
 
-// Función para geocodificar usando Google Maps API
-async function geocodeLocation(locationText: string): Promise<{ coordinates: [number, number], formattedAddress: string } | null> {
-  // Primero intentar con la dirección específica
-  let fullAddress = `${locationText}, ${BARRIO}`;
-  let url = `${GOOGLE_GEOCODING_URL}?address=${encodeURIComponent(fullAddress)}&key=${GOOGLE_GEOCODING_API_KEY}`;
-
-  try {
-    console.log(`🔍 Intentando geocodificar: ${fullAddress}`);
-    let response = await fetch(url);
-    let data = await response.json();
-    
-    if (data.status === "OK" && data.results.length > 0) {
-      const location = data.results[0].geometry.location;
-      const formattedAddress = data.results[0].formatted_address;
-      
-      // Verificar si es una ubicación genérica del barrio
-      const isGenericLocation = formattedAddress.includes("Reserva Forestal Bosque Peralta Ramos");
-      const hasLocationTypeApproximate = data.results[0].geometry.location_type === "APPROXIMATE";
-      
-      if (isGenericLocation || hasLocationTypeApproximate) {
-        console.log(`⚠️ Resultado demasiado genérico para: ${locationText}`);
-        
-        // Intentar con calles principales en Mar del Plata
-        fullAddress = `${locationText}, Mar del Plata, Argentina`;
-        url = `${GOOGLE_GEOCODING_URL}?address=${encodeURIComponent(fullAddress)}&key=${GOOGLE_GEOCODING_API_KEY}`;
-        
-        console.log(`🔍 Intentando geocodificar con ciudad más amplia: ${fullAddress}`);
-        response = await fetch(url);
-        data = await response.json();
-        
-        if (data.status === "OK" && data.results.length > 0) {
-          const location = data.results[0].geometry.location;
-          const formattedAddress = data.results[0].formatted_address;
-          
-          // Verificar si esta vez el resultado es más específico
-          if (data.results[0].geometry.location_type !== "APPROXIMATE") {
-            console.log(`✅ Geocodificación mejorada exitosa: ${formattedAddress}`);
-            return {
-              coordinates: [location.lng, location.lat],
-              formattedAddress
-            };
-          }
-        }
-        
-        // Si aún no tenemos un buen resultado, intentar con la dirección simplificada
-        console.log(`⚠️ Intentando con dirección simplificada: ${locationText}`);
-        url = `${GOOGLE_GEOCODING_URL}?address=${encodeURIComponent(locationText)}&components=country:ar&key=${GOOGLE_GEOCODING_API_KEY}`;
-        
-        response = await fetch(url);
-        data = await response.json();
-        
-        if (data.status === "OK" && data.results.length > 0) {
-          const location = data.results[0].geometry.location;
-          const formattedAddress = data.results[0].formatted_address;
-          console.log(`✅ Geocodificación con dirección simplificada exitosa: ${formattedAddress}`);
-          return {
-            coordinates: [location.lng, location.lat],
-            formattedAddress
-          };
-        }
-        
-        // Si todos los intentos fallan, generar una ubicación aleatoria cerca del barrio
-        // para evitar agrupar todos los incidentes en el mismo punto
-        console.log(`⚠️ Generando ubicación aproximada para: ${locationText}`);
-        
-        // Coordenadas base para Bosque Peralta Ramos
-        const baseLat = -38.069919;
-        const baseLng = -57.559690;
-        
-        // Generar un offset aleatorio (+-0.005 grados, aproximadamente +-500 metros)
-        const latOffset = (Math.random() - 0.5) * 0.01;
-        const lngOffset = (Math.random() - 0.5) * 0.01;
-        
-        return {
-          coordinates: [baseLng + lngOffset, baseLat + latOffset],
-          formattedAddress: `${locationText} (ubicación aproximada)`
-        };
-      }
-      
-      console.log(`✅ Geocodificación exitosa: ${formattedAddress}`);
-      return {
-        coordinates: [location.lng, location.lat],
-        formattedAddress
-      };
-    } else {
-      console.error(`⛔ Google Maps no encontró resultados para: ${fullAddress}. Status: ${data.status}`);
-      console.error(`Error details:`, data.error_message || 'No error message provided');
-      
-      // Generar ubicación alternativa
-      console.log(`⚠️ Generando ubicación aproximada para: ${locationText}`);
-      
-      // Coordenadas base para Bosque Peralta Ramos
-      const baseLat = -38.069919;
-      const baseLng = -57.559690;
-      
-      // Generar un offset aleatorio (+-0.005 grados, aproximadamente +-500 metros)
-      const latOffset = (Math.random() - 0.5) * 0.01;
-      const lngOffset = (Math.random() - 0.5) * 0.01;
-      
-      return {
-        coordinates: [baseLng + lngOffset, baseLat + latOffset],
-        formattedAddress: `${locationText} (ubicación aproximada)`
-      };
-    }
-  } catch (error) {
-    console.error(`⛔ Error geocoding '${fullAddress}':`, error);
-    
-    // Generar ubicación aleatoria como último recurso
-    const baseLat = -38.069919;
-    const baseLng = -57.559690;
-    const latOffset = (Math.random() - 0.5) * 0.01;
-    const lngOffset = (Math.random() - 0.5) * 0.01;
-    
-    return {
-      coordinates: [baseLng + lngOffset, baseLat + latOffset],
-      formattedAddress: `${locationText} (ubicación aproximada por error)`
-    };
-  }
-}
-
 // Función para determinar tags
 function determineTags(incidentType: string, description: string): string[] {
   const tags: string[] = [];
   const lowerType = incidentType.toLowerCase();
   const lowerDesc = description.toLowerCase();
 
-  if (lowerType.includes("robo") || lowerType.includes("robar")) tags.push("robo");
-  if (lowerType.includes("asalto") || lowerType.includes("arma") || lowerType.includes("violencia")) tags.push("asalto");
-  if (lowerType.includes("vandalismo") || lowerDesc.includes("romper")) tags.push("vandalismo");
-  if (lowerType.includes("disturbio")) tags.push("disturbio");
-  if (lowerDesc.includes("amenaza")) tags.push("amenaza");
-  if (lowerDesc.includes("sospechoso") || lowerDesc.includes("merodear")) tags.push("sospechoso");
-  if (lowerDesc.includes("violencia") || lowerDesc.includes("violento")) tags.push("violencia");
+  // Usar las etiquetas comunes definidas en la configuración
+  const commonTags = ["robo", "hurto", "asalto", "violencia", "vandalismo", "drogas", "disturbios", "sospechoso"];
+  commonTags.forEach((tag: string) => {
+    if (lowerType.includes(tag) || lowerDesc.includes(tag)) {
+      tags.push(tag);
+    }
+  });
 
-  return tags.length > 0 ? Array.from(new Set(tags)) : ["robo"];
+  return tags.length > 0 ? tags : ["otros"];
+}
+
+// Función para geocodificar una dirección
+async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+  const url = `${EXTERNAL_SERVICES.GOOGLE_MAPS.GEOCODING_URL}?address=${encodeURIComponent(address)}&key=${EXTERNAL_SERVICES.GOOGLE_MAPS.GEOCODING_API_KEY}`;
+  
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.status === "OK" && data.results[0]) {
+      const location = data.results[0].geometry.location;
+      return {
+        lat: location.lat,
+        lng: location.lng
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error en geocodificación:", error);
+    return null;
+  }
 }
 
 // Main
 async function main() {
-  const client = new MongoClient(MONGODB_URI);
+  if (!DB_CONFIG.MONGODB_URI) {
+    console.error("Error: MONGODB_URI no está definida en las variables de entorno");
+    process.exit(1);
+  }
+
+  if (!EXTERNAL_SERVICES.GOOGLE_MAPS.GEOCODING_API_KEY) {
+    console.error("Error: GOOGLE_GEOCODING_API_KEY no está definida en las variables de entorno");
+    process.exit(1);
+  }
+
+  const client = new MongoClient(DB_CONFIG.MONGODB_URI);
+  
   try {
     await client.connect();
-    const db = client.db(DATABASE_NAME);
-    const collection = db.collection(COLLECTION_NAME);
-
+    console.log("Conectado a MongoDB");
+    
+    const db = client.db(DB_CONFIG.DATABASE_NAME);
+    const collection = db.collection(DB_CONFIG.COLLECTIONS.INCIDENTS);
+    
     const rawData = fs.readFileSync("scripts/input_gpt4o.json", "utf-8");
     const incidents: Incident[] = JSON.parse(rawData);
-
-    let success = 0;
-    let errors = 0;
-    let approximate = 0;
-
+    
+    console.log(`Procesando ${incidents.length} incidentes...`);
+    
     for (const incident of incidents) {
-      const geocodeResult = await geocodeLocation(incident.location_text);
-      // Ahora no debería ser null, pero verificamos por si acaso
-      if (!geocodeResult) {
-        console.error(`⛔ No se pudo geocodificar: ${incident.location_text}`);
-        errors++;
-        continue;
-      }
-
-      const { coordinates, formattedAddress } = geocodeResult;
-      const [lon, lat] = coordinates;
+      const location = await geocodeAddress(incident.location_text);
       
-      // Comprobar si es una ubicación aproximada
-      const isApproximate = formattedAddress.includes("ubicación aproximada");
-      if (isApproximate) {
-        approximate++;
-      }
-
-      const doc = {
-        description: incident.description,
-        address: formattedAddress,
-        original_location: incident.location_text,
-        time: incident.time ?? "",
-        date: incident.date,
-        location: {
-          type: "Point",
-          coordinates: [lon, lat],
-        },
-        createdAt: new Date(),
-        status: "pending",
-        tags: determineTags(incident.incident_type, incident.description),
-        evidenceFiles: [],
-        createdBy: "admin",
-      };
-
-      try {
-        await collection.insertOne(doc);
-        if (isApproximate) {
-          console.log(`⚠️ Insertado con ubicación aproximada: ${incident.location_text} -> ${formattedAddress}`);
-        } else {
-          console.log(`✅ Insertado: ${incident.location_text} -> ${formattedAddress}`);
-        }
-        success++;
-      } catch (error) {
-        console.error(`⛔ Error insertando en DB:`, error);
-        errors++;
+      if (location) {
+        const tags = determineTags(incident.incident_type, incident.description);
+        
+        await collection.insertOne({
+          description: incident.description,
+          address: incident.location_text,
+          time: incident.time,
+          date: incident.date,
+          location: {
+            type: "Point",
+            coordinates: [location.lng, location.lat]
+          },
+          createdAt: new Date(),
+          status: "pending",
+          tags
+        });
+        
+        console.log(`Incidente procesado: ${incident.description}`);
+      } else {
+        console.error(`No se pudo geocodificar: ${incident.location_text}`);
       }
     }
-
-    console.log(`\n✅ ${success} documentos insertados correctamente.`);
-    console.log(`⚠️ ${approximate} con ubicaciones aproximadas.`);
-    console.log(`⛔ ${errors} errores.`);
+    
+    console.log("Proceso completado");
+  } catch (error) {
+    console.error("Error:", error);
   } finally {
     await client.close();
   }
 }
 
-main().catch(console.error);
+main();

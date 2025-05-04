@@ -12,14 +12,16 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  Legend,
 } from 'recharts';
 import { Incident } from '@/lib/types';
+import { CHART_COLORS } from '@/config/constants';
 
 interface IncidentChartsProps {
   incidents: Incident[];
 }
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
 
 export default function IncidentCharts({ incidents }: IncidentChartsProps) {
   // Procesar datos para el gráfico de incidentes por día
@@ -58,76 +60,44 @@ export default function IncidentCharts({ incidents }: IncidentChartsProps) {
   }, [incidents]);
 
   return (
-    <div className="space-y-8 bg-gray-900/50 p-6 rounded-lg backdrop-blur-sm">
-      <div>
-        <h3 className="text-lg font-medium text-gray-200 mb-4">
-          Incidentes por día
-        </h3>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={incidentsPerDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis
-                dataKey="date"
-                stroke="#9CA3AF"
-                fontSize={12}
-              />
-              <YAxis
-                stroke="#9CA3AF"
-                fontSize={12}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1F2937',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  color: '#E5E7EB',
-                }}
-              />
-              <Bar
-                dataKey="count"
-                fill="#3B82F6"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h3 className="text-xl font-semibold mb-4">Incidentes por Día</h3>
+        <div className="w-full overflow-x-auto">
+          <LineChart width={500} height={300} data={incidentsPerDay}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+            <XAxis dataKey="date" stroke="#888" />
+            <YAxis stroke="#888" />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="count" stroke={CHART_COLORS.PRIMARY[0]} />
+          </LineChart>
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-200 mb-4">
-          Distribución por tipo de incidente
-        </h3>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={crimeDistribution}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {crimeDistribution.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1F2937',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  color: '#E5E7EB',
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h3 className="text-xl font-semibold mb-4">Distribución por Tipo</h3>
+        <div className="w-full">
+          <PieChart width={500} height={300}>
+            <Pie
+              data={crimeDistribution}
+              cx={250}
+              cy={150}
+              labelLine={false}
+              outerRadius={120}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {crimeDistribution.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={CHART_COLORS.PRIMARY[index % CHART_COLORS.PRIMARY.length]} 
+                />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
         </div>
       </div>
     </div>

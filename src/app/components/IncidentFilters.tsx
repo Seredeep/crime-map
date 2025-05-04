@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { fetchNeighborhoods, Neighborhood } from '@/lib/neighborhoodService';
+import { INCIDENT_TAGS } from '@/config/constants';
 import { IncidentFilters as FiltersType } from '@/lib/types';
 
 interface IncidentFiltersProps {
@@ -321,14 +322,14 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
               Etiquetas
             </label>
             <div className="flex flex-wrap gap-2">
-              {COMMON_TAGS.map((tag) => (
+              {INCIDENT_TAGS.COMMON.map((tag) => (
                 <button
                   key={tag}
                   onClick={() => handleTagToggle(tag)}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
                     selectedTags.includes(tag)
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
                 >
                   {tag}

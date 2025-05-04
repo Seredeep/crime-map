@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Incident } from '@/lib/types';
 import { fetchIncidents } from '@/lib/incidentService';
 import { formatDate, formatTime, timeAgo } from '@/lib/utils';
-import { COMMON_TAGS } from '@/lib/constants';
+import { INCIDENT_TAGS } from '@/config/constants';
 
 interface IncidentQueueProps {
   onIncidentSelect?: (incident: Incident) => void;
@@ -128,7 +128,7 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
           className="bg-gray-800/50 text-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="all">Todos los tipos</option>
-          {COMMON_TAGS.map(tag => (
+          {INCIDENT_TAGS.COMMON.map((tag: string) => (
             <option key={tag} value={tag}>
               {tag.charAt(0).toUpperCase() + tag.slice(1)}
             </option>
