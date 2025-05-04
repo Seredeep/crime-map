@@ -3,7 +3,8 @@ import clientPromise from '@/lib/mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { Incident } from '@/lib/types';
-import { Filter } from 'mongodb';
+import { Filter, ObjectId } from 'mongodb';
+import { ROLES, hasRequiredRole, Role } from '@/lib/config/roles';
 
 interface MongoQuery extends Filter<Incident> {
   location?: {
@@ -264,6 +265,76 @@ export async function POST(request: Request) {
     console.error('Error saving incident:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to save incident' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    // Get user session
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.id) {
+      return NextResponse.json(
+        { success: false, message: 'No autorizado. Debes iniciar sesión para actualizar un incidente.' },
+        { status: 401 }
+      );
+    }
+
+    if (!hasRequiredRole(session.user.role as Role, [ROLES.EDITOR, ROLES.ADMIN])) {
+      return NextResponse.json(
+        { success: false, message: 'No autorizado. Debes estar autenticado como editor para actualizar un incidente.' },
+        { status: 401 }
+      );
+    }
+
+    const { incidentId, status, reason } = await request.json();
+
+    if (!incidentId || !status) {
+      return NextResponse.json(
+        { success: false, message: 'Faltan campos requeridos' },
+        { status: 400 }
+      );
+    }
+
+    const client = await clientPromise;
+    const db = client.db();
+
+    // Update the incident
+    const result = await db.collection('incident_draft').updateOne(
+      { _id: ObjectId.createFromHexString(incidentId) },
+      { $set: { status } }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { success: false, message: 'Incidente no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Insert a log entry
+    await db.collection('logs').insertOne({
+      action: 'update_incident_status',
+      incidentId,
+      userId: session.user.id,
+      userEmail: session.user.email,
+      timestamp: new Date(),
+      details: {
+        newStatus: status,
+        reason: reason || undefined,
+      },
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Estado del incidente actualizado exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error updating incident:', error);
+    return NextResponse.json(
+      { success: false, message: 'Error al actualizar el incidente' },
       { status: 500 }
     );
   }
