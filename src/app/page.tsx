@@ -5,10 +5,7 @@ import IncidentsView from './components/IncidentsView';
 import Tabs from './components/Tabs';
 import { useSession } from 'next-auth/react';
 import IncidentForm from './components/IncidentForm';
-<<<<<<< HEAD
 import IncidentQueue from './components/IncidentQueue';
-=======
->>>>>>> b76f114 (fix report tab)
 
 export default function Home() {
   const router = useRouter();
@@ -45,7 +42,6 @@ export default function Home() {
               </button>
             </>
           )}
-<<<<<<< HEAD
         </div>
       )
     },
@@ -56,8 +52,6 @@ export default function Home() {
         <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Cola de Incidentes</h2>
           <IncidentQueue />
-=======
->>>>>>> b76f114 (fix report tab)
         </div>
       )
     }
