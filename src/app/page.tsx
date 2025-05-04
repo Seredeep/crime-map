@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import IncidentsView from './components/IncidentsView';
 import Tabs from './components/Tabs';
 import { useSession } from 'next-auth/react';
+import IncidentQueue from './components/IncidentQueue';
 
 export default function Home() {
   const router = useRouter();
@@ -36,6 +37,16 @@ export default function Home() {
           >
             {status === 'authenticated' ? 'Ir a reportar' : 'Iniciar sesión para reportar'}
           </button>
+        </div>
+      )
+    },
+    {
+      id: 'queue',
+      label: 'Cola de Incidentes',
+      content: (
+        <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+          <h2 className="text-2xl font-semibold mb-4">Cola de Incidentes</h2>
+          <IncidentQueue />
         </div>
       )
     }
