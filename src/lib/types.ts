@@ -25,6 +25,7 @@ export interface IncidentFilters {
   time?: string;
   timeFrom?: string;
   timeTo?: string;
+  status?: 'pending' | 'verified' | 'resolved';
   tags?: string[];
 }
 

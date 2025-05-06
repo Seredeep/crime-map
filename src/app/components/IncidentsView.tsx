@@ -9,12 +9,16 @@ import IncidentFiltersComponent from './IncidentFilters';
 import { Neighborhood } from '@/lib/neighborhoodService';
 import IncidentStatistics from './IncidentStatistics';
 import { fetchNeighborhoods } from '@/lib/neighborhoodService';
+import { useSession } from 'next-auth/react';
 
 export default function IncidentsView() {
+  const { data: session } = useSession();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isEditorOrAdmin = session?.user?.role === 'editor' || session?.user?.role === 'admin';
+
   const [filters, setFilters] = useState<IncidentFilters>(() => {
     // Set default date range to last 30 days
     const today = new Date();
@@ -24,7 +28,8 @@ export default function IncidentsView() {
     return {
       dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
-      neighborhoodId: '83' // Bosque Peralta Ramos
+      neighborhoodId: '83',
+      status: 'verified' // Siempre iniciar con estado 'verified'
     };
   });
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
@@ -72,6 +77,10 @@ export default function IncidentsView() {
 
   // Handler for when filters change
   const handleFiltersChange = (newFilters: IncidentFilters) => {
+    // Si el usuario no es editor o admin, forzar el estado a 'verified'
+    if (!isEditorOrAdmin) {
+      newFilters.status = 'verified';
+    }
     setFilters(newFilters);
     if (selectedIncident) {
       setSelectedIncident(null);
