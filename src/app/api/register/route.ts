@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import clientPromise from "@/lib/mongodb";
 import { hashPassword } from "@/lib/utils";
+import { getDefaultRole } from "@/lib/config/roles";
 
 export async function POST(request: Request) {
   try {
@@ -48,12 +49,12 @@ export async function POST(request: Request) {
     // Hasheamos la contraseña
     const hashedPassword = await hashPassword(password);
 
-    // Creamos el usuario
+    // Create the user with the default role
     const result = await db.collection("users").insertOne({
       name,
       email,
       password: hashedPassword,
-      role: "user", // Rol por defecto
+      role: getDefaultRole(),
       enabled: false, // Usuario deshabilitado por defecto
       createdAt: new Date(),
     });

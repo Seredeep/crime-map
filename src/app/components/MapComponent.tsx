@@ -3,9 +3,9 @@
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents, useMap, GeoJSON } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useCallback, useRef } from 'react';
-/* eslint-disable */
+ 
 import L from 'leaflet';
-/* eslint-enable */
+ 
 import { Incident } from '@/lib/types';
 import { Neighborhood } from '@/lib/neighborhoodService';
 
@@ -74,7 +74,7 @@ function MapClickHandler({
   onMapClick: (e: L.LeafletMouseEvent) => void;
   setMarkerOnClick?: boolean;
 }) {
-  const map = useMapEvents({
+  useMapEvents({
     click: (e) => {
       if (setMarkerOnClick) {
         console.log('Map clicked at:', e.latlng);

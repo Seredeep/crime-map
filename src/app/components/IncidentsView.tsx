@@ -6,17 +6,44 @@ import IncidentDetails from './IncidentDetails';
 import { Incident, IncidentFilters } from '@/lib/types';
 import { fetchIncidents } from '@/lib/incidentService';
 import IncidentFiltersComponent from './IncidentFilters';
-import IncidentCharts from './IncidentCharts';
 import { Neighborhood } from '@/lib/neighborhoodService';
+import IncidentStatistics from './IncidentStatistics';
+import { fetchNeighborhoods } from '@/lib/neighborhoodService';
 
 export default function IncidentsView() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<IncidentFilters>({});
-  const [showCharts, setShowCharts] = useState(false);
+  const [filters, setFilters] = useState<IncidentFilters>(() => {
+    // Set default date range to last 30 days
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    return {
+      dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
+      dateTo: today.toISOString().split('T')[0],
+      neighborhoodId: '83' // Bosque Peralta Ramos
+    };
+  });
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
+
+  // Load initial neighborhood
+  useEffect(() => {
+    async function loadInitialNeighborhood() {
+      try {
+        const neighborhoods = await fetchNeighborhoods();
+        const defaultNeighborhood = neighborhoods.find(n => n.properties.id === 83);
+        if (defaultNeighborhood) {
+          setSelectedNeighborhood(defaultNeighborhood);
+        }
+      } catch (err) {
+        console.error('Error loading initial neighborhood:', err);
+      }
+    }
+    loadInitialNeighborhood();
+  }, []);
 
   // Function to load incidents based on filters
   const loadIncidents = useCallback(async () => {
@@ -41,7 +68,6 @@ export default function IncidentsView() {
 
   const handleIncidentSelected = (incident: Incident) => {
     setSelectedIncident(incident);
-    setShowCharts(false);
   };
 
   // Handler for when filters change
@@ -57,7 +83,6 @@ export default function IncidentsView() {
     setSelectedNeighborhood(null);
     setTimeout(() => {
       setSelectedNeighborhood(neighborhood);
-      console.log('Barrio seleccionado:', neighborhood?.properties?.soc_fomen);
     }, 50);
   };
 
@@ -65,7 +90,6 @@ export default function IncidentsView() {
     <div className="flex flex-col space-y-4">
       {/* Panel de Filtros */}
       <div className="bg-gray-900/50 p-4 rounded-lg backdrop-blur-sm">
-        <h2 className="text-lg font-semibold mb-2 text-gray-200">Filtros</h2>
         <IncidentFiltersComponent 
           filters={filters} 
           onFiltersChange={handleFiltersChange}
@@ -73,7 +97,7 @@ export default function IncidentsView() {
         />
       </div>
       
-      {/* Mapa y Panel de Detalles/Estadísticas */}
+      {/* Mapa y Panel de Detalles */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Mapa */}
         <div className="flex-1 min-h-[400px] lg:min-h-[600px] relative">
@@ -108,45 +132,24 @@ export default function IncidentsView() {
           )}
         </div>
         
-        {/* Panel de Detalles/Estadísticas */}
+        {/* Panel de Detalles */}
         <div className="flex-1">
-          {/* Botones de alternancia */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setShowCharts(false)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                !showCharts
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
-              }`}
-            >
-              Detalles
-            </button>
-            <button
-              onClick={() => setShowCharts(true)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                showCharts
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
-              }`}
-            >
-              Estadísticas
-            </button>
-          </div>
-
-          {/* Contenido del panel */}
-          {showCharts ? (
-            <IncidentCharts incidents={incidents} />
-          ) : selectedIncident ? (
+          {selectedIncident ? (
             <IncidentDetails incident={selectedIncident} />
           ) : (
             <div className="bg-gray-900/50 p-6 rounded-lg backdrop-blur-sm text-center">
               <p className="text-gray-300">
-                Selecciona un incidente en el mapa para ver sus detalles o haz clic en &quot;Estadísticas&quot; para ver gráficos.
+                Selecciona un incidente en el mapa para ver sus detalles.
               </p>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Stats section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-gray-200 mb-4">Estadísticas</h2>
+        <IncidentStatistics filters={filters} />
       </div>
     </div>
   );

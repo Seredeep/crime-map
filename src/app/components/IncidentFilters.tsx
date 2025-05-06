@@ -26,6 +26,7 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Load neighborhoods on component mount
   useEffect(() => {
@@ -81,17 +82,48 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
     }
   };
 
-  // Handle date change
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
-    onFiltersChange({ ...filters, date: newDate });
-  };
-
-  // Handle time period selection
-  const handleTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Handle date range changes
+  const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFiltersChange({
       ...filters,
-      time: e.target.value || undefined
+      dateFrom: e.target.value || undefined,
+      date: undefined // Clear single date if using range
+    });
+  };
+
+  const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltersChange({
+      ...filters,
+      dateTo: e.target.value || undefined,
+      date: undefined // Clear single date if using range
+    });
+  };
+
+  // Handle time range changes
+  const handleTimeFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltersChange({
+      ...filters,
+      timeFrom: e.target.value || undefined,
+      time: undefined // Clear time period if using range
+    });
+  };
+
+  const handleTimeToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFiltersChange({
+      ...filters,
+      timeTo: e.target.value || undefined,
+      time: undefined // Clear time period if using range
+    });
+  };
+
+  // Handle time period selection (for backward compatibility)
+  const handleTimePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    onFiltersChange({
+      ...filters,
+      time: value || undefined,
+      timeFrom: undefined, // Clear time range if using period
+      timeTo: undefined
     });
   };
 
@@ -112,7 +144,14 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
   // Clear all filters
   const handleClearFilters = () => {
     setSelectedTags([]);
-    onFiltersChange({});
+    const today = new Date();
+    const defaultDate = new Date('2013-01-01');
+    
+    onFiltersChange({
+      dateFrom: defaultDate.toISOString().split('T')[0],
+      dateTo: today.toISOString().split('T')[0],
+      neighborhoodId: '83' // Bosque Peralta Ramos
+    });
     
     // Limpiar también el barrio seleccionado
     if (onNeighborhoodSelect) {
@@ -120,117 +159,185 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
     }
   };
 
+  // Count active filters
+  const activeFiltersCount = Object.keys(filters).length;
+
+  const toggleFilters = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <div className="space-y-4 bg-gray-900/50 p-4 rounded-lg backdrop-blur-sm">
-      {/* Filtros activos */}
-      {Object.keys(filters).length > 0 && (
-        <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-          <p className="text-sm text-gray-300">
-            Filtros activos: {
-              Object.entries(filters).map(([key, value]) => {
-                const label = {
-                  neighborhoodId: 'Barrio',
-                  date: 'Fecha',
-                  time: 'Hora',
-                  tags: 'Etiquetas'
-                }[key];
-                return `${label}: ${Array.isArray(value) ? value.join(', ') : value}`;
-              }).join(' • ')
-            }
-          </p>
-          <button
-            onClick={handleClearFilters}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+    <div className="relative">
+      <button
+        onClick={toggleFilters}
+        className="w-full flex items-center justify-between p-4 bg-gray-900/50 rounded-lg backdrop-blur-sm hover:bg-gray-800/50 transition-colors"
+      >
+        <div className="flex items-center space-x-2">
+          <span className="text-gray-200">Filtros</span>
+          {activeFiltersCount > 0 && (
+            <span className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 rounded-full">
+              {activeFiltersCount}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center space-x-2">
+          {activeFiltersCount > 0 && (
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClearFilters();
+              }}
+              className="px-2 py-1 text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-full cursor-pointer"
+            >
+              Limpiar
+            </div>
+          )}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className={`h-5 w-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
           >
-            Limpiar filtros
-          </button>
+            <path
+              fillRule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+      </button>
+
+      {/* Filters content */}
+      {isOpen && (
+        <div className="mt-4 space-y-4 bg-gray-900/50 p-4 rounded-lg backdrop-blur-sm">
+          {/* Grid de filtros principales */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Filtro de barrio */}
+            <div>
+              <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-300 mb-1">
+                Barrio
+              </label>
+              <select
+                id="neighborhood"
+                className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={filters.neighborhoodId || ''}
+                onChange={handleNeighborhoodChange}
+                disabled={loading}
+              >
+                <option value="">Todos los barrios</option>
+                {error ? (
+                  <option disabled>Error al cargar barrios</option>
+                ) : loading ? (
+                  <option disabled>Cargando barrios...</option>
+                ) : (
+                  neighborhoods.map((neighborhood) => (
+                    <option key={neighborhood._id} value={neighborhood.properties.id.toString()}>
+                      {neighborhood.properties.soc_fomen}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* Filtro de fecha desde */}
+            <div>
+              <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-300 mb-1">
+                Fecha desde
+              </label>
+              <input
+                type="date"
+                id="dateFrom"
+                className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={filters.dateFrom || ''}
+                onChange={handleDateFromChange}
+              />
+            </div>
+
+            {/* Filtro de fecha hasta */}
+            <div>
+              <label htmlFor="dateTo" className="block text-sm font-medium text-gray-300 mb-1">
+                Fecha hasta
+              </label>
+              <input
+                type="date"
+                id="dateTo"
+                className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={filters.dateTo || ''}
+                onChange={handleDateToChange}
+              />
+            </div>
+
+            {/* Filtro de hora desde */}
+            <div>
+              <label htmlFor="timeFrom" className="block text-sm font-medium text-gray-300 mb-1">
+                Hora desde
+              </label>
+              <input
+                type="time"
+                id="timeFrom"
+                className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={filters.timeFrom || ''}
+                onChange={handleTimeFromChange}
+              />
+            </div>
+
+            {/* Filtro de hora hasta */}
+            <div>
+              <label htmlFor="timeTo" className="block text-sm font-medium text-gray-300 mb-1">
+                Hora hasta
+              </label>
+              <input
+                type="time"
+                id="timeTo"
+                className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={filters.timeTo || ''}
+                onChange={handleTimeToChange}
+              />
+            </div>
+
+            {/* Filtro de período de hora (para compatibilidad) */}
+            <div>
+              <label htmlFor="timePeriod" className="block text-sm font-medium text-gray-300 mb-1">
+                Período de hora
+              </label>
+              <select
+                id="timePeriod"
+                className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={filters.time || ''}
+                onChange={handleTimePeriodChange}
+              >
+                <option value="">Cualquier hora</option>
+                <option value="morning">Mañana (6:00 - 12:00)</option>
+                <option value="afternoon">Tarde (12:00 - 18:00)</option>
+                <option value="evening">Noche (18:00 - 00:00)</option>
+                <option value="night">Madrugada (00:00 - 6:00)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Sección de etiquetas */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Etiquetas
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {COMMON_TAGS.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                    selectedTags.includes(tag)
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                      : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
-
-      {/* Grid de filtros principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Filtro de barrio */}
-        <div>
-          <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-300 mb-1">
-            Barrio
-          </label>
-          <select
-            id="neighborhood"
-            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={filters.neighborhoodId || ''}
-            onChange={handleNeighborhoodChange}
-            disabled={loading}
-          >
-            <option value="">Todos los barrios</option>
-            {error ? (
-              <option disabled>Error al cargar barrios</option>
-            ) : loading ? (
-              <option disabled>Cargando barrios...</option>
-            ) : (
-              neighborhoods.map((neighborhood) => (
-                <option key={neighborhood._id} value={neighborhood.properties.id.toString()}>
-                  {neighborhood.properties.soc_fomen}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
-
-        {/* Filtro de fecha */}
-        <div>
-          <label htmlFor="date" className="block text-sm font-medium text-gray-300 mb-1">
-            Fecha
-          </label>
-          <input
-            type="date"
-            id="date"
-            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={filters.date || ''}
-            onChange={handleDateChange}
-          />
-        </div>
-
-        {/* Filtro de hora */}
-        <div>
-          <label htmlFor="time" className="block text-sm font-medium text-gray-300 mb-1">
-            Hora
-          </label>
-          <select
-            id="time"
-            className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={filters.time || ''}
-            onChange={handleTimeChange}
-          >
-            <option value="">Cualquier hora</option>
-            <option value="morning">Mañana (6:00 - 12:00)</option>
-            <option value="afternoon">Tarde (12:00 - 18:00)</option>
-            <option value="evening">Noche (18:00 - 00:00)</option>
-            <option value="night">Madrugada (00:00 - 6:00)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Sección de etiquetas */}
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Etiquetas
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {COMMON_TAGS.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => handleTagToggle(tag)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
-                selectedTags.includes(tag)
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                  : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 } 

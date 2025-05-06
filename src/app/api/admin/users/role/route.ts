@@ -3,10 +3,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { Role, ROLES } from '@/lib/config/roles';
 
 export async function POST(request: Request) {
   try {
-    // Verificar sesión y rol de administrador
+    // Verify session and admin role
     const session = await getServerSession(authOptions);
     
     if (!session) {
@@ -23,24 +24,32 @@ export async function POST(request: Request) {
       );
     }
     
-    // Obtener datos de la solicitud
-    const { userId, enabled } = await request.json();
+    // Get request data
+    const { userId, role } = await request.json() as { userId: string, role: Role };
     
-    if (!userId) {
+    if (!userId || !role) {
       return NextResponse.json(
-        { success: false, message: 'ID de usuario requerido' },
+        { success: false, message: 'ID de usuario y rol requeridos' },
+        { status: 400 }
+      );
+    }
+
+    // Validate role
+    if (!Object.values(ROLES).includes(role as Role)) {
+      return NextResponse.json(
+        { success: false, message: 'Rol inválido' },
         { status: 400 }
       );
     }
     
-    // Conectar a la base de datos
+    // Connect to database
     const client = await clientPromise;
     const db = client.db();
     
-    // Actualizar estado del usuario
+    // Update user role
     const result = await db.collection('users').updateOne(
       { _id: ObjectId.createFromHexString(userId) },
-      { $set: { enabled: enabled } }
+      { $set: { role: role } }
     );
     
     if (result.matchedCount === 0) {
@@ -52,12 +61,12 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ 
       success: true, 
-      message: `Usuario ${enabled ? 'habilitado' : 'deshabilitado'} correctamente` 
+      message: `Rol de usuario actualizado correctamente a ${role}` 
     });
   } catch (error) {
-    console.error('Error al actualizar estado del usuario:', error);
+    console.error('Error al actualizar rol del usuario:', error);
     return NextResponse.json(
-      { success: false, message: 'Error al actualizar estado del usuario' },
+      { success: false, message: 'Error al actualizar rol del usuario' },
       { status: 500 }
     );
   }

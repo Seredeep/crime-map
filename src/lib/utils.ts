@@ -25,19 +25,29 @@ export function formatDate(dateStr: string): string {
  */
 export function formatTime(timeStr: string): string {
   try {
-    // Create a date object with the time string
+    if (!timeStr || typeof timeStr !== 'string') return '-';
     const [hours, minutes] = timeStr.split(':').map(Number);
+    if (
+      isNaN(hours) ||
+      isNaN(minutes) ||
+      hours < 0 ||
+      hours > 23 ||
+      minutes < 0 ||
+      minutes > 59
+    ) {
+      return '-';
+    }
     const date = new Date();
-    date.setHours(hours, minutes);
-
-    return new Intl.DateTimeFormat('en-US', { 
-      hour: 'numeric', 
+    date.setHours(hours, minutes, 0, 0);
+    if (!isFinite(date.getTime())) return '-';
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
       minute: 'numeric',
-      hour12: true 
+      hour12: true,
     }).format(date);
   } catch (error) {
     console.error('Error formatting time:', error);
-    return timeStr; // Return original if formatting fails
+    return '-';
   }
 }
 

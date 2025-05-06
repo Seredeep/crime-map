@@ -1,7 +1,40 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
+import { Incident } from '@/lib/types';
+import { Filter, ObjectId } from 'mongodb';
+import { ROLES, hasRequiredRole, Role } from '@/lib/config/roles';
+
+interface MongoQuery extends Filter<Incident> {
+  location?: {
+    $geoWithin?: {
+      $geometry: {
+        type: string;
+        coordinates: number[][][];
+      };
+    };
+    $near?: {
+      $geometry: {
+        type: string;
+        coordinates: [number, number];
+      };
+      $maxDistance: number;
+    };
+  };
+  date?: {
+    $gte?: string;
+    $lte?: string;
+  };
+  time?: {
+    $gte?: string;
+    $lte?: string;
+  };
+  status?: 'pending' | 'verified' | 'resolved';
+  tags?: {
+    $in: string[];
+  };
+}
 
 // Helper function to ensure indexes exist
 async function ensureIndexes() {
@@ -27,7 +60,7 @@ async function ensureIndexes() {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // Ensure indexes exist
     await ensureIndexes();
@@ -37,114 +70,111 @@ export async function GET(request: Request) {
     const client = await clientPromise;
     const db = client.db();
     
+    const neighborhoodId = searchParams.get('neighborhoodId');
+    const date = searchParams.get('date');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+    const time = searchParams.get('time');
+    const timeFrom = searchParams.get('timeFrom');
+    const timeTo = searchParams.get('timeTo');
+    const status = searchParams.get('status') as 'pending' | 'verified' | 'resolved' | null;
+    const tags = searchParams.getAll('tag');
+    const location = searchParams.get('location');
+    
     // Build MongoDB query based on filters
-    let query: any = {};
+    const query: MongoQuery = {};
     
-    // Neighborhood filter
-    if (searchParams.has('neighborhoodId')) {
-      const neighborhoodId = searchParams.get('neighborhoodId');
-      
-      // Only proceed if we have a valid ID
-      if (neighborhoodId) {
-        try {
-          // Primero intentamos convertir a número ya que properties.id es numérico
-          const neighborhoodIdNum = parseInt(neighborhoodId, 10);
-          
-          // Find the neighborhood - could be numeric ID from properties
-          const neighborhood = await db
-            .collection('neighborhoods')
-            .findOne({ 'properties.id': isNaN(neighborhoodIdNum) ? neighborhoodId : neighborhoodIdNum });
-          
-          if (neighborhood && neighborhood.geometry) {
-            // Filter incidents by location within the neighborhood polygon
-            query.location = {
-              $geoWithin: {
-                $geometry: neighborhood.geometry
-              }
-            };
+    // Add neighborhood filter if provided
+    if (neighborhoodId) {
+      const neighborhoodIdNum = parseInt(neighborhoodId, 10);
+      const neighborhood = await db.collection('neighborhoods').findOne({ 'properties.id': isNaN(neighborhoodIdNum) ? neighborhoodId : neighborhoodIdNum });
+      if (neighborhood) {
+        query.location = {
+          $geoWithin: {
+            $geometry: neighborhood.geometry
           }
-        } catch (err) {
-          console.error('Error fetching neighborhood for filtering:', err);
-        }
-      }
-    }
-    // Location filter (original feature)
-    else if (searchParams.has('lat') && searchParams.has('lng')) {
-      const lat = parseFloat(searchParams.get('lat') || '0');
-      const lng = parseFloat(searchParams.get('lng') || '0');
-      const zoom = parseInt(searchParams.get('zoom') || '12', 10);
-      
-      // Calculate the bounding box based on zoom level and coordinates
-      const radius = Math.max(5 / Math.pow(1.5, zoom - 10), 0.5); // in kilometers
-      
-      // Add geospatial query
-      query.location = {
-        $geoWithin: {
-          $centerSphere: [[lng, lat], radius / 6371] // radius in radians (divide by Earth's radius in km)
-        }
-      };
-    }
-    
-    // Date filter
-    if (searchParams.has('date')) {
-      const date = searchParams.get('date');
-      
-      // Aseguramos que la fecha tenga el formato correcto (YYYY-MM-DD)
-      if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        query.date = date;
+        };
       }
     }
     
-    // Time range filter
-    if (searchParams.has('time')) {
-      const timeRange = searchParams.get('time');
-      
-      switch (timeRange) {
-        case 'morning':
-          query.time = { $gte: '06:00', $lt: '12:00' };
-          break;
-        case 'afternoon':
-          query.time = { $gte: '12:00', $lt: '18:00' };
-          break;
-        case 'evening':
-          query.time = { $gte: '18:00', $lt: '24:00' };
-          break;
-        case 'night':
-          // Para el periodo "night" (00:00-06:00)
-          query = {
-            ...query,
-            $or: [
-              { time: { $gte: '00:00', $lt: '06:00' } }
-            ]
+    // Add date filters
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      query.date = { $gte: startOfDay.toISOString(), $lte: endOfDay.toISOString() };
+    } else {
+      const dateQuery: MongoQuery['date'] = {};
+      if (dateFrom) {
+        const startDate = new Date(dateFrom);
+        startDate.setHours(0, 0, 0, 0);
+        dateQuery.$gte = startDate.toISOString();
+      }
+      if (dateTo) {
+        const endDate = new Date(dateTo);
+        endDate.setHours(23, 59, 59, 999);
+        dateQuery.$lte = endDate.toISOString();
+      }
+      if (Object.keys(dateQuery).length > 0) {
+        query.date = dateQuery;
+      }
+    }
+    
+    // Add time filters
+    if (time) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const timeInMinutes = hours * 60 + minutes;
+      query.time = { $gte: timeInMinutes.toString(), $lte: timeInMinutes.toString() };
+    } else {
+      const timeQuery: MongoQuery['time'] = {};
+      if (timeFrom) {
+        const [hours, minutes] = timeFrom.split(':').map(Number);
+        timeQuery.$gte = (hours * 60 + minutes).toString();
+      }
+      if (timeTo) {
+        const [hours, minutes] = timeTo.split(':').map(Number);
+        timeQuery.$lte = (hours * 60 + minutes).toString();
+      }
+      if (Object.keys(timeQuery).length > 0) {
+        query.time = timeQuery;
+      }
+    }
+    
+    // Add status filter if provided
+    if (status) {
+      query.status = status;
+    }
+    
+    // Add tags filter if provided
+    if (tags.length > 0) {
+      query.tags = { $in: tags };
+    }
+    
+    // Add location filter if provided
+    if (location) {
+      try {
+        const locationObj = JSON.parse(location);
+        if (locationObj.type === 'Point' && Array.isArray(locationObj.coordinates)) {
+          query.location = {
+            $near: {
+              $geometry: locationObj,
+              $maxDistance: 1000 // 1km radius
+            }
           };
-          break;
-        default:
-          // If it's not a predefined range, assume it's a specific time
-          query.time = timeRange;
-      }
-    }
-    
-    // Tag filter
-    if (searchParams.has('tag')) {
-      const tags = searchParams.getAll('tag');
-      
-      if (tags.length === 1) {
-        query.tags = tags[0];
-      } else if (tags.length > 1) {
-        query.tags = { $in: tags };
+        }
+      } catch (error) {
+        console.error('Error parsing location:', error);
       }
     }
     
     // Execute the query
-    const incidents = await db.collection('incident_draft').find(query).toArray();
+    const incidents = await db.collection<Incident>('incident_draft').find(query).toArray();
 
     return NextResponse.json(incidents);
   } catch (error) {
     console.error('Error fetching incidents:', error);
-    return NextResponse.json(
-      { success: false, message: 'Failed to fetch incidents' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -235,6 +265,76 @@ export async function POST(request: Request) {
     console.error('Error saving incident:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to save incident' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    // Get user session
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.id) {
+      return NextResponse.json(
+        { success: false, message: 'No autorizado. Debes iniciar sesión para actualizar un incidente.' },
+        { status: 401 }
+      );
+    }
+
+    if (!hasRequiredRole(session.user.role as Role, [ROLES.EDITOR, ROLES.ADMIN])) {
+      return NextResponse.json(
+        { success: false, message: 'No autorizado. Debes estar autenticado como editor para actualizar un incidente.' },
+        { status: 401 }
+      );
+    }
+
+    const { incidentId, status, reason } = await request.json();
+
+    if (!incidentId || !status) {
+      return NextResponse.json(
+        { success: false, message: 'Faltan campos requeridos' },
+        { status: 400 }
+      );
+    }
+
+    const client = await clientPromise;
+    const db = client.db();
+
+    // Update the incident
+    const result = await db.collection('incident_draft').updateOne(
+      { _id: ObjectId.createFromHexString(incidentId) },
+      { $set: { status } }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { success: false, message: 'Incidente no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Insert a log entry
+    await db.collection('logs').insertOne({
+      action: 'update_incident_status',
+      incidentId,
+      userId: session.user.id,
+      userEmail: session.user.email,
+      timestamp: new Date(),
+      details: {
+        newStatus: status,
+        reason: reason || undefined,
+      },
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Estado del incidente actualizado exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error updating incident:', error);
+    return NextResponse.json(
+      { success: false, message: 'Error al actualizar el incidente' },
       { status: 500 }
     );
   }

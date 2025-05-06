@@ -4,14 +4,19 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../../components/ProtectedRoute';
+import { Role, ROLES } from '@/lib/config/roles';
 
 interface User {
   _id: string;
   name: string;
   email: string;
-  role: string;
+  role: Role;
   enabled: boolean;
   createdAt: string;
+}
+
+interface ErrorResponse {
+  message: string;
 }
 
 export default function AdminUsersPage() {
@@ -23,7 +28,7 @@ export default function AdminUsersPage() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    // Verificar si el usuario es administrador
+    // Verify if user is admin
     if (session?.user?.role !== 'admin') {
       router.push('/');
       return;
@@ -69,11 +74,11 @@ export default function AdminUsersPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = await response.json() as ErrorResponse;
         throw new Error(data.message || 'Error al actualizar el estado del usuario');
       }
 
-      // Actualizar estado local
+      // Update local state
       setUsers(users.map(user => 
         user._id === userId 
           ? { ...user, enabled: !currentStatus } 
@@ -81,8 +86,53 @@ export default function AdminUsersPage() {
       ));
       
       setSuccessMessage(`Usuario ${!currentStatus ? 'habilitado' : 'deshabilitado'} correctamente`);
-    } catch (error: any) {
-      setError(error.message || 'Error al actualizar el estado del usuario');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Error al actualizar el estado del usuario');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: Role) => {
+    try {
+      setLoading(true);
+      setSuccessMessage('');
+      setError('');
+      
+      const response = await fetch('/api/admin/users/role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          role: newRole,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json() as ErrorResponse;
+        throw new Error(data.message || 'Error al actualizar el rol del usuario');
+      }
+
+      // Update local state
+      setUsers(users.map(user => 
+        user._id === userId 
+          ? { ...user, role: newRole } 
+          : user
+      ));
+      
+      setSuccessMessage(`Rol de usuario actualizado correctamente a ${newRole}`);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Error al actualizar el rol del usuario');
+      }
     } finally {
       setLoading(false);
     }
@@ -128,7 +178,7 @@ export default function AdminUsersPage() {
                     <th className="px-4 py-3 text-left">Rol</th>
                     <th className="px-4 py-3 text-left">Estado</th>
                     <th className="px-4 py-3 text-left">Fecha de registro</th>
-                    <th className="px-4 py-3 text-center">Acción</th>
+                    <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -136,7 +186,20 @@ export default function AdminUsersPage() {
                     <tr key={user._id} className="border-b border-gray-700">
                       <td className="px-4 py-3">{user.name}</td>
                       <td className="px-4 py-3">{user.email}</td>
-                      <td className="px-4 py-3">{user.role}</td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user._id, e.target.value as Role)}
+                          className="bg-gray-700 text-white rounded px-2 py-1"
+                          disabled={loading}
+                        >
+                          {Object.values(ROLES).map((role) => (
+                            <option key={role} value={role}>
+                              {role.charAt(0).toUpperCase() + role.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs ${user.enabled ? 'bg-green-600' : 'bg-red-600'}`}>
                           {user.enabled ? 'Activo' : 'Pendiente'}
