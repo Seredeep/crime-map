@@ -10,6 +10,7 @@ import IncidentQueue from './components/IncidentQueue';
 export default function Home() {
   const router = useRouter();
   const { status } = useSession();
+  const { data: session } = useSession();
 
   const handleReportClick = () => {
     if (status !== 'authenticated') {
@@ -44,8 +45,12 @@ export default function Home() {
           )}
         </div>
       )
-    },
-    {
+    }
+  ];
+
+  // Solo agregar la pestaña de cola si el usuario es administrador o editor
+  if (session?.user?.role === 'admin' || session?.user?.role === 'editor') {
+    tabs.push({
       id: 'queue',
       label: 'Cola de Incidentes',
       content: (
@@ -54,8 +59,8 @@ export default function Home() {
           <IncidentQueue />
         </div>
       )
-    }
-  ];
+    });
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
