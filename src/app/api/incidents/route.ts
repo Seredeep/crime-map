@@ -288,11 +288,11 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const { incidentId, status, reason } = await request.json();
+    const { incidentId, ...updates } = await request.json();
 
-    if (!incidentId || !status) {
+    if (!incidentId) {
       return NextResponse.json(
-        { success: false, message: 'Faltan campos requeridos' },
+        { success: false, message: 'Falta el ID del incidente' },
         { status: 400 }
       );
     }
@@ -300,10 +300,30 @@ export async function PATCH(request: Request) {
     const client = await clientPromise;
     const db = client.db();
 
+    // Construir el objeto de actualización
+    const updateData: any = {};
+    
+    // Campos que se pueden actualizar
+    const allowedFields = ['description', 'address', 'date', 'time', 'status', 'location'];
+    
+    // Filtrar solo los campos permitidos
+    Object.keys(updates).forEach(key => {
+      if (allowedFields.includes(key)) {
+        updateData[key] = updates[key];
+      }
+    });
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { success: false, message: 'No hay campos válidos para actualizar' },
+        { status: 400 }
+      );
+    }
+
     // Update the incident
     const result = await db.collection('incident_draft').updateOne(
       { _id: ObjectId.createFromHexString(incidentId) },
-      { $set: { status } }
+      { $set: updateData }
     );
 
     if (result.matchedCount === 0) {
@@ -315,20 +335,19 @@ export async function PATCH(request: Request) {
 
     // Insert a log entry
     await db.collection('logs').insertOne({
-      action: 'update_incident_status',
+      action: 'update_incident',
       incidentId,
       userId: session.user.id,
       userEmail: session.user.email,
       timestamp: new Date(),
       details: {
-        newStatus: status,
-        reason: reason || undefined,
+        updates: updateData,
       },
     });
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Estado del incidente actualizado exitosamente'
+      message: 'Incidente actualizado exitosamente'
     });
 
   } catch (error) {

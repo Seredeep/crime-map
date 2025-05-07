@@ -75,6 +75,17 @@ export default function IncidentsView() {
     setSelectedIncident(incident);
   };
 
+  const handleIncidentUpdate = (updatedIncident: Incident) => {
+    // Actualizar el incidente en la lista local
+    setIncidents(incidents.map(inc => 
+      inc._id === updatedIncident._id ? updatedIncident : inc
+    ));
+    // Actualizar el incidente seleccionado si es el mismo
+    if (selectedIncident?._id === updatedIncident._id) {
+      setSelectedIncident(updatedIncident);
+    }
+  };
+
   // Handler for when filters change
   const handleFiltersChange = (newFilters: IncidentFilters) => {
     // Si el usuario no es editor o admin, forzar el estado a 'verified'
@@ -137,6 +148,7 @@ export default function IncidentsView() {
               onIncidentSelect={handleIncidentSelected} 
               mode="incidents"
               selectedNeighborhood={selectedNeighborhood}
+              onIncidentUpdate={handleIncidentUpdate}
             />
           )}
         </div>
@@ -144,7 +156,10 @@ export default function IncidentsView() {
         {/* Panel de Detalles */}
         <div className="flex-1">
           {selectedIncident ? (
-            <IncidentDetails incident={selectedIncident} />
+            <IncidentDetails 
+              incident={selectedIncident} 
+              onIncidentUpdate={handleIncidentUpdate}
+            />
           ) : (
             <div className="bg-gray-900/50 p-6 rounded-lg backdrop-blur-sm text-center">
               <p className="text-gray-300">

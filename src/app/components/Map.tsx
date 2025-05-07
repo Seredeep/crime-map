@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import { reverseGeocode } from '@/lib/geocoding';
 import { Incident } from '@/lib/types';
 import { Neighborhood } from '@/lib/neighborhoodService';
+import { useSession } from 'next-auth/react';
+import { updateIncident } from '@/lib/incidentService';
 
 interface MapProps {
   markerPosition?: [number, number];
@@ -18,23 +20,18 @@ interface MapProps {
   mode?: 'form' | 'incidents';
   selectedNeighborhood?: Neighborhood | null;
   onMapClick?: (coordinates: [number, number]) => void;
+  onIncidentUpdate?: (incident: Incident) => void;
 }
 
-// Dynamically import the Map components with ssr disabled
-const MapComponentWithNoSSR = dynamic(
-  () => import('./MapComponent'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-[300px] md:h-[400px] lg:h-[600px] bg-gray-700 rounded-lg shadow-lg flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          <p className="mt-3 text-white font-medium">Loading map...</p>
-        </div>
-      </div>
-    )
-  }
-);
+// Importar el componente del mapa dinámicamente para evitar problemas con SSR
+const MapComponentWithNoSSR = dynamic(() => import('./MapComponent'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[300px] md:h-[400px] lg:h-[600px] bg-gray-800/50 rounded-lg flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  ),
+});
 
 export default function Map({
   markerPosition,
@@ -47,72 +44,85 @@ export default function Map({
   setMarkerOnClick = true,
   mode = 'form',
   selectedNeighborhood,
-  onMapClick
+  onMapClick,
+  onIncidentUpdate
 }: MapProps) {
+  const { data: session } = useSession();
+  const isEditor = session?.user?.role === 'editor' || session?.user?.role === 'admin';
+  const [editingIncident, setEditingIncident] = useState<Incident | null>(null);
+
   // Keep track of the last geocoded position to prevent redundant calls
   const [lastGeocodedPosition, setLastGeocodedPosition] = useState<[number, number] | null>(null);
-  // Debounced marker position for geocoding
-  const [debouncedPosition, setDebouncedPosition] = useState<[number, number] | null>(null);
-  // Flag to track if geocoding is in progress
-  const [isGeocoding, setIsGeocoding] = useState(false);
 
-  // Handle marker position changes
+  // Handle marker position change
   const handleMarkerChange = async (position: [number, number]) => {
-    // First, immediately call the callback with just the position
-    if (onMarkerPositionChange) {
-      onMarkerPositionChange(position);
+    // Update last geocoded position
+    setLastGeocodedPosition(position);
+    
+    // Si estamos editando un incidente, actualizar su ubicación
+    if (editingIncident) {
+      try {
+        const updatedIncident = await updateIncident(editingIncident._id, {
+          location: {
+            type: 'Point',
+            coordinates: [position[1], position[0]] // [longitude, latitude]
+          }
+        });
+        
+        // Actualizar el incidente en el estado local
+        setEditingIncident(updatedIncident);
+      } catch (error) {
+        console.error('Error updating incident location:', error);
+      }
+      return;
     }
     
-    // Only set up for debounced reverse geocoding in form mode
-    if (mode === 'form') {
-      setDebouncedPosition(position);
+    // Only geocode if the position has changed
+    if (!lastGeocodedPosition || 
+        lastGeocodedPosition[0] !== position[0] || 
+        lastGeocodedPosition[1] !== position[1]) {
+      try {
+        const result = await reverseGeocode(position[0], position[1]);
+        if (result && onMarkerPositionChange) {
+          onMarkerPositionChange(position, result.features[0].properties.label);
+        } else if (onMarkerPositionChange) {
+          onMarkerPositionChange(position);
+        }
+      } catch (error) {
+        console.error('Error geocoding position:', error);
+        if (onMarkerPositionChange) {
+          onMarkerPositionChange(position);
+        }
+      }
     }
   };
 
-  // Effect for debounced reverse geocoding
-  useEffect(() => {
-    if (!debouncedPosition || isGeocoding || mode !== 'form') return;
-
-    // Skip if this position was recently geocoded
-    if (lastGeocodedPosition && 
-        debouncedPosition[0] === lastGeocodedPosition[0] && 
-        debouncedPosition[1] === lastGeocodedPosition[1]) {
-      return;
-    }
-
-    // Set up a timer to execute after a delay
-    const timer = setTimeout(async () => {
-      if (!debouncedPosition) return;
-      
-      setIsGeocoding(true);
-      try {
-        const result = await reverseGeocode(debouncedPosition[0], debouncedPosition[1]);
-        
-        if (result.features && result.features.length > 0) {
-          const address = result.features[0].properties.label;
-          
-          // Call the callback with both position and address
-          if (onMarkerPositionChange) {
-            onMarkerPositionChange(debouncedPosition, address);
-          }
-        }
-        
-        // Record this position as geocoded
-        setLastGeocodedPosition(debouncedPosition);
-      } catch (error) {
-        console.error('Error during reverse geocoding:', error);
-      } finally {
-        setIsGeocoding(false);
-      }
-    }, 500); // 500ms debounce delay
-    
-    // Clean up the timer
-    return () => clearTimeout(timer);
-  }, [debouncedPosition, onMarkerPositionChange, lastGeocodedPosition, isGeocoding, mode]);
-
+  // Handle map click
   const handleMapClick = (coordinates: [number, number]) => {
     if (onMapClick) {
       onMapClick(coordinates);
+    }
+  };
+
+  // Handle incident selection
+  const handleIncidentSelect = (incident: Incident) => {
+    if (isEditor && editingIncident?._id === incident._id) {
+      // Si ya estamos editando este incidente, desactivar la edición
+      setEditingIncident(null);
+    } else if (isEditor) {
+      // Si es un nuevo incidente, activar la edición
+      setEditingIncident(incident);
+    }
+    
+    if (onIncidentSelect) {
+      onIncidentSelect(incident);
+    }
+  };
+
+  // Handle incident update
+  const handleIncidentUpdate = (updatedIncident: Incident) => {
+    if (onIncidentUpdate) {
+      onIncidentUpdate(updatedIncident);
     }
   };
 
@@ -131,7 +141,7 @@ export default function Map({
           typeof incident.location.coordinates[1] === 'number'
         )}
         onMarkerPositionChange={handleMarkerChange}
-        onIncidentSelect={onIncidentSelect}
+        onIncidentSelect={handleIncidentSelect}
         onMapCenterChange={onMapCenterChange}
         onZoomChange={onZoomChange}
         draggable={draggable}
@@ -139,6 +149,8 @@ export default function Map({
         mode={mode}
         selectedNeighborhood={selectedNeighborhood}
         onMapClick={handleMapClick}
+        editingIncident={editingIncident}
+        onIncidentUpdate={handleIncidentUpdate}
       />
     </div>
   );

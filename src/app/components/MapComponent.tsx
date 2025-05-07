@@ -35,8 +35,7 @@ const createMarkerIcon = (color: string, size: number = 25) => {
 // Regular marker icons
 const defaultMarkerIcon = createMarkerIcon('#3B82F6', 25); // Blue
 const incidentMarkerIcon = createMarkerIcon('#EF4444', 15); // Red, smaller for incidents
-
-// Hover marker icon
+const editingMarkerIcon = createMarkerIcon('#3B82F6', 20); // Blue, slightly larger for editing
 const hoverMarkerIcon = createMarkerIcon('#EF4444', 20); // Red, slightly larger for hover effect
 
 interface MapComponentProps {
@@ -64,6 +63,10 @@ interface MapComponentProps {
   selectedNeighborhood?: Neighborhood | null;
   // Whether the map is in form mode
   isFormMode?: boolean;
+  // Incident being edited
+  editingIncident?: Incident | null;
+  // Callback when an incident is updated
+  onIncidentUpdate?: (incident: Incident) => void;
 }
 
 // This component handles map click events
@@ -164,7 +167,9 @@ export default function MapComponent({
   setMarkerOnClick = true,
   mode = 'form',
   selectedNeighborhood,
-  isFormMode
+  isFormMode,
+  editingIncident,
+  onIncidentUpdate
 }: MapComponentProps) {
   useEffect(() => {
     fixLeafletIcons();
@@ -182,6 +187,23 @@ export default function MapComponent({
   // Keep track of the previous position to prevent unnecessary rerenders
   const prevPositionRef = useRef<[number, number] | undefined>(position);
   
+  // Effect to handle editing incident
+  useEffect(() => {
+    if (editingIncident) {
+      // Centrar el mapa en el incidente que se está editando
+      const mapElement = document.getElementById('map');
+      if (mapElement) {
+        const map = (mapElement as any)._leaflet_map;
+        if (map) {
+          map.setView(
+            [editingIncident.location.coordinates[1], editingIncident.location.coordinates[0]],
+            15
+          );
+        }
+      }
+    }
+  }, [editingIncident]);
+
   // Utilizamos onMapClick si está definido
   useEffect(() => {
     if (onMapClick && isFormMode) {
@@ -237,8 +259,34 @@ export default function MapComponent({
     }
   }, [onIncidentSelect]);
 
+  // Handle incident marker drag
+  const handleIncidentMarkerDrag = useCallback((e: L.LeafletEvent, incident: Incident) => {
+    const marker = e.target;
+    const latLng = marker.getLatLng();
+    const newPosition: [number, number] = [latLng.lat, latLng.lng];
+    
+    if (onIncidentUpdate) {
+      const updatedIncident: Incident = {
+        ...incident,
+        location: {
+          type: "Point" as const,
+          coordinates: [newPosition[1], newPosition[0]] // [longitude, latitude]
+        }
+      };
+      onIncidentUpdate(updatedIncident);
+    }
+  }, [onIncidentUpdate]);
+
   // Calculate appropriate center and zoom for incidents view
   const getMapCenterAndZoom = () => {
+    if (editingIncident) {
+      // Si estamos editando un incidente, centrar en él
+      return {
+        center: [editingIncident.location.coordinates[1], editingIncident.location.coordinates[0]] as L.LatLngExpression,
+        zoom: 15
+      };
+    }
+
     if (mode === 'incidents' && incidents.length > 0) {
       // If we have incidents and are in incidents mode, center the map to show all incidents
       if (incidents.length === 1) {
@@ -355,25 +403,56 @@ export default function MapComponent({
       )}
       
       {/* Incidents mode markers */}
-      {mode === 'incidents' && incidents && incidents.length > 0 && incidents.map((incident) => (
-        <Marker
-          key={incident._id}
-          position={[incident.location.coordinates[1], incident.location.coordinates[0]]}
-          icon={hoveredIncidentId === incident._id ? hoverMarkerIcon : incidentMarkerIcon}
-          eventHandlers={{
-            click: () => handleIncidentMarkerClick(incident),
-            mouseover: () => setHoveredIncidentId(incident._id || null),
-            mouseout: () => setHoveredIncidentId(null),
-          }}
-        >
-          <Popup className="text-black">
-            <div className="text-sm">
-              <strong>{incident.description.substring(0, 30)}...</strong><br />
-              {incident.date} at {incident.time}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      {mode === 'incidents' && incidents && incidents.length > 0 && incidents.map((incident) => {
+        // Si estamos editando un incidente, solo mostrar ese incidente
+        if (editingIncident && incident._id !== editingIncident._id) {
+          return null;
+        }
+
+        const isEditing = editingIncident?._id === incident._id;
+        const isHovered = hoveredIncidentId === incident._id;
+
+        return (
+          <Marker
+            key={incident._id}
+            position={[incident.location.coordinates[1], incident.location.coordinates[0]]}
+            icon={isEditing ? editingMarkerIcon : (isHovered ? hoverMarkerIcon : incidentMarkerIcon)}
+            eventHandlers={{
+              click: () => handleIncidentMarkerClick(incident),
+              mouseover: () => setHoveredIncidentId(incident._id || null),
+              mouseout: () => setHoveredIncidentId(null),
+              dragend: (e) => handleIncidentMarkerDrag(e, incident)
+            }}
+            draggable={isEditing}
+          >
+            <Popup className="text-black">
+              <div className="text-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <strong>{incident.description.substring(0, 30)}...</strong>
+                  {isEditing && (
+                    <button
+                      onClick={() => handleIncidentMarkerClick(incident)}
+                      className="text-blue-400 hover:text-blue-500 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <div className="text-gray-600">
+                  {incident.date} at {incident.time}
+                </div>
+                {isEditing && (
+                  <div className="mt-2 text-xs text-blue-500">
+                    {isEditing ? 'Arrastra para mover' : 'Click para editar'}
+                  </div>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
       
       <div className="absolute bottom-0 right-0 z-[1000] bg-black bg-opacity-50 text-xs text-white p-1">
         © <a href="https://www.openstreetmap.org/copyright" className="text-blue-300">OpenStreetMap</a> contributors
