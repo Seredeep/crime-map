@@ -6,10 +6,11 @@ import Tabs from './components/Tabs';
 import { useSession } from 'next-auth/react';
 import IncidentForm from './components/IncidentForm';
 import IncidentQueue from './components/IncidentQueue';
+import { hasRequiredRole, ROLES } from '@/lib/config/roles';
 
 export default function Home() {
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
 
   const handleReportClick = () => {
     if (status !== 'authenticated') {
@@ -44,8 +45,12 @@ export default function Home() {
           )}
         </div>
       )
-    },
-    {
+    }
+  ];
+
+  // Solo agregar la pestaña de cola si el usuario tiene el rol adecuado
+  if (session?.user?.role && hasRequiredRole(session.user.role, [ROLES.EDITOR, ROLES.ADMIN])) {
+    tabs.push({
       id: 'queue',
       label: 'Cola de Incidentes',
       content: (
@@ -54,8 +59,8 @@ export default function Home() {
           <IncidentQueue />
         </div>
       )
-    }
-  ];
+    });
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
