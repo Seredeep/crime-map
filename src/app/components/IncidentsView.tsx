@@ -121,20 +121,42 @@ export default function IncidentsView() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Mapa */}
         <div className="flex-1 min-h-[400px] lg:min-h-[600px] relative">
-          {loading ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm rounded-lg z-10">
-              <div className="text-center">
+          {/* Mapa siempre presente */}
+          <Map 
+            incidents={incidents} 
+            onIncidentSelect={handleIncidentSelected} 
+            mode="incidents"
+            selectedNeighborhood={selectedNeighborhood}
+            onIncidentUpdate={handleIncidentUpdate}
+          />
+          
+          {/* Overlay de carga */}
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm rounded-lg z-[9999]">
+              <div className="text-center bg-gray-900/80 p-6 rounded-xl shadow-lg">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
                 <p className="mt-2 text-gray-300">Cargando incidentes...</p>
               </div>
             </div>
-          ) : null}
+          )}
           
-          {error ? (
-            <div className="bg-red-900/50 backdrop-blur-sm p-4 rounded-lg text-red-200">{error}</div>
-          ) : incidents.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm rounded-lg">
-              <div className="text-center p-4">
+          {/* Overlay de error */}
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center bg-red-900/50 backdrop-blur-sm rounded-lg z-[9999]" style={{ pointerEvents: 'none' }}>
+              <div className="text-center bg-red-900/80 p-6 rounded-xl shadow-lg" style={{ pointerEvents: 'auto' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 className="text-lg font-medium text-red-200 mt-2">Error</h3>
+                <p className="text-red-300 mt-1">{error}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Overlay de "No se encontraron incidentes" */}
+          {!loading && !error && incidents.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-xs rounded-lg z-[9999]">
+              <div className="text-center max-w-md p-4 bg-gray-900/80 rounded-xl shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 13h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -142,14 +164,6 @@ export default function IncidentsView() {
                 <p className="text-gray-400 mt-1">Intente con diferentes filtros o elimine algunos filtros para ver más resultados.</p>
               </div>
             </div>
-          ) : (
-            <Map 
-              incidents={incidents} 
-              onIncidentSelect={handleIncidentSelected} 
-              mode="incidents"
-              selectedNeighborhood={selectedNeighborhood}
-              onIncidentUpdate={handleIncidentUpdate}
-            />
           )}
         </div>
         
@@ -177,4 +191,4 @@ export default function IncidentsView() {
       </div>
     </div>
   );
-} 
+}
