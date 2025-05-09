@@ -33,10 +33,10 @@ const createMarkerIcon = (color: string, size: number = 25) => {
 };
 
 // Regular marker icons
-const defaultMarkerIcon = createMarkerIcon('#3B82F6', 25); // Blue
-const incidentMarkerIcon = createMarkerIcon('#EF4444', 15); // Red, smaller for incidents
-const editingMarkerIcon = createMarkerIcon('#3B82F6', 20); // Blue, slightly larger for editing
-const hoverMarkerIcon = createMarkerIcon('#EF4444', 20); // Red, slightly larger for hover effect
+const defaultMarkerIcon = createMarkerIcon('#3B82F6', 25);
+const incidentMarkerIcon = createMarkerIcon('#EF4444', 15); 
+const editingMarkerIcon = createMarkerIcon('#3B82F6', 20); 
+const hoverMarkerIcon = createMarkerIcon('#EF4444', 20); 
 
 interface MapComponentProps {
   // Single marker position [lat, lng] for form mode
@@ -135,13 +135,11 @@ function NeighborhoodFitBounds({ neighborhood }: { neighborhood: Neighborhood })
     if (neighborhood && neighborhood.geometry && neighborhood.geometry.coordinates) {
       try {
         // Crear un objeto GeoJSON para calcular los límites
-        /* eslint-disable */
         const geoJsonLayer = L.geoJSON({
           type: 'Feature',
           properties: {},
           geometry: neighborhood.geometry
-        } as any);
-        /* eslint-enable */
+        } as GeoJSON.Feature);
         
         // Obtener los límites del polígono y ajustar el mapa
         const bounds = geoJsonLayer.getBounds();
@@ -193,7 +191,7 @@ export default function MapComponent({
       // Centrar el mapa en el incidente que se está editando
       const mapElement = document.getElementById('map');
       if (mapElement) {
-        const map = (mapElement as any)._leaflet_map;
+        const map = (mapElement as unknown as { _leaflet_map: L.Map })._leaflet_map;
         if (map) {
           map.setView(
             [editingIncident.location.coordinates[1], editingIncident.location.coordinates[0]],
@@ -358,13 +356,11 @@ export default function MapComponent({
       {/* Renderizar barrio seleccionado con GeoJSON */}
       {selectedNeighborhood && (
         <GeoJSON 
-          /* eslint-disable */
           data={{
             type: 'Feature',
             properties: {},
             geometry: selectedNeighborhood.geometry
-          } as any}
-          /* eslint-enable */
+          } as GeoJSON.Feature}
           style={() => ({
             color: '#3B82F6',
             weight: 3,

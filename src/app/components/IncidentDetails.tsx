@@ -78,7 +78,7 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
     setEditValue('');
   };
 
-  const renderEditableField = (field: string, value: string, label: string) => {
+  const renderEditableField = (field: string, value: string) => {
     if (editingField === field) {
       return (
         <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
   return (
     <div className="space-y-5 animate-fadeIn">
       <div className="flex items-start justify-between">
-        {renderEditableField('description', incident.description, 'Description')}
+        {renderEditableField('description', incident.description)}
         {incident.status && (
           <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusBadgeClass(incident.status)}`}>
             {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
@@ -147,7 +147,7 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
           </div>
           <div className="ml-2 flex-1">
             <p className="font-medium text-sm">Location:</p>
-            {renderEditableField('address', incident.address, 'Address')}
+            {renderEditableField('address', incident.address)}
             <div className="mt-1 text-xs text-gray-400">
               GPS: {incident.location.coordinates[1].toFixed(6)}, {incident.location.coordinates[0].toFixed(6)}
             </div>
@@ -158,12 +158,12 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
       <div className="grid grid-cols-2 gap-3">
         <div className="p-3 bg-gray-700 rounded-md">
           <p className="text-xs text-gray-400">Date</p>
-          {renderEditableField('date', formatDate(incident.date), 'Date')}
+          {renderEditableField('date', formatDate(incident.date))}
         </div>
 
         <div className="p-3 bg-gray-700 rounded-md">
           <p className="text-xs text-gray-400">Time</p>
-          {renderEditableField('time', formatTime(incident.time), 'Time')}
+          {renderEditableField('time', formatTime(incident.time))}
         </div>
       </div>
 

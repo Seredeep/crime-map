@@ -301,7 +301,17 @@ export async function PATCH(request: Request) {
     const db = client.db();
 
     // Construir el objeto de actualización
-    const updateData: any = {};
+    const updateData: Partial<{
+      description: string;
+      address: string;
+      date: string;
+      time: string;
+      status: 'pending' | 'verified' | 'resolved';
+      location: {
+        type: string;
+        coordinates: [number, number];
+      };
+    }> = {};
     
     // Campos que se pueden actualizar
     const allowedFields = ['description', 'address', 'date', 'time', 'status', 'location'];
@@ -309,7 +319,7 @@ export async function PATCH(request: Request) {
     // Filtrar solo los campos permitidos
     Object.keys(updates).forEach(key => {
       if (allowedFields.includes(key)) {
-        updateData[key] = updates[key];
+        updateData[key as keyof typeof updateData] = updates[key as keyof typeof updates];
       }
     });
 
