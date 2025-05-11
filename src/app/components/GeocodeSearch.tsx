@@ -177,7 +177,7 @@ export default function GeocodeSearch({
               </svg>
             </div>
             <div className="ml-2 flex-1">
-              <p className="font-medium text-sm mb-1">Ubicación seleccionada:</p>
+              <p className="font-medium text-sm mb-1">Selected location:</p>
               <p className="text-sm text-gray-300 break-words">{selectedAddress}</p>
               {selectedCoordinates && (
                 <p className="mt-1 text-xs text-gray-400">

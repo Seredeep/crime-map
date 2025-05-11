@@ -62,8 +62,8 @@ export default function SignUp() {
       
       // Redirigimos al login después de un breve retraso
       setTimeout(() => router.push('/auth/signin'), 5000);
-    } catch (error: any) {
-      setError(error.message || 'Ocurrió un error inesperado');
+    } catch (error: Error | unknown) {
+      setError(error instanceof Error ? error.message : 'Ocurrió un error inesperado');
     } finally {
       setLoading(false);
     }

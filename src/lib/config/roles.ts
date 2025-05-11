@@ -54,7 +54,7 @@ export function hasRequiredRole(userRole: Role | undefined, requiredRoles: Role[
 /**
  * Check if a user has a specific permission
  */
-export function hasPermission(userRole: Role | undefined, permission: keyof typeof ROLE_PERMISSIONS[Role]): boolean {
+export function hasPermission(userRole: Role | undefined, permission: keyof typeof ROLE_PERMISSIONS[typeof ROLES[keyof typeof ROLES]]): boolean {
   if (!userRole) return false;
   return ROLE_PERMISSIONS[userRole]?.[permission] || false;
 }
