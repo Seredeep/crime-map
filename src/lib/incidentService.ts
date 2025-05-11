@@ -201,3 +201,32 @@ export async function fetchIncidentById(id: string): Promise<Incident | null> {
     return null;
   }
 }
+
+/**
+ * Update an incident
+ */
+export async function updateIncident(incidentId: string, updates: Partial<Incident>): Promise<Incident> {
+  try {
+    const response = await fetch('/api/incidents', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        incidentId,
+        ...updates,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al actualizar el incidente');
+    }
+
+    const data = await response.json();
+    return data as Incident;
+  } catch (error) {
+    console.error('Error updating incident:', error);
+    throw error;
+  }
+}

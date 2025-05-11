@@ -2,12 +2,21 @@
 import { Incident } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { useState } from 'react';
+import { updateIncident } from '@/lib/incidentService';
 
 interface IncidentDetailsProps {
   incident: Incident | null;
+  onIncidentUpdate?: (incident: Incident) => void;
 }
 
-export default function IncidentDetails({ incident }: IncidentDetailsProps) {
+export default function IncidentDetails({ incident, onIncidentUpdate }: IncidentDetailsProps) {
+  const { data: session } = useSession();
+  const isEditor = session?.user?.role === 'editor' || session?.user?.role === 'admin';
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+
   if (!incident) {
     return (
       <div className="p-6 text-center text-gray-400">
@@ -44,10 +53,84 @@ export default function IncidentDetails({ incident }: IncidentDetailsProps) {
     }
   };
 
+  const handleEditClick = (field: string) => {
+    setEditingField(field);
+    setEditValue(incident[field as keyof Incident] as string);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingField || !onIncidentUpdate) return;
+
+    try {
+      const updatedIncident = await updateIncident(incident._id, {
+        [editingField]: editValue,
+      });
+
+      onIncidentUpdate(updatedIncident);
+      setEditingField(null);
+    } catch (error) {
+      console.error('Error updating incident:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  const renderEditableField = (field: string, value: string) => {
+    if (editingField === field) {
+      return (
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            className="flex-1 bg-gray-800 text-gray-200 rounded px-2 py-1"
+          />
+          <button
+            onClick={handleSaveEdit}
+            className="p-1 bg-green-600 hover:bg-green-500 text-white rounded-md transition-colors flex items-center justify-center"
+            title="Guardar cambios"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+          <button
+            onClick={handleCancelEdit}
+            className="p-1 bg-red-600 hover:bg-red-500 text-white rounded-md transition-colors flex items-center justify-center"
+            title="Cancelar edición"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <span>{value}</span>
+        {isEditor && (
+          <button
+            onClick={() => handleEditClick(field)}
+            className="text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+          </button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-5 animate-fadeIn">
       <div className="flex items-start justify-between">
-        <h3 className="text-xl font-semibold break-words pr-3">{incident.description}</h3>
+        {renderEditableField('description', incident.description)}
         {incident.status && (
           <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusBadgeClass(incident.status)}`}>
             {incident.status.charAt(0).toUpperCase() + incident.status.slice(1)}
@@ -64,7 +147,7 @@ export default function IncidentDetails({ incident }: IncidentDetailsProps) {
           </div>
           <div className="ml-2 flex-1">
             <p className="font-medium text-sm">Location:</p>
-            <p className="text-sm text-gray-300 break-words">{incident.address}</p>
+            {renderEditableField('address', incident.address)}
             <div className="mt-1 text-xs text-gray-400">
               GPS: {incident.location.coordinates[1].toFixed(6)}, {incident.location.coordinates[0].toFixed(6)}
             </div>
@@ -75,12 +158,12 @@ export default function IncidentDetails({ incident }: IncidentDetailsProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="p-3 bg-gray-700 rounded-md">
           <p className="text-xs text-gray-400">Date</p>
-          <p className="font-medium">{formatDate(incident.date)}</p>
+          {renderEditableField('date', formatDate(incident.date))}
         </div>
 
         <div className="p-3 bg-gray-700 rounded-md">
           <p className="text-xs text-gray-400">Time</p>
-          <p className="font-medium">{formatTime(incident.time)}</p>
+          {renderEditableField('time', formatTime(incident.time))}
         </div>
       </div>
 
