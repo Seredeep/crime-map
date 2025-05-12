@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
@@ -44,7 +44,8 @@ export default function OnboardingPage() {
       // Actualizar la sesión para reflejar que el usuario ha completado el onboarding
       await update();
       
-      // Redirigir al usuario a la página principal
+      // Cerrar sesión y redirigir al usuario a la página principal
+      await signOut({ redirect: false });
       router.push('/');
     } catch (err) {
       setError('Hubo un error al guardar tu información. Por favor, intenta de nuevo.');
