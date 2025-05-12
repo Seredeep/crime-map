@@ -316,9 +316,19 @@ export async function PATCH(request: Request) {
     // Campos que se pueden actualizar
     const allowedFields = ['description', 'address', 'date', 'time', 'status', 'location'];
     
-    // Filtrar solo los campos permitidos
+    // Filtrar solo los campos permitidos y validar el formato de la hora
     Object.keys(updates).forEach(key => {
       if (allowedFields.includes(key)) {
+        if (key === 'time') {
+          // Validar formato de hora (HH:mm)
+          const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+          if (!timeRegex.test(updates[key])) {
+            return NextResponse.json(
+              { success: false, message: 'Formato de hora inválido. Use HH:mm (ejemplo: 14:30)' },
+              { status: 400 }
+            );
+          }
+        }
         updateData[key as keyof typeof updateData] = updates[key as keyof typeof updates];
       }
     });
@@ -343,9 +353,25 @@ export async function PATCH(request: Request) {
       );
     }
 
+    // Get the updated incident
+    const updatedIncident = await db.collection('incident_draft').findOne(
+      { _id: ObjectId.createFromHexString(incidentId) }
+    );
+
+    // Determinar la acción específica basada en los campos actualizados
+    let action = 'update_incident';
+    if (Object.keys(updateData).length === 1) {
+      if ('description' in updateData) action = 'update_incident_description';
+      else if ('address' in updateData) action = 'update_incident_address';
+      else if ('location' in updateData) action = 'update_incident_location';
+      else if ('status' in updateData) action = 'update_incident_status';
+      else if ('date' in updateData) action = 'update_incident_date';
+      else if ('time' in updateData) action = 'update_incident_time';
+    }
+
     // Insert a log entry
     await db.collection('logs').insertOne({
-      action: 'update_incident',
+      action,
       incidentId,
       userId: session.user.id,
       userEmail: session.user.email,
@@ -357,7 +383,8 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Incidente actualizado exitosamente'
+      message: 'Incidente actualizado exitosamente',
+      incident: updatedIncident
     });
 
   } catch (error) {

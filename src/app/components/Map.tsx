@@ -62,14 +62,22 @@ export default function Map({
     // Si estamos editando un incidente, actualizar su ubicación
     if (editingIncident) {
       try {
+        // Primero obtenemos la dirección actualizada
+        const result = await reverseGeocode(position[0], position[1]);
+        const newAddress = result?.features[0]?.properties?.label;
+
         const updatedIncident = await updateIncident(editingIncident._id, {
           location: {
             type: 'Point',
-            coordinates: [position[1], position[0]] // [longitude, latitude]
-          }
+            coordinates: [position[0], position[1]] // [longitude, latitude]
+          },
+          address: newAddress || editingIncident.address // Si no se puede obtener la dirección, mantener la anterior
         });
         
         // Actualizar el incidente en el estado local
+        if (onIncidentUpdate) {
+          onIncidentUpdate(updatedIncident);
+        }
         setEditingIncident(updatedIncident);
       } catch (error) {
         console.error('Error updating incident location:', error);
