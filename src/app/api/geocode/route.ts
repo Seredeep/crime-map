@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Google Geocoding API configuration
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const GOOGLE_GEOCODING_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 const GOOGLE_PLACES_AUTOCOMPLETE_URL = 'https://maps.googleapis.com/maps/api/place/autocomplete/json';
 const GOOGLE_PLACES_DETAILS_URL = 'https://maps.googleapis.com/maps/api/place/details/json';
@@ -257,7 +257,7 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    if (!GOOGLE_CLIENT_SECRET) {
+    if (!GOOGLE_MAPS_API_KEY) {
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
         { status: 500 }
@@ -267,7 +267,8 @@ export async function GET(request: NextRequest) {
     // First, try to get autocomplete suggestions
     const autocompleteUrl = new URL(GOOGLE_PLACES_AUTOCOMPLETE_URL);
     autocompleteUrl.searchParams.append('input', query);
-    autocompleteUrl.searchParams.append('key', GOOGLE_CLIENT_SECRET);
+    autocompleteUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+    autocompleteUrl.searchParams.append('components', 'locality:Mar del Plata|country:AR');
     
     console.log(`Google Places Autocomplete request for query: "${query}"`);
     
@@ -297,7 +298,8 @@ export async function GET(request: NextRequest) {
     // If no autocomplete results, fall back to geocoding
     const geocodeUrl = new URL(GOOGLE_GEOCODING_URL);
     geocodeUrl.searchParams.append('address', query);
-    geocodeUrl.searchParams.append('key', GOOGLE_CLIENT_SECRET);
+    geocodeUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+    geocodeUrl.searchParams.append('components', 'locality:Mar del Plata|country:AR');
     
     console.log(`Google Geocoding request for query: "${query}"`);
     
@@ -343,7 +345,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { lat, lon, placeId } = body;
     
-    if (!GOOGLE_CLIENT_SECRET) {
+    if (!GOOGLE_MAPS_API_KEY) {
       return NextResponse.json(
         { error: 'Google Maps API key is not configured' },
         { status: 500 }
@@ -355,7 +357,7 @@ export async function POST(request: NextRequest) {
       const detailsUrl = new URL(GOOGLE_PLACES_DETAILS_URL);
       detailsUrl.searchParams.append('place_id', placeId);
       detailsUrl.searchParams.append('fields', 'geometry,formatted_address,name,address_component');
-      detailsUrl.searchParams.append('key', GOOGLE_CLIENT_SECRET);
+      detailsUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
       
       console.log(`Google Places Details request for place ID: "${placeId}"`);
       
@@ -399,7 +401,7 @@ export async function POST(request: NextRequest) {
     if (lat !== undefined && lon !== undefined) {
       const reverseUrl = new URL(GOOGLE_GEOCODING_URL);
       reverseUrl.searchParams.append('latlng', `${lat},${lon}`);
-      reverseUrl.searchParams.append('key', GOOGLE_CLIENT_SECRET);
+      reverseUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
       
       console.log(`Reverse geocoding request for coordinates: ${lat}, ${lon}`);
       

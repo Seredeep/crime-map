@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchNeighborhoods, Neighborhood } from '@/lib/neighborhoodService';
 import { IncidentFilters as FiltersType } from '@/lib/types';
+import { useSession } from 'next-auth/react';
 
 interface IncidentFiltersProps {
   filters: FiltersType;
@@ -22,11 +23,14 @@ const COMMON_TAGS = [
 ];
 
 export default function IncidentFilters({ filters, onFiltersChange, onNeighborhoodSelect }: IncidentFiltersProps) {
+  const { data: session } = useSession();
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
   const [isOpen, setIsOpen] = useState(false);
+
+  const isEditorOrAdmin = session?.user?.role === 'editor' || session?.user?.role === 'admin';
 
   // Load neighborhoods on component mount
   useEffect(() => {
@@ -127,6 +131,15 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
     });
   };
 
+  // Handle status change
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value as 'pending' | 'verified' | 'resolved' | '';
+    onFiltersChange({
+      ...filters,
+      status: value || undefined
+    });
+  };
+
   // Handle tag selection
   const handleTagToggle = (tag: string) => {
     const newSelectedTags = selectedTags.includes(tag)
@@ -150,7 +163,8 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
     onFiltersChange({
       dateFrom: defaultDate.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
-      neighborhoodId: '83' // Bosque Peralta Ramos
+      neighborhoodId: '83', // Bosque Peralta Ramos
+      status: 'verified' // Siempre volver a 'verified' al limpiar filtros
     });
     
     // Limpiar también el barrio seleccionado
@@ -238,6 +252,26 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
                 )}
               </select>
             </div>
+
+            {/* Filtro de estado - solo visible para editores y administradores */}
+            {isEditorOrAdmin && (
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-1">
+                  Estado
+                </label>
+                <select
+                  id="status"
+                  className="w-full p-2 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={filters.status || ''}
+                  onChange={handleStatusChange}
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="pending">Pendiente</option>
+                  <option value="verified">Verificado</option>
+                  <option value="resolved">Resuelto</option>
+                </select>
+              </div>
+            )}
 
             {/* Filtro de fecha desde */}
             <div>
