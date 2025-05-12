@@ -7,10 +7,18 @@ export async function middleware(request: NextRequest) {
   const isOnboardingPage = request.nextUrl.pathname === '/onboarding';
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
+  const isPublicApiRoute = request.nextUrl.pathname.startsWith('/api/auth') || 
+                          request.nextUrl.pathname === '/api/register';
 
-  // Si es una ruta de API, permitir el acceso
-  if (isApiRoute) {
+  if (isPublicApiRoute) {
     return NextResponse.next();
+  }
+
+  if (isApiRoute && !token) {
+    return NextResponse.json(
+      { success: false, message: 'No autorizado' },
+      { status: 401 }
+    );
   }
 
   // Si el usuario no está autenticado y no está en una página de auth
