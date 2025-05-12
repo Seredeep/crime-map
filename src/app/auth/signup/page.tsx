@@ -60,8 +60,8 @@ export default function SignUp() {
       setPassword('');
       setConfirmPassword('');
       
-      // Redirigimos al login después de un breve retraso
-      setTimeout(() => router.push('/auth/signin'), 5000);
+      // Redirigimos al login inmediatamente
+      router.push('/auth/signin');
     } catch (error: any) {
       setError(error.message || 'Ocurrió un error inesperado');
     } finally {
