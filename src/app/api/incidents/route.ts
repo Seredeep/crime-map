@@ -359,11 +359,10 @@ export async function PATCH(request: Request) {
     );
 
     // Determinar la acción específica basada en los campos actualizados
-    let action = 'update_incident';
+    let action = 'update_incident_location';
     if (Object.keys(updateData).length === 1) {
       if ('description' in updateData) action = 'update_incident_description';
       else if ('address' in updateData) action = 'update_incident_address';
-      else if ('location' in updateData) action = 'update_incident_location';
       else if ('status' in updateData) action = 'update_incident_status';
       else if ('date' in updateData) action = 'update_incident_date';
       else if ('time' in updateData) action = 'update_incident_time';
