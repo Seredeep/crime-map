@@ -10,7 +10,8 @@ import { hasRequiredRole, ROLES } from '@/lib/config/roles';
 
 export default function Home() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
+  const { data: session } = useSession();
 
   const handleReportClick = () => {
     if (status !== 'authenticated') {
@@ -48,8 +49,7 @@ export default function Home() {
     }
   ];
 
-  // Solo agregar la pestaña de cola si el usuario tiene el rol adecuado
-  if (session?.user?.role && hasRequiredRole(session.user.role, [ROLES.EDITOR, ROLES.ADMIN])) {
+  if (session?.user?.role === 'admin' || session?.user?.role === 'editor') {
     tabs.push({
       id: 'queue',
       label: 'Cola de Incidentes',
