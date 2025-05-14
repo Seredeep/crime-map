@@ -154,6 +154,19 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
         )}
       </div>
 
+      {incident.tags && incident.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {incident.tags.map((tag) => (
+            <span
+              key={tag}
+              className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full text-xs"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="p-3 bg-gray-700 rounded-md">
         <div className="flex items-start">
           <div className="flex-shrink-0 mt-0.5">

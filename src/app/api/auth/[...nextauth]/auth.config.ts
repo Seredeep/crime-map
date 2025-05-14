@@ -12,6 +12,7 @@ declare module 'next-auth' {
     id: string;
     role: Role;
     enabled?: boolean;
+    onboarded?: boolean;
   }
   
   interface Session {
@@ -22,6 +23,7 @@ declare module 'next-auth' {
       image?: string | null;
       role: Role;
       enabled?: boolean;
+      onboarded?: boolean;
     }
   }
 }
@@ -31,6 +33,7 @@ declare module 'next-auth/jwt' {
     id: string;
     role: Role;
     enabled?: boolean;
+    onboarded?: boolean;
   }
 }
 
@@ -89,6 +92,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             role: user.role || getDefaultRole(),
             enabled: user.enabled,
+            onboarded: user.onboarded || false,
           };
         } catch (error) {
           console.error("Error durante la autenticación:", error);
@@ -119,6 +123,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.enabled = user.enabled;
+        token.onboarded = user.onboarded;
       }
       return token;
     },
@@ -127,6 +132,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.enabled = token.enabled;
+        session.user.onboarded = token.onboarded;
       }
       return session;
     },
