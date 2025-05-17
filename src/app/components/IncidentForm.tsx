@@ -5,6 +5,7 @@ import { DateTime } from 'luxon';
 import GeocodeSearch from './GeocodeSearch';
 import { GeocodingResult } from '@/lib/geocoding';
 import Map from './Map';
+import supabase from '@/lib/supabase';
 
 // Lista de etiquetas comunes para incidents
 const COMMON_TAGS = [
@@ -128,45 +129,47 @@ export default function IncidentForm() {
       formDataToSend.append('time', formData.time);
       formDataToSend.append('date', formData.date);
       
+      // Add text fields
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('address', formData.address);
+      formDataToSend.append('time', formData.time);
+      formDataToSend.append('date', formData.date);
       formDataToSend.append('location', JSON.stringify(formData.location));
-      
-      formData.tags.forEach(tag => {
-        formDataToSend.append('tags[]', tag);
-      });
-      
-      formData.evidence.forEach((file) => {
-        formDataToSend.append(`evidence`, file);
-      });
+
+      // Add tags
+      formData.tags.forEach(tag => formDataToSend.append('tags[]', tag));
+
+      // Add evidence files
+      formData.evidence.forEach(file => formDataToSend.append('evidence', file));
 
       const response = await fetch('/api/incidents', {
         method: 'POST',
         body: formDataToSend,
       });
 
-      if (!response.ok) {
-        throw new Error('Error al enviar el incidente');
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitMessage({
+          type: 'success',
+          message: 'Incidente reportado exitosamente'
+        });
+        setFormData({
+          description: '',
+          address: '',
+          time: '',
+          date: DateTime.now().toFormat('yyyy-MM-dd'),
+          evidence: [],
+          location: null,
+          tags: [],
+        });
+      } else {
+        throw new Error(data.message || 'Error al reportar el incidente');
       }
-
-      setFormData({
-        description: '',
-        address: '',
-        time: '',
-        date: DateTime.now().toFormat('yyyy-MM-dd'),
-        evidence: [],
-        location: null,
-        tags: [],
-      });
-
-      setSubmitMessage({
-        type: 'success',
-        message: 'Incidente reportado correctamente'
-      });
-      
     } catch (error) {
-      console.error('Error al enviar el incidente:', error);
       setSubmitMessage({
         type: 'error',
-        message: 'No se pudo enviar el incidente. Por favor, inténtalo de nuevo.'
+        message: error instanceof Error ? error.message : 'Error al reportar el incidente'
       });
     } finally {
       setIsSubmitting(false);

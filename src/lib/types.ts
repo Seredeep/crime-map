@@ -2,6 +2,7 @@
  * Represents an incident reported in the system
  */
 export interface Incident {
+  [x: string]: any;
   _id: string;
   description: string;
   address: string;

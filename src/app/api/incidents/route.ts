@@ -5,6 +5,45 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { Incident } from '@/lib/types';
 import { Filter, ObjectId } from 'mongodb';
 import { ROLES, hasRequiredRole, Role } from '@/lib/config/roles';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client with environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+// Initialize Supabase on the server-side
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Define the bucket name for incident evidence
+const EVIDENCE_BUCKET = 'incident-evidence';
+
+// Ensure the bucket exists (run once during initialization)
+async function ensureBucketExists() {
+  try {
+    // Check if bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(bucket => bucket.name === EVIDENCE_BUCKET);
+    
+    if (!bucketExists) {
+      // Create bucket with public access
+      const { error } = await supabase.storage.createBucket(EVIDENCE_BUCKET, {
+        public: true, // Makes files publicly accessible
+        fileSizeLimit: 10485760 // 10MB limit
+      });
+      
+      if (error) {
+        console.error('Error creating bucket:', error);
+      } else {
+        console.log(`Bucket ${EVIDENCE_BUCKET} created successfully`);
+      }
+    }
+  } catch (error) {
+    console.error('Error checking/creating bucket:', error);
+  }
+}
+
+// Call this function when the server starts
+ensureBucketExists();
 
 interface MongoQuery extends Filter<Incident> {
   location?: {
@@ -42,13 +81,11 @@ async function ensureIndexes() {
     const client = await clientPromise;
     const db = client.db();
     
-    // Check if the geospatial index already exists
     const indexes = await db.collection('incident_draft').indexes();
     const hasGeoIndex = indexes.some(index => 
       index.key && index.key.location === '2dsphere'
     );
     
-    // Create the index if it doesn't exist
     if (!hasGeoIndex) {
       await db.collection('incident_draft').createIndex(
         { location: '2dsphere' },
@@ -62,7 +99,6 @@ async function ensureIndexes() {
 
 export async function GET(request: NextRequest) {
   try {
-    // Ensure indexes exist
     await ensureIndexes();
     
     const { searchParams } = new URL(request.url);
@@ -180,6 +216,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
+    // Check if Supabase is correctly initialized
+    if (!supabase || !supabase.storage) {
+      console.error('Supabase client not properly initialized');
+      return NextResponse.json(
+        { success: false, message: 'Storage service unavailable' },
+        { status: 500 }
+      );
+    }
+
     // Get user session
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.id) {
@@ -188,11 +233,12 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+    
     const formData = await request.formData();
     const client = await clientPromise;
     const db = client.db();
 
-    // Obtener y analizar el objeto location
+    // Parse location
     let location;
     try {
       location = JSON.parse(formData.get('location') as string);
@@ -204,7 +250,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar que las coordenadas sean números válidos
+    // Validate coordinates
     if (!location || 
         !location.coordinates || 
         !Array.isArray(location.coordinates) ||
@@ -220,29 +266,77 @@ export async function POST(request: Request) {
     // Get tags from form data
     const tags = formData.getAll('tags[]').map(tag => tag.toString());
 
-    // Convert formData to a regular object
+    // Handle file uploads to Supabase
+    const evidenceFiles = formData.getAll('evidence') as File[];
+    const uploadedEvidences = [];
+
+    // Upload each file to Supabase
+    for (const file of evidenceFiles) {
+      try {
+        // Create a unique file name with timestamp and random string
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        
+        // Store files in a user-specific folder for better organization
+        const filePath = `${session.user.id}/${fileName}`;
+        
+        // Convert the file to array buffer for upload
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = new Uint8Array(arrayBuffer);
+        
+        // Upload to the dedicated bucket
+        const { data, error } = await supabase
+          .storage
+          .from(EVIDENCE_BUCKET)
+          .upload(filePath, buffer, {
+            contentType: file.type,
+            upsert: false
+          });
+        
+        if (error) {
+          console.error('Error uploading file to Supabase:', error);
+          continue; // Skip this file but continue with the others
+        }
+        
+        // Get public URL using the correct bucket
+        const { data: urlData } = supabase
+          .storage
+          .from(EVIDENCE_BUCKET)
+          .getPublicUrl(filePath);
+        
+        // Store file metadata with the public URL
+        uploadedEvidences.push({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          path: filePath,
+          url: urlData.publicUrl
+        });
+      } catch (error) {
+        console.error(`Error processing file ${file.name}:`, error);
+      }
+    }
+
+    // Create incident data object
     const incidentData = {
       description: formData.get('description'),
       address: formData.get('address'),
       time: formData.get('time'),
       date: formData.get('date'),
-      // Add location data
       location,
       createdAt: new Date(),
       status: 'pending',
       tags: tags.length > 0 ? tags : undefined,
-      evidenceFiles: formData.getAll('evidence').map((file) => ({
-        name: (file as File).name,
-        type: (file as File).type,
-        size: (file as File).size,
-      })),
+      // Store both file metadata and direct URLs
+      evidenceFiles: uploadedEvidences,
+      evidenceUrls: uploadedEvidences.map(file => file.url), // For backward compatibility
       createdBy: session.user.id,
     };
 
     // Insert the incident into MongoDB
     const result = await db.collection('incident_draft').insertOne(incidentData);
 
-    // Insert a log entry
+    // Log the action
     await db.collection('logs').insertOne({
       action: 'create_incident',
       incidentId: result.insertedId,
@@ -367,4 +461,4 @@ export async function PATCH(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

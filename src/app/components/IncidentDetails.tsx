@@ -1,10 +1,12 @@
 'use client';
 import { Incident } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
-import Image from 'next/image';
+
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { updateIncident } from '@/lib/incidentService';
+import supabase from '@/lib/supabase';
+
 
 interface IncidentDetailsProps {
   incident: Incident | null;
@@ -39,9 +41,13 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
     }
   };
 
+  const getEvidenceUrl = (filePath: string) => {
+    return supabase.storage.from('evidence').getPublicUrl(filePath).data.publicUrl;
+  };
+
   // Determine file type from URL
-  const getFileType = (url: string) => {
-    const extension = url.split('.').pop()?.toLowerCase();
+  const getFileType = (filePath: string) => {
+    const extension = filePath.split('.').pop()?.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '')) {
       return 'image';
     } else if (['mp4', 'webm', 'ogg'].includes(extension || '')) {
@@ -168,64 +174,67 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
       </div>
 
       {incident.evidenceUrls && incident.evidenceUrls.length > 0 && (
-        <div>
-          <h4 className="text-sm font-medium mb-2">Evidence:</h4>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {incident.evidenceUrls.map((url, index) => {
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium">Evidence Files:</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {incident.evidenceUrls.map((url: string, index: number) => {
+              const fileName = url.split('/').pop() || `file-${index + 1}`;
               const fileType = getFileType(url);
-              
+
               return (
-                <div key={index} className="bg-gray-700 rounded-md overflow-hidden relative">
+                <div key={index} className="bg-gray-700 rounded-lg overflow-hidden">
                   {fileType === 'image' && (
                     <a href={url} target="_blank" rel="noopener noreferrer" className="block">
                       <div className="aspect-square relative">
-                        <Image 
-                          src={url} 
-                          alt={`Evidence ${index + 1}`} 
-                          fill
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          className="object-cover hover:opacity-90 transition-opacity" 
+                        <img
+                          src={url}
+                          alt={fileName}
+                          className="object-cover hover:opacity-90 transition-opacity"
                         />
                       </div>
                     </a>
                   )}
-                  
+
                   {fileType === 'video' && (
-                    <div className="aspect-square">
-                      <video 
-                        src={url} 
-                        controls 
+                    <div className="aspect-video">
+                      <video
+                        src={url}
+                        controls
                         className="w-full h-full object-cover"
                       />
                     </div>
                   )}
-                  
+
                   {fileType === 'pdf' && (
-                    <a 
-                      href={url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center aspect-square p-3 hover:bg-gray-600 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="mt-2 text-xs text-center">PDF Document</span>
-                    </a>
+                    <div className="p-4">
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0V2h10v2H6zm2 4a1 1 0 011-1h6a1 1 0 110 2H11a1 1 0 01-1-1zm-2 4a1 1 0 011-1h6a1 1 0 110 2H11a1 1 0 01-1-1zm2 4a1 1 0 100 2h4a1 1 0 100-2h-4z" clipRule="evenodd" />
+                        </svg>
+                        {fileName}
+                      </a>
+                    </div>
                   )}
-                  
+
                   {fileType === 'other' && (
-                    <a 
-                      href={url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center aspect-square p-3 hover:bg-gray-600 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="mt-2 text-xs text-center">File Attachment</span>
-                    </a>
+                    <div className="p-4">
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {fileName}
+                      </a>
+                    </div>
                   )}
                 </div>
               );
@@ -233,11 +242,8 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
           </div>
         </div>
       )}
-
-      <div className="text-xs text-gray-400">
-        <p>Reported: {new Date(incident.createdAt).toLocaleString()}</p>
-        <p>Incident ID: {incident._id}</p>
-      </div>
+      <p>Reported: {new Date(incident.createdAt).toLocaleString()}</p>
+      <p>Incident ID: {incident._id}</p>
     </div>
   );
-} 
+}

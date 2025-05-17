@@ -2,6 +2,14 @@
 
 import { Incident } from './types';
 
+interface EvidenceFile {
+  name: string;
+  type: string;
+  size: number;
+  path: string;
+  url?: string;
+}
+
 export interface IncidentFilters {
   neighborhoodId?: string;
   date?: string;
@@ -162,7 +170,7 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
       'heat-map-density',
       'rate'
     ];
-    params.append('stats', stats.join(','));
+    params.append('stats', stats.join('|')); // Use pipe as separator instead of comma
 
     const queryString = params.toString();
     if (queryString) {
@@ -184,20 +192,22 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
 }
 
 /**
- * Fetch a single incident by ID
+ * Fetch a single incident by ID with evidence files
  */
 export async function fetchIncidentById(id: string): Promise<Incident | null> {
   try {
     const response = await fetch(`/api/incidents/${id}`);
-    
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      console.error(`Error fetching incident by ID ${id}: Status ${response.status}`);
+      return null;
     }
+
+    const incident = await response.json();
     
-    const data = await response.json();
-    return data as Incident;
+    // No need to process URLs as they should now be provided directly from the API
+    return incident;
   } catch (error) {
-    console.error(`Error fetching incident with ID ${id}:`, error);
+    console.error(`Error fetching incident by ID ${id}:`, error instanceof Error ? error.message : String(error));
     return null;
   }
 }
