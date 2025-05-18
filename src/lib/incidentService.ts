@@ -170,7 +170,7 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
       'heat-map-density',
       'rate'
     ];
-    params.append('stats', stats.join('|')); // Use pipe as separator instead of comma
+    params.append('stats', stats.join(','));
 
     const queryString = params.toString();
     if (queryString) {
