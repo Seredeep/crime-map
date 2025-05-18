@@ -8,9 +8,11 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
   const isPublicApiRoute = request.nextUrl.pathname.startsWith('/api/auth') || 
-                          request.nextUrl.pathname === '/api/register';
+                          request.nextUrl.pathname === '/api/register' ||
+                          request.nextUrl.pathname === '/api/user/onboarding';
 
-  if (isPublicApiRoute) {
+  // Permitir acceso a rutas públicas
+  if (isPublicApiRoute || isAuthPage || isOnboardingPage) {
     return NextResponse.next();
   }
 

@@ -10,6 +10,7 @@ interface OnboardingFormData {
   surname: string;
   blockNumber: string;
   lotNumber: string;
+  email: string;
 }
 
 export default function OnboardingPage() {
@@ -22,23 +23,36 @@ export default function OnboardingPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<OnboardingFormData>();
+  } = useForm<OnboardingFormData>({
+    defaultValues: {
+      email: session?.user?.email || ''
+    }
+  });
 
   const onSubmit = async (data: OnboardingFormData) => {
     try {
       setIsSubmitting(true);
       setError('');
 
+      // Asegurarnos de que tenemos el email
+      if (!session?.user?.email) {
+        throw new Error('No se encontró el email del usuario');
+      }
+
       const response = await fetch('/api/user/onboarding', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          email: session.user.email
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Error al guardar la información');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al guardar la información');
       }
 
       // Actualizar la sesión para reflejar que el usuario ha completado el onboarding
@@ -48,12 +62,24 @@ export default function OnboardingPage() {
       await signOut({ redirect: false });
       router.push('/');
     } catch (err) {
-      setError('Hubo un error al guardar tu información. Por favor, intenta de nuevo.');
+      setError(err instanceof Error ? err.message : 'Hubo un error al guardar tu información. Por favor, intenta de nuevo.');
       console.error('Error en onboarding:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Si no hay sesión, mostrar mensaje de error
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
+        <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-lg p-6 text-center">
+          <h1 className="text-2xl font-bold mb-4">Error</h1>
+          <p className="text-red-500">No se encontró la sesión del usuario. Por favor, inicia sesión nuevamente.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">

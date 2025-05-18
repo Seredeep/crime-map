@@ -14,6 +14,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const router = useRouter();
   const pathname = usePathname();
 
+  // Si estamos en la página de onboarding, permitimos el acceso
+  if (pathname === '/onboarding') {
+    return <>{children}</>;
+  }
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push(`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`);
