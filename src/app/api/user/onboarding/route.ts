@@ -6,21 +6,11 @@ import { ObjectId } from 'mongodb';
 
 export async function POST(request: Request) {
   try {
-    // Verificar sesión
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'No autorizado' },
-        { status: 401 }
-      );
-    }
-
     // Obtener datos del formulario
-    const { name, surname, blockNumber, lotNumber } = await request.json();
+    const { name, surname, blockNumber, lotNumber, email } = await request.json();
 
     // Validar datos requeridos
-    if (!name || !surname || !blockNumber || !lotNumber) {
+    if (!name || !surname || !blockNumber || !lotNumber || !email) {
       return NextResponse.json(
         { success: false, message: 'Todos los campos son requeridos' },
         { status: 400 }
@@ -31,9 +21,19 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db();
 
+    // Buscar usuario por email
+    const user = await db.collection('users').findOne({ email });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Usuario no encontrado' },
+        { status: 404 }
+      );
+    }
+
     // Actualizar usuario
     const result = await db.collection('users').updateOne(
-      { _id: ObjectId.createFromHexString(session.user.id) },
+      { email },
       {
         $set: {
           name,
@@ -48,8 +48,8 @@ export async function POST(request: Request) {
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
-        { status: 404 }
+        { success: false, message: 'Error al actualizar el usuario' },
+        { status: 500 }
       );
     }
 
