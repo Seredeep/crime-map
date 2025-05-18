@@ -8,6 +8,8 @@ import L from 'leaflet';
  
 import { Incident } from '@/lib/types';
 import { Neighborhood } from '@/lib/neighborhoodService';
+import { updateIncident } from '@/lib/incidentService';
+import { reverseGeocode } from '@/lib/geocoding';
 
 // Fix for default marker icons in Leaflet with Next.js
 const fixLeafletIcons = () => {
@@ -258,20 +260,70 @@ export default function MapComponent({
   }, [onIncidentSelect]);
 
   // Handle incident marker drag
-  const handleIncidentMarkerDrag = useCallback((e: L.LeafletEvent, incident: Incident) => {
+  const handleIncidentMarkerDrag = useCallback(async (e: L.LeafletEvent, incident: Incident) => {
     const marker = e.target;
     const latLng = marker.getLatLng();
     const newPosition: [number, number] = [latLng.lat, latLng.lng];
     
     if (onIncidentUpdate) {
-      const updatedIncident: Incident = {
-        ...incident,
-        location: {
-          type: "Point" as const,
-          coordinates: [newPosition[1], newPosition[0]] // [longitude, latitude]
+      try {
+        // Obtener la dirección usando geocodificación inversa
+        console.log('Obteniendo dirección para:', latLng.lng, latLng.lat);
+        
+        // Usar la función de geocoding.ts que utiliza Google Maps API
+        const result = await reverseGeocode(latLng.lat, latLng.lng);
+        
+        // Extraer la dirección formateada del resultado
+        let formattedAddress = "";
+        if (result && result.features && result.features.length > 0 && result.features[0].properties) {
+          formattedAddress = result.features[0].properties.label;
+        } else {
+          // Si no podemos obtener una dirección, usar una por defecto
+          formattedAddress = incident.address || `Mar del Plata, Argentina`;
         }
-      };
-      onIncidentUpdate(updatedIncident);
+        
+        console.log('Dirección obtenida:', formattedAddress);
+        
+        // Actualizar el incidente
+        const updatedIncident = await updateIncident(incident._id, {
+          location: {
+            type: "Point" as const,
+            coordinates: [latLng.lng, latLng.lat] // [longitude, latitude]
+          },
+          address: formattedAddress
+        });
+        
+        console.log('Incidente actualizado:', updatedIncident);
+        onIncidentUpdate(updatedIncident);
+        
+      } catch (error) {
+        console.error('Error al actualizar la ubicación del incidente:', error);
+        // En caso de error, intentar una solución alternativa
+        try {
+          // Si no podemos obtener una dirección, al menos actualizar las coordenadas
+          const fallbackUpdate = await updateIncident(incident._id, {
+            location: {
+              type: "Point" as const,
+              coordinates: [latLng.lng, latLng.lat] // [longitude, latitude]
+            }
+          });
+          
+          onIncidentUpdate(fallbackUpdate);
+        } catch (secondError) {
+          console.error('Error en la actualización alternativa:', secondError);
+          
+          // Como último recurso, actualizar solo el estado local
+          const localUpdate: Incident = {
+            ...incident,
+            location: {
+              type: "Point",
+              coordinates: [latLng.lng, latLng.lat] // [longitude, latitude]
+            }
+          };
+          
+          onIncidentUpdate(localUpdate);
+        }
+      }
     }
   }, [onIncidentUpdate]);
 

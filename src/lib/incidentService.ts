@@ -234,7 +234,11 @@ export async function updateIncident(incidentId: string, updates: Partial<Incide
     }
 
     const data = await response.json();
-    return data as Incident;
+    if (!data.success || !data.incident) {
+      throw new Error('Error al actualizar el incidente: respuesta inválida del servidor');
+    }
+    
+    return data.incident as Incident;
   } catch (error) {
     console.error('Error updating incident:', error);
     throw error;

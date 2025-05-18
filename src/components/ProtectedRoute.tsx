@@ -14,10 +14,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const router = useRouter();
   const pathname = usePathname();
 
+  // Si estamos en la página de onboarding, permitimos el acceso
+  if (pathname === '/onboarding') {
+    return <>{children}</>;
+  }
+
   useEffect(() => {
-    // Si la autenticación ha terminado de cargar y no hay sesión
     if (status === 'unauthenticated') {
-      // Guardamos la ruta actual para redirigir después del login
       router.push(`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`);
     }
   }, [status, router, pathname]);
@@ -34,12 +37,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     );
   }
 
+  // Si no hay sesión, no mostramos nada mientras se redirige
   if (!session) {
-    return <div>No autorizado</div>;
+    return null;
   }
 
   if (allowedRoles && !allowedRoles.includes(session.user.role)) {
-    return <div>Acceso denegado</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-lg text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Acceso denegado</h2>
+          <div className="p-4 bg-red-500 text-white rounded-md">
+            No tienes permisos para acceder a esta página.
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!session.user.enabled) {
@@ -55,7 +68,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     );
   }
 
-  // Si el usuario está autenticado, mostramos el contenido protegido
   return <>{children}</>;
 };
 

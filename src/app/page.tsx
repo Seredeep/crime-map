@@ -4,17 +4,18 @@ import { useRouter } from 'next/navigation';
 import IncidentsView from './components/IncidentsView';
 import Tabs from './components/Tabs';
 import { useSession } from 'next-auth/react';
+import IncidentForm from './components/IncidentForm';
 import IncidentQueue from './components/IncidentQueue';
+import { hasRequiredRole, ROLES } from '@/lib/config/roles';
 
 export default function Home() {
   const router = useRouter();
   const { status } = useSession();
+  const { data: session } = useSession();
 
   const handleReportClick = () => {
-    if (status === 'authenticated') {
-      router.push('/report');
-    } else {
-      router.push('/auth/signin?callbackUrl=/report');
+    if (status !== 'authenticated') {
+      router.push('/auth/signin?callbackUrl=/');
     }
   };
 
@@ -29,18 +30,27 @@ export default function Home() {
       label: 'Reportar Incidente',
       content: (
         <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">Reportar un Incidente</h2>
-          <p className="mb-4">Para reportar un incidente, necesitas estar autenticado.</p>
-          <button 
-            onClick={handleReportClick} 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-          >
-            {status === 'authenticated' ? 'Ir a reportar' : 'Iniciar sesión para reportar'}
-          </button>
+          {status === 'authenticated' ? (
+            <IncidentForm />
+          ) : (
+            <>
+              <h2 className="text-2xl font-semibold mb-4">Reportar un Incidente</h2>
+              <p className="mb-4">Para reportar un incidente, necesitas estar autenticado.</p>
+              <button 
+                onClick={handleReportClick} 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+              >
+                Iniciar sesión para reportar
+              </button>
+            </>
+          )}
         </div>
       )
-    },
-    {
+    }
+  ];
+
+  if (session?.user?.role === 'admin' || session?.user?.role === 'editor') {
+    tabs.push({
       id: 'queue',
       label: 'Cola de Incidentes',
       content: (
@@ -49,8 +59,8 @@ export default function Home() {
           <IncidentQueue />
         </div>
       )
-    }
-  ];
+    });
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">

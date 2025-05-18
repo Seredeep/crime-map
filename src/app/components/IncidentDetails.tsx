@@ -89,12 +89,28 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
     if (editingField === field) {
       return (
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            className="flex-1 bg-gray-800 text-gray-200 rounded px-2 py-1"
-          />
+          {field === 'time' ? (
+            <input
+              type="time"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="flex-1 bg-gray-800 text-gray-200 rounded px-2 py-1"
+            />
+          ) : field === 'date' ? (
+            <input
+              type="date"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="flex-1 bg-gray-800 text-gray-200 rounded px-2 py-1"
+            />
+          ) : (
+            <input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="flex-1 bg-gray-800 text-gray-200 rounded px-2 py-1"
+            />
+          )}
           <button
             onClick={handleSaveEdit}
             className="p-1 bg-green-600 hover:bg-green-500 text-white rounded-md transition-colors flex items-center justify-center"
@@ -144,6 +160,19 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
           </span>
         )}
       </div>
+
+      {incident.tags && incident.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {incident.tags.map((tag) => (
+            <span
+              key={tag}
+              className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full text-xs"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="p-3 bg-gray-700 rounded-md">
         <div className="flex items-start">
