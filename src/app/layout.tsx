@@ -2,8 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "../components/SessionProvider";
-import Navbar from "../components/Navbar";
+import Navbar from "./components/Navbar";
 import { Analytics } from "@vercel/analytics/react"
+import { ImageModalProvider } from "../lib/ImageModalContext";
+import ImageModal from "./components/ImageModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,7 +53,10 @@ export default function RootLayout({
 
         <SessionProvider>
           <Navbar />
-          {children}
+          <ImageModalProvider>
+            {children}
+            <ImageModal />
+          </ImageModalProvider>
         </SessionProvider>
         <Analytics />
       </body>

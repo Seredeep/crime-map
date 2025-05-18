@@ -1,11 +1,11 @@
 'use client';
 import { Incident } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
-
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { updateIncident } from '@/lib/incidentService';
 import supabase from '@/lib/supabase';
+import { useImageModal } from '@/lib/ImageModalContext';
 
 
 interface IncidentDetailsProps {
@@ -18,6 +18,7 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
   const isEditor = session?.user?.role === 'editor' || session?.user?.role === 'admin';
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const { openModal } = useImageModal();
 
   if (!incident) {
     return (
@@ -184,15 +185,21 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
               return (
                 <div key={index} className="bg-gray-700 rounded-lg overflow-hidden">
                   {fileType === 'image' && (
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openModal(url);
+                      }}
+                      className="w-full h-full"
+                    >
                       <div className="aspect-square relative">
                         <img
                           src={url}
                           alt={fileName}
-                          className="object-cover hover:opacity-90 transition-opacity"
+                          className="object-cover hover:opacity-90 transition-opacity w-full h-full"
                         />
                       </div>
-                    </a>
+                    </button>
                   )}
 
                   {fileType === 'video' && (
