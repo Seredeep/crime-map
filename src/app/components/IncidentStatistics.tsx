@@ -1,20 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import ReactECharts from 'echarts-for-react';
 import { IncidentFilters, StatisticsResults } from '@/lib/types';
 import { fetchStatistics } from '@/lib/incidentService';
 
@@ -42,7 +29,6 @@ export default function IncidentStatistics({ filters }: IncidentStatisticsProps)
         console.error('Error loading statistics:', err);
         let errorMessage = 'No se pudieron cargar las estadísticas';
         
-        // Try to get detailed error information
         if (err instanceof Error) {
           try {
             const errorData = JSON.parse(err.message);
@@ -53,7 +39,6 @@ export default function IncidentStatistics({ filters }: IncidentStatisticsProps)
             }
             console.log('Error details:', errorData);
           } catch {
-            // If parsing fails, use the original error message
             errorMessage = err.message;
           }
         }
@@ -87,224 +72,374 @@ export default function IncidentStatistics({ filters }: IncidentStatisticsProps)
     return null;
   }
 
+  // Opciones para el gráfico de incidentes por día
+  const dailyIncidentsOption = {
+    title: {
+      text: 'Incidentes por día',
+      textStyle: {
+        color: '#E5E7EB',
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#1F2937',
+      borderColor: '#374151',
+      textStyle: {
+        color: '#E5E7EB'
+      }
+    },
+    legend: {
+      data: ['Incidentes', 'Promedio móvil (7 días)'],
+      textStyle: {
+        color: '#E5E7EB'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: stats.day?.dates || [],
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#374151'
+        }
+      }
+    },
+    series: [
+      {
+        name: 'Incidentes',
+        type: 'line',
+        data: stats.day?.counts || [],
+        smooth: true,
+        lineStyle: {
+          color: '#3B82F6',
+          width: 2
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [{
+              offset: 0,
+              color: 'rgba(59, 130, 246, 0.3)'
+            }, {
+              offset: 1,
+              color: 'rgba(59, 130, 246, 0.1)'
+            }]
+          }
+        }
+      },
+      {
+        name: 'Promedio móvil (7 días)',
+        type: 'line',
+        data: stats.day?.rollingAverage || [],
+        smooth: true,
+        lineStyle: {
+          color: '#10B981',
+          width: 2
+        }
+      }
+    ]
+  };
+
+  // Opciones para el gráfico de incidentes por semana
+  const weeklyIncidentsOption = {
+    title: {
+      text: 'Incidentes por semana',
+      textStyle: {
+        color: '#E5E7EB',
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#1F2937',
+      borderColor: '#374151',
+      textStyle: {
+        color: '#E5E7EB'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: stats.week?.weeks || [],
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#374151'
+        }
+      }
+    },
+    series: [{
+      data: stats.week?.counts || [],
+      type: 'bar',
+      itemStyle: {
+        color: '#3B82F6',
+        borderRadius: [4, 4, 0, 0]
+      }
+    }]
+  };
+
+  // Opciones para el gráfico de distribución por día de la semana
+  const weekdayDistributionOption = {
+    title: {
+      text: 'Distribución por día de la semana',
+      textStyle: {
+        color: '#E5E7EB',
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#1F2937',
+      borderColor: '#374151',
+      textStyle: {
+        color: '#E5E7EB'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: stats.weekdayDistribution?.weekdays.map((_, i) => WEEKDAYS[i]) || [],
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#374151'
+        }
+      }
+    },
+    series: [{
+      data: stats.weekdayDistribution?.counts || [],
+      type: 'bar',
+      itemStyle: {
+        color: '#3B82F6',
+        borderRadius: [4, 4, 0, 0]
+      }
+    }]
+  };
+
+  // Opciones para el gráfico de distribución por hora
+  const hourDistributionOption = {
+    title: {
+      text: 'Distribución por hora del día',
+      textStyle: {
+        color: '#E5E7EB',
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#1F2937',
+      borderColor: '#374151',
+      textStyle: {
+        color: '#E5E7EB'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: stats.hourDistribution?.hours.map(hour => `${hour}:00`) || [],
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: '#9CA3AF'
+        }
+      },
+      axisLabel: {
+        color: '#9CA3AF'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#374151'
+        }
+      }
+    },
+    series: [{
+      data: stats.hourDistribution?.counts || [],
+      type: 'bar',
+      itemStyle: {
+        color: '#3B82F6',
+        borderRadius: [4, 4, 0, 0]
+      }
+    }]
+  };
+
+  // Opciones para el gráfico de distribución por tipo
+  const tagDistributionOption = {
+    title: {
+      text: 'Distribución por tipo de incidente',
+      textStyle: {
+        color: '#E5E7EB',
+        fontSize: 16,
+        fontWeight: 'normal'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: '#1F2937',
+      borderColor: '#374151',
+      textStyle: {
+        color: '#E5E7EB'
+      },
+      formatter: '{b}: {c} ({d}%)'
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#1F2937',
+        borderWidth: 2
+      },
+      label: {
+        show: true,
+        color: '#E5E7EB',
+        formatter: '{b}: {d}%'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 14,
+          fontWeight: 'bold'
+        }
+      },
+      data: stats.tag?.tags.map((tag, index) => ({
+        name: tag,
+        value: stats.tag?.counts[index],
+        itemStyle: {
+          color: COLORS[index % COLORS.length]
+        }
+      })) || []
+    }]
+  };
+
   return (
     <div className="space-y-8 bg-gray-900/50 p-6 rounded-lg backdrop-blur-sm">
       {/* Daily incidents with rolling average */}
       {stats.day && (
-        <div>
-          <h3 className="text-lg font-medium text-gray-200 mb-4">
-            Incidentes por día
-          </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stats.day.dates.map((date: string, i: number) => ({
-                date,
-                count: stats.day?.counts[i],
-                average: stats.day?.rollingAverage[i]
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis
-                  dataKey="date"
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#E5E7EB',
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="average"
-                  stroke="#10B981"
-                  strokeWidth={2}
-                  dot={false}
-                  name="Promedio móvil (7 días)"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="h-[400px] w-full">
+          <ReactECharts option={dailyIncidentsOption} style={{ height: '100%' }} />
         </div>
       )}
 
       {/* Weekly incidents */}
       {stats.week && (
-        <div>
-          <h3 className="text-lg font-medium text-gray-200 mb-4">
-            Incidentes por semana
-          </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.week.weeks.map((week: string, i: number) => ({
-                week,
-                count: stats.week?.counts[i],
-                average: stats.week?.rollingAverage[i]
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis
-                  dataKey="week"
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#E5E7EB',
-                  }}
-                />
-                <Bar
-                  dataKey="count"
-                  fill="#3B82F6"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="h-[400px] w-full">
+          <ReactECharts option={weeklyIncidentsOption} style={{ height: '100%' }} />
         </div>
       )}
 
       {/* Weekday distribution */}
       {stats.weekdayDistribution && (
-        <div>
-          <h3 className="text-lg font-medium text-gray-200 mb-4">
-            Distribución por día de la semana
-          </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.weekdayDistribution.weekdays.map((_: string, i: number) => ({
-                weekday: WEEKDAYS[i],
-                count: stats.weekdayDistribution?.counts[i]
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis
-                  dataKey="weekday"
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#E5E7EB',
-                  }}
-                />
-                <Bar
-                  dataKey="count"
-                  fill="#3B82F6"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="h-[400px] w-full">
+          <ReactECharts option={weekdayDistributionOption} style={{ height: '100%' }} />
         </div>
       )}
 
       {/* Hour distribution */}
       {stats.hourDistribution && (
-        <div>
-          <h3 className="text-lg font-medium text-gray-200 mb-4">
-            Distribución por hora del día
-          </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.hourDistribution.hours.map((hour: number, i: number) => ({
-                hour: `${hour}:00`,
-                count: stats.hourDistribution?.counts[i]
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis
-                  dataKey="hour"
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#E5E7EB',
-                  }}
-                />
-                <Bar
-                  dataKey="count"
-                  fill="#3B82F6"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="h-[400px] w-full">
+          <ReactECharts option={hourDistributionOption} style={{ height: '100%' }} />
         </div>
       )}
 
       {/* Tag distribution */}
       {stats.tag && (
-        <div>
-          <h3 className="text-lg font-medium text-gray-200 mb-4">
-            Distribución por tipo de incidente
-          </h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={stats.tag.tags.map((tag: string, i: number) => ({
-                    name: tag,
-                    value: stats.tag?.counts[i]
-                  }))}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {stats.tag.tags.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: 'none',
-                    borderRadius: '0.5rem',
-                    color: '#E5E7EB',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="h-[400px] w-full">
+          <ReactECharts option={tagDistributionOption} style={{ height: '100%' }} />
         </div>
       )}
 
