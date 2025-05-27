@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import LogsStatistics from './LogsStatistics';
 
 interface Log {
   _id: string;
@@ -28,10 +29,13 @@ export default function LogsView() {
     dateTo: ''
   });
   const [selectedLog, setSelectedLog] = useState<Log | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const logsPerPage = 10;
 
   useEffect(() => {
     fetchLogs();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   const fetchLogs = async () => {
     try {
@@ -43,6 +47,8 @@ export default function LogsView() {
       if (filters.user) queryParams.append('user', filters.user);
       if (filters.dateFrom) queryParams.append('dateFrom', filters.dateFrom);
       if (filters.dateTo) queryParams.append('dateTo', filters.dateTo);
+      queryParams.append('page', currentPage.toString());
+      queryParams.append('limit', logsPerPage.toString());
 
       const response = await fetch(`/api/logs?${queryParams.toString()}`);
       if (!response.ok) {
@@ -50,7 +56,8 @@ export default function LogsView() {
       }
 
       const data = await response.json();
-      setLogs(data);
+      setLogs(data.logs);
+      setTotalPages(Math.ceil(data.total / logsPerPage));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar los logs');
     } finally {
@@ -61,6 +68,11 @@ export default function LogsView() {
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+    setCurrentPage(1); // Resetear a la primera página al cambiar filtros
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   const handleExportCSV = () => {
@@ -192,7 +204,7 @@ export default function LogsView() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-gray-800 divide-y divide-gray-700">
+            <tbody className="divide-y divide-gray-700">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
@@ -239,6 +251,124 @@ export default function LogsView() {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {!loading && !error && logs.length > 0 && (
+          <div className="bg-gray-700 px-4 py-3 flex items-center justify-between border-t border-gray-600 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md text-gray-300 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md text-gray-300 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-300">
+                  Mostrando <span className="font-medium">{(currentPage - 1) * logsPerPage + 1}</span> a{' '}
+                  <span className="font-medium">
+                    {Math.min(currentPage * logsPerPage, totalPages * logsPerPage)}
+                  </span>{' '}
+                  de <span className="font-medium">{totalPages * logsPerPage}</span> resultados
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-600 bg-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="sr-only">Anterior</span>
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+
+                  {/* Primera página */}
+                  {currentPage > 3 && (
+                    <>
+                      <button
+                        onClick={() => handlePageChange(1)}
+                        className="relative inline-flex items-center px-4 py-2 border border-gray-600 bg-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-600"
+                      >
+                        1
+                      </button>
+                      {currentPage > 4 && (
+                        <span className="relative inline-flex items-center px-4 py-2 border border-gray-600 bg-gray-700 text-sm font-medium text-gray-300">
+                          ...
+                        </span>
+                      )}
+                    </>
+                  )}
+
+                  {/* Páginas alrededor de la actual */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      const diff = Math.abs(page - currentPage);
+                      return diff <= 2;
+                    })
+                    .map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === page
+                            ? 'z-10 bg-blue-600 border-blue-600 text-white'
+                            : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                  {/* Última página */}
+                  {currentPage < totalPages - 2 && (
+                    <>
+                      {currentPage < totalPages - 3 && (
+                        <span className="relative inline-flex items-center px-4 py-2 border border-gray-600 bg-gray-700 text-sm font-medium text-gray-300">
+                          ...
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handlePageChange(totalPages)}
+                        className="relative inline-flex items-center px-4 py-2 border border-gray-600 bg-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-600"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-600 bg-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="sr-only">Siguiente</span>
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Estadísticas */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-gray-200 mb-4">Estadísticas</h2>
+        <LogsStatistics filters={filters} />
       </div>
 
       {/* Modal de detalles */}
