@@ -31,9 +31,14 @@ export default function Navbar() {
             </Link>
             
             {isAdmin && (
-              <Link href="/admin/users" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
-                Administración
-              </Link>
+              <>
+                <Link href="/admin/users" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Administración
+                </Link>
+                <Link href="/admin/logs" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                  Logs
+                </Link>
+              </>
             )}
             
             {status === 'authenticated' ? (
@@ -115,12 +120,20 @@ export default function Navbar() {
           </Link>
           
           {isAdmin && (
-            <Link 
-              href="/admin/users"
-              className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Administración
-            </Link>
+            <>
+              <Link 
+                href="/admin/users"
+                className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Administración
+              </Link>
+              <Link 
+                href="/admin/logs"
+                className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+              >
+                Logs
+              </Link>
+            </>
           )}
           
           {status === 'authenticated' ? (
