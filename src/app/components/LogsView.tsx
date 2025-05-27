@@ -104,10 +104,13 @@ export default function LogsView() {
               className="w-full p-2 bg-gray-700 border border-gray-600 rounded-md text-white"
             >
               <option value="all">Todas las acciones</option>
-              <option value="create">Crear</option>
-              <option value="update">Actualizar</option>
-              <option value="delete">Eliminar</option>
-              <option value="verify">Verificar</option>
+              <option value="create_incident">Crear incidente</option>
+              <option value="update_incident_location">Actualizar ubicación</option>
+              <option value="update_incident_description">Actualizar descripción</option>
+              <option value="update_incident_status">Actualizar estado</option>
+              <option value="update_incident_date">Actualizar fecha</option>
+              <option value="update_incident_time">Actualizar hora</option>
+              <option value="delete_incident">Eliminar incidente</option>
             </select>
           </div>
 
