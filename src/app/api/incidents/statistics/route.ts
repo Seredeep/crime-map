@@ -189,10 +189,15 @@ export async function GET(request: NextRequest) {
             const date = incident.date;
             dailyStats.set(date, (dailyStats.get(date) || 0) + 1);
           });
+          // Ordenar por fecha ascendente
+          const sortedDaily = Array.from(dailyStats.entries()).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+          const sortedDates = sortedDaily.map(([date]) => date);
+          const sortedCounts = sortedDaily.map(([, count]) => count);
+          const sortedRollingAverage = calculateRollingAverage(sortedCounts);
           results.day = {
-            dates: Array.from(dailyStats.keys()),
-            counts: Array.from(dailyStats.values()),
-            rollingAverage: calculateRollingAverage(Array.from(dailyStats.values())),
+            dates: sortedDates,
+            counts: sortedCounts,
+            rollingAverage: sortedRollingAverage,
           };
           break;
 
@@ -205,10 +210,15 @@ export async function GET(request: NextRequest) {
             const weekKey = weekStart.toISOString().split('T')[0];
             weeklyStats.set(weekKey, (weeklyStats.get(weekKey) || 0) + 1);
           });
+          // Ordenar por fecha ascendente
+          const sortedWeekly = Array.from(weeklyStats.entries()).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+          const sortedWeeks = sortedWeekly.map(([week]) => week);
+          const sortedWeekCounts = sortedWeekly.map(([, count]) => count);
+          const sortedWeekRollingAverage = calculateRollingAverage(sortedWeekCounts);
           results.week = {
-            weeks: Array.from(weeklyStats.keys()),
-            counts: Array.from(weeklyStats.values()),
-            rollingAverage: calculateRollingAverage(Array.from(weeklyStats.values())),
+            weeks: sortedWeeks,
+            counts: sortedWeekCounts,
+            rollingAverage: sortedWeekRollingAverage,
           };
           break;
 
@@ -219,9 +229,13 @@ export async function GET(request: NextRequest) {
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             monthlyStats.set(monthKey, (monthlyStats.get(monthKey) || 0) + 1);
           });
+          // Ordenar meses por año y mes ascendente
+          const sortedMonthly = Array.from(monthlyStats.entries()).sort((a, b) => new Date(a[0] + '-01').getTime() - new Date(b[0] + '-01').getTime());
+          const sortedMonths = sortedMonthly.map(([month]) => month);
+          const sortedMonthCounts = sortedMonthly.map(([, count]) => count);
           results.month = {
-            months: Array.from(monthlyStats.keys()),
-            counts: Array.from(monthlyStats.values()),
+            months: sortedMonths,
+            counts: sortedMonthCounts,
           };
           break;
 
@@ -231,6 +245,7 @@ export async function GET(request: NextRequest) {
             const date = new Date(incident.date);
             weekdayStats[date.getDay()]++;
           });
+          // Asegurar el orden de domingo a sábado
           results.weekdayDistribution = {
             weekdays: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
             counts: weekdayStats,
@@ -243,6 +258,7 @@ export async function GET(request: NextRequest) {
             const time = incident.time.split(':')[0];
             hourStats[parseInt(time)]++;
           });
+          // Asegurar el orden de 0 a 23
           results.hourDistribution = {
             hours: Array.from({ length: 24 }, (_, i) => i),
             counts: hourStats,
