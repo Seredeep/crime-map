@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import ProtectedRoute from '../../../components/ProtectedRoute';
+import ProtectedRoute from '../../components/ProtectedRoute';
 import { Role, ROLES } from '@/lib/config/roles';
 
 interface User {

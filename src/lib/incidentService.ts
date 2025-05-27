@@ -141,12 +141,21 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
     let url = '/api/incidents/statistics';
     const params = new URLSearchParams();
 
-    if (filters?.dateFrom) {
+    // Required parameters
+    if (!filters?.dateFrom || !filters?.dateTo) {
+      // Default to last 30 days if no dates provided
+      const today = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      
+      params.append('dateFrom', thirtyDaysAgo.toISOString().split('T')[0]);
+      params.append('dateTo', today.toISOString().split('T')[0]);
+    } else {
       params.append('dateFrom', filters.dateFrom);
-    }
-    if (filters?.dateTo) {
       params.append('dateTo', filters.dateTo);
     }
+
+    // Optional parameters
     if (filters?.neighborhoodId) {
       params.append('neighborhoodId', filters.neighborhoodId);
     }
@@ -160,22 +169,25 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
       params.append('tag', filters.tags[0]); // For now, we only support one tag
     }
 
+    // Required stats parameter
     const stats = [
       'day',
       'week',
       'month',
       'weekday-distribution',
       'hour-distribution',
-      'tag',
-      'heat-map-density',
-      'rate'
+      'tag'
     ];
+    
+    // Only include heat-map-density if we have a neighborhoodId
+    if (filters?.neighborhoodId) {
+      stats.push('heat-map-density');
+    }
+    
+    stats.push('rate');
     params.append('stats', stats.join(','));
 
-    const queryString = params.toString();
-    if (queryString) {
-      url = `${url}?${queryString}`;
-    }
+    url = `${url}?${params.toString()}`;
     
     const response = await fetch(url);
     

@@ -3,10 +3,51 @@
 @tailwind utilities;
 
 :root {
-  --primary: #3B82F6;
-  --primary-dark: #2563EB;
-  --error: #EF4444;
+  /* Light mode colors */
+  --primary: #0A84FF;
+  --verified: #B3BC4E;
+  --alert: #FF7F11;
+  --text: #333333;
+  --background: #F8F9FA;
+  
+  /* Dark mode colors */
+  --bg-dark: #121417;
+  --bg-surface: #1B1D22;
+  --text-inverted: #F8F9FA;
+  --border-dark: #2A2E35;
+  
+  /* Additional dark mode variables */
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
   --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
+  
+  /* Shadows and overlays */
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --shadow-heavy: rgba(0, 0, 0, 0.25);
+  --overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease-out;
+  --transition-normal: 0.3s ease-out;
+  --transition-slow: 0.5s ease-out;
+}
+
+/* Dark theme class */
+.dark {
+  --background: var(--bg-dark);
+  --text: var(--text-inverted);
+  --text-secondary: #D1D5DB;
+  --text-muted: #9CA3AF;
+  --border: var(--border-dark);
+  
+  /* Adjust shadows for dark mode */
+  --shadow-light: rgba(0, 0, 0, 0.3);
+  --shadow-medium: rgba(0, 0, 0, 0.4);
+  --shadow-heavy: rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -24,6 +65,9 @@ body {
   font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-dark);
+  color: var(--text-inverted);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 /* Disable pull-to-refresh on mobile */
@@ -54,6 +98,7 @@ input[type="time"] {
   }
 }
 
+/* Enhanced animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -65,15 +110,60 @@ input[type="time"] {
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out forwards;
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-/* Apply a gentle hover effect to the tabs */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn var(--transition-normal) ease-out forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft var(--transition-normal) ease-out forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight var(--transition-normal) ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn var(--transition-normal) ease-out forwards;
+}
+
+/* Enhanced hover effects */
 button:hover svg,
 button:focus svg {
   transform: scale(1.1);
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-fast);
 }
 
 /* Pulse animation for markers */
@@ -98,12 +188,154 @@ button:focus svg {
 
 /* Smooth transition for marker hover effects */
 .custom-div-icon div {
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-fast) ease-in-out;
 }
 
 /* Ensure tab content transition is smooth */
 .tab-content {
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity var(--transition-normal) ease-in-out;
+}
+
+/* Backdrop blur utilities */
+.backdrop-blur-xs {
+  backdrop-filter: blur(2px);
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(8px);
+}
+
+.backdrop-blur-lg {
+  backdrop-filter: blur(16px);
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3A3E45;
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Utility classes for consistent spacing and colors */
+.bg-surface {
+  background-color: var(--bg-surface);
+}
+
+.bg-dark {
+  background-color: var(--bg-dark);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-alert {
+  color: var(--alert);
+}
+
+.text-verified {
+  color: var(--verified);
+}
+
+.border-dark {
+  border-color: var(--border-dark);
+}
+
+/* Form styling */
+input, select, textarea {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-dark);
+  color: var(--text-inverted);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Button base styles */
+.btn {
+  transition: all var(--transition-fast);
+  border-radius: 8px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0066CC;
+}
+
+/* Card styles */
+.card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-dark);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px var(--shadow-light);
+  transition: all var(--transition-normal);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-medium);
 }
 
 @layer base {
@@ -134,6 +366,7 @@ button:focus svg {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+  
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;

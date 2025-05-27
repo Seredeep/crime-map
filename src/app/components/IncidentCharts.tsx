@@ -58,7 +58,7 @@ export default function IncidentCharts({ incidents }: IncidentChartsProps) {
   }, [incidents]);
 
   return (
-    <div className="space-y-8 bg-gray-900/50 p-6 rounded-lg backdrop-blur-sm">
+    <div className="space-y-8 bg-gray-800/50 p-6 rounded-lg backdrop-blur-sm border border-gray-700/50">
       <div>
         <h3 className="text-lg font-medium text-gray-200 mb-4">
           Incidentes por día
@@ -71,23 +71,27 @@ export default function IncidentCharts({ incidents }: IncidentChartsProps) {
                 dataKey="date"
                 stroke="#9CA3AF"
                 fontSize={12}
+                tick={{ fill: '#9CA3AF' }}
               />
               <YAxis
                 stroke="#9CA3AF"
                 fontSize={12}
+                tick={{ fill: '#9CA3AF' }}
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#1F2937',
-                  border: 'none',
+                  border: '1px solid #374151',
                   borderRadius: '0.5rem',
                   color: '#E5E7EB',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                 }}
               />
               <Bar
                 dataKey="count"
                 fill="#3B82F6"
                 radius={[4, 4, 0, 0]}
+                className="transition-all duration-300 hover:opacity-80"
               />
             </BarChart>
           </ResponsiveContainer>
