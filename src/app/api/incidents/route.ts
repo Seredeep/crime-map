@@ -393,4 +393,83 @@ export async function PATCH(request: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    // Get user session
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.id) {
+      return NextResponse.json(
+        { success: false, message: 'No autorizado. Debes iniciar sesión para eliminar un incidente.' },
+        { status: 401 }
+      );
+    }
+
+    if (!hasRequiredRole(session.user.role as Role, [ROLES.EDITOR, ROLES.ADMIN])) {
+      return NextResponse.json(
+        { success: false, message: 'No autorizado. Debes estar autenticado como editor para eliminar un incidente.' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const incidentId = searchParams.get('id');
+
+    if (!incidentId) {
+      return NextResponse.json(
+        { success: false, message: 'ID de incidente no proporcionado' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que el incidente existe
+    const client = await clientPromise;
+    const db = client.db();
+    const incident = await db.collection('incident_draft').findOne(
+      { _id: ObjectId.createFromHexString(incidentId) }
+    );
+
+    if (!incident) {
+      return NextResponse.json(
+        { success: false, message: 'Incidente no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Eliminar el incidente
+    const result = await db.collection('incident_draft').deleteOne(
+      { _id: ObjectId.createFromHexString(incidentId) }
+    );
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { success: false, message: 'No se pudo eliminar el incidente' },
+        { status: 500 }
+      );
+    }
+
+    // Registrar la acción en el log
+    await db.collection('logs').insertOne({
+      action: 'delete_incident',
+      incidentId: incidentId,
+      userId: session.user.id,
+      userEmail: session.user.email,
+      timestamp: new Date(),
+      details: {
+        description: incident.description,
+        address: incident.address,
+        status: incident.status,
+        tags: incident.tags
+      }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting incident:', error);
+    return NextResponse.json(
+      { success: false, message: 'Error al eliminar el incidente' },
+      { status: 500 }
+    );
+  }
 } 

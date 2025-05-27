@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Incident } from '@/lib/types';
-import { fetchIncidents } from '@/lib/incidentService';
+import { fetchIncidents, deleteIncident } from '@/lib/incidentService';
 import { formatDate, formatTime, timeAgo } from '@/lib/utils';
 import { COMMON_TAGS } from '@/lib/constants';
 
@@ -20,6 +20,8 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
   const [reason, setReason] = useState('');
   const [showReasonModal, setShowReasonModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<'pending' | 'verified' | 'resolved' | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [incidentToDelete, setIncidentToDelete] = useState<Incident | null>(null);
 
   useEffect(() => {
     async function loadIncidents() {
@@ -91,6 +93,26 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
     }
   };
 
+  const handleDeleteClick = (incident: Incident, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIncidentToDelete(incident);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!incidentToDelete) return;
+
+    try {
+      await deleteIncident(incidentToDelete._id);
+      setIncidents(incidents.filter(i => i._id !== incidentToDelete._id));
+      setShowDeleteModal(false);
+      setIncidentToDelete(null);
+    } catch (err) {
+      console.error('Error deleting incident:', err);
+      setError(err instanceof Error ? err.message : 'No se pudo eliminar el incidente');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -151,16 +173,24 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
                 </h3>
                 <p className="text-sm text-gray-400">{incident.address}</p>
               </div>
-              <select
-                value={incident.status || 'pending'}
-                onChange={(e) => handleStatusChange(incident._id, e.target.value as 'pending' | 'verified' | 'resolved')}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-gray-700/50 text-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="pending">Pendiente</option>
-                <option value="verified">Verificado</option>
-                <option value="resolved">Resuelto</option>
-              </select>
+              <div className="flex gap-2">
+                <select
+                  value={incident.status || 'pending'}
+                  onChange={(e) => handleStatusChange(incident._id, e.target.value as 'pending' | 'verified' | 'resolved')}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-gray-700/50 text-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="pending">Pendiente</option>
+                  <option value="verified">Verificado</option>
+                  <option value="resolved">Resuelto</option>
+                </select>
+                <button
+                  onClick={(e) => handleDeleteClick(incident, e)}
+                  className="bg-red-500/20 text-red-300 hover:bg-red-500/30 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  Eliminar
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-2">
@@ -225,6 +255,40 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
                 Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {showDeleteModal && incidentToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-gray-200 mb-4">
+              Eliminar Incidente
+            </h3>
+            <p className="text-sm text-gray-400 mb-4">
+              ¿Estás seguro de que deseas eliminar este incidente? Esta acción no se puede deshacer.
+            </p>
+            <p className="text-sm text-gray-300 mb-4">
+              {incidentToDelete.description}
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setIncidentToDelete(null);
+                }}
+                className="px-4 py-2 text-gray-400 hover:text-gray-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Eliminar
               </button>
             </div>
           </div>

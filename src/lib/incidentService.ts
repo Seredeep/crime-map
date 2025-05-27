@@ -234,3 +234,27 @@ export async function updateIncident(incidentId: string, updates: Partial<Incide
     throw error;
   }
 }
+
+/**
+ * Delete an incident
+ */
+export async function deleteIncident(incidentId: string): Promise<void> {
+  try {
+    const response = await fetch(`/api/incidents?id=${incidentId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al eliminar el incidente');
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error('Error al eliminar el incidente: respuesta inválida del servidor');
+    }
+  } catch (error) {
+    console.error('Error deleting incident:', error);
+    throw error;
+  }
+}
