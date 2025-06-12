@@ -1,5 +1,4 @@
 'use client';
-
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { FiMenu, FiX, FiSun, FiMoon, FiMap, FiAlertTriangle, FiUser, FiLogIn, FiLogOut } from 'react-icons/fi';

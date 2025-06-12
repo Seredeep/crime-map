@@ -15,10 +15,21 @@ if (!supabaseAnonKey) {
   console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined in environment variables');
 }
 
-// Create the client
+// Create the client with additional options for better compatibility
 const supabase = createClient(
   supabaseUrl || '',
-  supabaseAnonKey || ''
+  supabaseAnonKey || '',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'supabase-js-web',
+      },
+    },
+  }
 );
 
 export default supabase;

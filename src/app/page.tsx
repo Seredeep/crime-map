@@ -6,11 +6,8 @@ import { useSession } from 'next-auth/react';
 import IncidentForm from './components/IncidentForm';
 import IncidentQueue from './components/IncidentQueue';
 import Sidebar from './components/Sidebar';
-import Navbar from './components/Navbar';
 import { useCallback, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import { FiBarChart, FiAlertCircle } from 'react-icons/fi';
 
 export default function Home() {
   // State to track sidebar collapse state

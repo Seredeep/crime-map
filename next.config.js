@@ -5,6 +5,27 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000'],
     },
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Fallbacks para módulos de Node.js en el cliente
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "./components/SessionProvider";
 import Navbar from "./components/Navbar";
@@ -7,14 +7,14 @@ import { Analytics } from "@vercel/analytics/react"
 import { ImageModalProvider } from "../lib/ImageModalContext";
 import ImageModal from "./components/ImageModal";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -47,7 +47,7 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased min-h-full`}
         suppressHydrationWarning
       >
 
