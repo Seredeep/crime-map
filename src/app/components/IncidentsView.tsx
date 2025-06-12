@@ -7,7 +7,6 @@ import { Incident, IncidentFilters } from '@/lib/types';
 import { fetchIncidents } from '@/lib/incidentService';
 import IncidentFiltersComponent from './IncidentFilters';
 import { Neighborhood } from '@/lib/neighborhoodService';
-import { fetchNeighborhoods } from '@/lib/neighborhoodService';
 import { useSession } from 'next-auth/react';
 import { formatDate } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -31,7 +30,6 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
   const resizeRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const filtersButtonRef = useRef<HTMLButtonElement>(null);
 
   // Filtrar incidentes basado en el término de búsqueda
   const filteredIncidents = incidents.filter(incident =>
@@ -178,7 +176,6 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                   <button
                     onClick={() => {
                       setIsSearchOpen(true);
-                      // Enfocar el input después de que se abra
                       setTimeout(() => {
                         const input = document.querySelector('input[type="text"]') as HTMLInputElement;
                         if (input) input.focus();
@@ -187,7 +184,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors z-10"
                   >
                     <svg
-                      className="h-5 w-5"
+                      className="h-6 w-6"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -198,7 +195,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                 ) : (
                   <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
                     <svg
-                      className="h-5 w-5"
+                      className="h-6 w-6"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -207,14 +204,21 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                     </svg>
                   </div>
                 )}
-                <input
+                <motion.input
                   type="text"
                   placeholder="Buscar incidentes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full bg-gray-800/50 border border-gray-600/50 rounded-xl px-4 py-3 pl-11 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 ${!isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  initial={{ opacity: 0, x: 0 }}
+                  animate={{ 
+                    opacity: isSearchOpen ? 1 : 0,
+                    x: isSearchOpen ? 0 : 0
+                  }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="w-full bg-gray-800/50 border border-gray-600/50 rounded-xl px-4 py-3 pl-11 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/10 transition-all duration-200"
                   onBlur={() => setIsSearchOpen(false)}
                   autoFocus={isSearchOpen}
+                  style={{ pointerEvents: isSearchOpen ? 'auto' : 'none' }}
                 />
                 {searchTerm && isSearchOpen && (
                   <button
@@ -222,7 +226,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors z-10"
                   >
                     <svg
-                      className="h-5 w-5"
+                      className="h-6 w-6"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -233,6 +237,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                 )}
               </motion.div>
             </div>
+            
             <div className="flex items-center gap-2">
               <motion.span
                 className="text-gray-400 absolute right-12"
@@ -254,7 +259,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
           </div>
 
           {/* Contador de resultados */}
-          <div className="mt-3 flex items-center justify-between text-sm text-gray-400">
+          <div className="mt-2 flex items-center justify-between text-sm text-gray-400">
             <span>
               {filteredIncidents.length} de {incidents.length} incidente{incidents.length !== 1 ? 's' : ''}
             </span>

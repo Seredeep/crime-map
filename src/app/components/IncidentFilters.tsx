@@ -11,12 +11,10 @@ import {
   Calendar, 
   Clock, 
   Tags, 
-  Filter, 
-  X,
   CheckCircle,
-  AlertCircle,
   Clock3,
-  Trash2
+  Trash2,
+  List
 } from 'lucide-react';
 
 interface IncidentFiltersProps {
@@ -206,22 +204,11 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger asChild>
         <motion.button
-          className="relative flex items-center justify-center p-2.5 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
-          style={{
-            backgroundColor: 'rgba(36, 40, 50, 1)',
-            backgroundImage: 'linear-gradient(139deg, rgba(36, 40, 50, 1) 0%, rgba(36, 40, 50, 1) 0%, rgba(37, 28, 40, 1) 100%)',
-            border: '1px solid #42434a',
-            color: '#7e8590'
-          }}
-          whileHover={{ 
-            backgroundColor: '#5353ff',
-            color: '#ffffff',
-            transform: 'translate(1px, -1px)'
-          }}
-          whileTap={{ scale: 0.99 }}
+          className="relative flex items-center justify-center p-2 text-gray-400 hover:text-white rounded-lg transition-all duration-300"
+          whileTap={{ scale: 0.95 }}
           aria-label="Filtros de incidentes"
         >
-          <Filter className="h-5 w-5" />
+          <List className="h-6 w-6" />
           
           <AnimatePresence>
             {activeFiltersCount > 0 && (
@@ -229,7 +216,7 @@ export default function IncidentFilters({ filters, onFiltersChange, onNeighborho
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
-                className="absolute top-0 right-0 -mt-1 -mr-1 flex items-center justify-center h-5 w-5 text-xs bg-blue-500 text-white rounded-full"
+                className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 text-xs bg-blue-500 text-white rounded-full"
               >
                 {activeFiltersCount}
               </motion.span>
