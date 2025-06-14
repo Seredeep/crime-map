@@ -13,7 +13,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import IncidentCharts from './IncidentCharts';
 
 // Componente para el panel de incidentes recientes
-function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersChange, onNeighborhoodSelect }: {
+function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersChange, onNeighborhoodSelect, isMobile = false }: {
   incidents: Incident[],
   onIncidentClick: (incident: Incident) => void,
   onViewStatsClick: () => void,
@@ -21,7 +21,8 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
   setShowFilters: React.Dispatch<React.SetStateAction<boolean>>,
   filters: IncidentFilters,
   onFiltersChange: (newFilters: IncidentFilters) => void,
-  onNeighborhoodSelect: (neighborhood: Neighborhood | null) => void
+  onNeighborhoodSelect: (neighborhood: Neighborhood | null) => void,
+  isMobile?: boolean
 }) {
   const [showStats, setShowStats] = useState(false);
   const [panelWidth, setPanelWidth] = useState(400);
@@ -139,29 +140,31 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
   return (
     <div
       ref={panelRef}
-      className={`bg-gray-900/95 backdrop-blur-sm text-white h-full shadow-2xl z-10 border-r border-gray-700/50 relative transition-all duration-200 flex flex-col ${isResizing ? 'select-none' : ''}`}
-      style={{ width: `${panelWidth}px` }}
+      className={`bg-gray-900/95 backdrop-blur-sm text-white h-full shadow-2xl z-10 border-r border-gray-700/50 relative transition-all duration-200 flex flex-col ${isResizing ? 'select-none' : ''} ${isMobile ? 'w-full' : ''}`}
+      style={isMobile ? {} : { width: `${panelWidth}px` }}
     >
-      {/* Header con controles */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-bold text-xl text-white">Incidentes</h2>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setShowStats(!showStats)}
-                className={`p-2.5 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg transform hover:scale-105 ${showStats
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-700/50 hover:bg-gray-600 text-gray-300 border border-gray-600/50'
-                  }`}
-                title="Ver estadísticas"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </button>
+              {/* Header con controles */}
+        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
+          <div className={`p-4 ${isMobile ? 'pr-16' : ''}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-bold text-xl text-white">Incidentes</h2>
+              {!isMobile && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowStats(!showStats)}
+                    className={`p-2.5 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg transform hover:scale-105 ${showStats
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-gray-700/50 hover:bg-gray-600 text-gray-300 border border-gray-600/50'
+                      }`}
+                    title="Ver estadísticas"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
 
           {/* Contenedor de búsqueda y filtros */}
           <div className="relative flex justify-between items-center">
@@ -408,15 +411,17 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
         </AnimatePresence>
       </div>
 
-      {/* Handle de redimensionamiento mejorado */}
-      <div
-        ref={resizeRef}
-        className={`absolute top-0 right-0 w-2 h-full cursor-ew-resize group hover:bg-blue-500/20 transition-all duration-200 flex items-center justify-center ${isResizing ? 'bg-blue-500/30' : ''
-          }`}
-        title="Arrastrar para redimensionar"
-      >
-        <div className="w-1 h-8 bg-gray-600 rounded-full group-hover:bg-blue-400 transition-colors duration-200"></div>
-      </div>
+      {/* Handle de redimensionamiento mejorado - Solo en desktop */}
+      {!isMobile && (
+        <div
+          ref={resizeRef}
+          className={`absolute top-0 right-0 w-2 h-full cursor-ew-resize group hover:bg-blue-500/20 transition-all duration-200 flex items-center justify-center ${isResizing ? 'bg-blue-500/30' : ''
+            }`}
+          title="Arrastrar para redimensionar"
+        >
+          <div className="w-1 h-8 bg-gray-600 rounded-full group-hover:bg-blue-400 transition-colors duration-200"></div>
+        </div>
+      )}
     </div>
   );
 }
@@ -428,6 +433,8 @@ export default function IncidentsView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showMobilePopover, setShowMobilePopover] = useState(false);
+  const popoverBtnRef = useRef<HTMLButtonElement>(null);
   const isEditorOrAdmin = session?.user?.role === 'editor' || session?.user?.role === 'admin';
 
   const [filters, setFilters] = useState<IncidentFilters>(() => {
@@ -505,8 +512,7 @@ export default function IncidentsView() {
 
   return (
     <div className="p-0 w-full h-full">
-      {/* Mapa con panel de incidentes recientes */}
-      <div className="rounded-lg overflow-hidden shadow-xl h-[100vh] relative flex">
+      <div className="rounded-lg overflow-hidden shadow-xl h-full relative flex">
         {loading ? (
           <div className="w-full h-full bg-gray-800/50 flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -523,8 +529,8 @@ export default function IncidentsView() {
           </div>
         ) : (
           <>
-            {/* Panel de incidentes recientes */}
-            <div className="h-full z-20 relative">
+            {/* Panel de incidentes recientes - Desktop */}
+            <div className="hidden md:block h-full z-20 relative">
               <RecentIncidentsPanel
                 incidents={incidents}
                 onIncidentClick={handleIncidentSelected}
@@ -534,7 +540,70 @@ export default function IncidentsView() {
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
                 onNeighborhoodSelect={handleNeighborhoodSelect}
+                isMobile={false}
               />
+            </div>
+
+            {/* Botón para abrir popover de incidentes en móvil */}
+            <div className="absolute top-4 left-4 z-[1000] md:hidden">
+              <button
+                ref={popoverBtnRef}
+                onClick={() => setShowMobilePopover((v) => !v)}
+                className={`bg-gray-900/90 backdrop-blur-sm text-white p-3 rounded-xl shadow-lg border border-gray-700/50 hover:bg-gray-800/90 transition-all duration-200 flex items-center space-x-2 ${showMobilePopover ? 'ring-2 ring-blue-500' : ''}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span className="text-sm font-medium">Incidentes</span>
+                <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                  {incidents.length}
+                </div>
+              </button>
+              {/* Popover de incidentes */}
+              {showMobilePopover && (
+                <>
+                  {/* Overlay */}
+                  <div
+                    className="fixed inset-0 z-[900] bg-black/30"
+                    onClick={() => setShowMobilePopover(false)}
+                  />
+                  {/* Popover */}
+                  <div
+                    className="absolute left-0 mt-2 z-[1100] w-[80vw] max-w-xs"
+                    style={{ minWidth: 280 }}
+                  >
+                    {/* Flecha visual */}
+                    <div className="absolute -top-2 left-8 w-5 h-5 overflow-hidden">
+                      <div className="w-4 h-4 bg-gray-900 border-l border-t border-gray-700 rotate-45 mx-auto shadow-lg" />
+                    </div>
+                    <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden animate-slideInRight relative">
+                      <button
+                        onClick={() => setShowMobilePopover(false)}
+                        className="absolute top-2 right-2 p-2 text-gray-400 hover:text-white"
+                        aria-label="Cerrar"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <RecentIncidentsPanel
+                        incidents={incidents}
+                        onIncidentClick={(incident) => {
+                          handleIncidentSelected(incident);
+                          setShowMobilePopover(false);
+                        }}
+                        onViewStatsClick={() => { }}
+                        showFilters={false}
+                        setShowFilters={() => { }}
+                        filters={filters}
+                        onFiltersChange={handleFiltersChange}
+                        onNeighborhoodSelect={handleNeighborhoodSelect}
+                        isMobile={true}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Mapa principal */}
@@ -548,7 +617,7 @@ export default function IncidentsView() {
               />
 
               {/* Filtros flotantes para pantallas pequeñas */}
-              <div className="absolute top-4 left-4 z-[1000] md:hidden">
+              <div className="absolute top-20 left-4 z-[1000] md:hidden">
                 <IncidentFiltersComponent
                   filters={filters}
                   onFiltersChange={handleFiltersChange}

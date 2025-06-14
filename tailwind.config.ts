@@ -55,6 +55,19 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
+  		},
+  		spacing: {
+  			'safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+  			'safe-area-inset-top': 'env(safe-area-inset-top)',
+  			'safe-area-inset-left': 'env(safe-area-inset-left)',
+  			'safe-area-inset-right': 'env(safe-area-inset-right)'
+  		},
+  		height: {
+  			'safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+  			'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
+  		},
+  		minHeight: {
+  			'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
   		}
   	}
   },

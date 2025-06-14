@@ -6,6 +6,10 @@ import { useSession } from 'next-auth/react';
 import IncidentForm from './components/IncidentForm';
 import IncidentQueue from './components/IncidentQueue';
 import Sidebar from './components/Sidebar';
+import MobileBottomTabs from './components/MobileBottomTabs';
+import MobileStatsView from './components/MobileStatsView';
+import MobileCommunitiesView from './components/MobileCommunitiesView';
+import MobileReportView from './components/MobileReportView';
 import { useCallback, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -43,7 +47,7 @@ export default function Home() {
   
   // Definir las tabs disponibles basado en el rol del usuario
   const availableTabs = useMemo(() => {
-    const baseTabs = ['incidents', 'communities', 'report'];
+    const baseTabs = ['incidents', 'stats', 'communities', 'report'];
 
     if (session?.user?.role === 'admin' || session?.user?.role === 'editor') {
       baseTabs.push('queue');
@@ -62,32 +66,24 @@ export default function Home() {
           </div>
         );
 
+      case 'stats':
+        return (
+          <div className="w-full h-full">
+            <MobileStatsView />
+          </div>
+        );
+
       case 'communities':
         return (
-          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Comunidades</h2>
-            <p className="text-gray-300">
-              Sección de comunidades en desarrollo. Próximamente podrás ver y unirte a comunidades locales.
-            </p>
+          <div className="w-full h-full">
+            <MobileCommunitiesView />
           </div>
         );
 
       case 'report':
         return (
-          <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700/50">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-gray-200">Reportar un Incidente</h2>
-              <button
-                onClick={() => setActiveTab('incidents')}
-                className="flex items-center space-x-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                <span>Volver al mapa</span>
-              </button>
-            </div>
-            <IncidentForm />
+          <div className="w-full h-full">
+            <MobileReportView onBack={() => setActiveTab('incidents')} />
           </div>
         );
 
@@ -168,43 +164,34 @@ export default function Home() {
         </div>
 
         {/* Mobile Layout */}
-        <div className="md:hidden h-full w-full relative">
-          {/* Content wrapper with map and incidents */}
-          <div className="flex flex-col h-full">
-            {/* Main content area */}
-            <div className="flex-1 relative">
-              {/* Tab content with animation */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ 
-                    duration: 0.4, 
-                    ease: [0.4, 0, 0.2, 1],
-                    type: "spring",
-                    stiffness: 100
-                  }}
-                  className="w-full h-full"
-                >
-                  {renderTabContent()}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
+        <div className="md:hidden w-full relative h-[calc(100vh-4rem-5rem)]">
+          {/* Tab content with animation */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ 
+                duration: 0.4, 
+                ease: [0.4, 0, 0.2, 1],
+                type: "spring",
+                stiffness: 100
+              }}
+              className="w-full h-full"
+            >
+              {renderTabContent()}
+            </motion.div>
+          </AnimatePresence>
 
-          {/* Mobile Sidebar */}
-          <div className="fixed bottom-0 left-0 w-full z-40">
-            <Sidebar
-              activeTab={activeTab}
-              onTabChangeAction={handleTabChange}
-              onReportClickAction={handleReportClick}
-              status={status}
-              availableTabs={availableTabs}
-              onIncidentSelect={handleIncidentSelect}
-            />
-          </div>
+          {/* Mobile Bottom Tabs */}
+          <MobileBottomTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            onReportClick={handleReportClick}
+            status={status}
+            availableTabs={availableTabs}
+          />
         </div>
       </div>
     </div>
