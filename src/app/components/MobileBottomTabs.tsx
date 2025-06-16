@@ -46,12 +46,6 @@ const MobileBottomTabs = ({
       icon: <FiUsers className="w-5 h-5" /> 
     },
     { 
-      id: 'report', 
-      label: 'Reportar', 
-      icon: <FiAlertTriangle className="w-5 h-5" />,
-      requiresAuth: true 
-    },
-    { 
       id: 'queue', 
       label: 'Cola', 
       icon: <FiList className="w-5 h-5" />,
@@ -73,15 +67,11 @@ const MobileBottomTabs = ({
   }, [availableTabs, status]);
 
   const handleTabClick = (tabId: string) => {
-    if (tabId === 'report') {
-      onReportClick();
-    } else {
-      onTabChange(tabId);
-    }
+    onTabChange(tabId);
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden h-20">
+    <div className="fixed bottom-0 left-0 right-0 z-[200] md:hidden h-20">
       {/* Backdrop blur effect */}
       <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-lg border-t border-gray-700/50" />
       

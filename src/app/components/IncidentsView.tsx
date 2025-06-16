@@ -433,8 +433,7 @@ export default function IncidentsView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showMobilePopover, setShowMobilePopover] = useState(false);
-  const popoverBtnRef = useRef<HTMLButtonElement>(null);
+
   const isEditorOrAdmin = session?.user?.role === 'editor' || session?.user?.role === 'admin';
 
   const [filters, setFilters] = useState<IncidentFilters>(() => {
@@ -544,67 +543,7 @@ export default function IncidentsView() {
               />
             </div>
 
-            {/* Botón para abrir popover de incidentes en móvil */}
-            <div className="absolute top-4 left-4 z-[1000] md:hidden">
-              <button
-                ref={popoverBtnRef}
-                onClick={() => setShowMobilePopover((v) => !v)}
-                className={`bg-gray-900/90 backdrop-blur-sm text-white p-3 rounded-xl shadow-lg border border-gray-700/50 hover:bg-gray-800/90 transition-all duration-200 flex items-center space-x-2 ${showMobilePopover ? 'ring-2 ring-blue-500' : ''}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <span className="text-sm font-medium">Incidentes</span>
-                <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                  {incidents.length}
-                </div>
-              </button>
-              {/* Popover de incidentes */}
-              {showMobilePopover && (
-                <>
-                  {/* Overlay */}
-                  <div
-                    className="fixed inset-0 z-[900] bg-black/30"
-                    onClick={() => setShowMobilePopover(false)}
-                  />
-                  {/* Popover */}
-                  <div
-                    className="absolute left-0 mt-2 z-[1100] w-[80vw] max-w-xs"
-                    style={{ minWidth: 280 }}
-                  >
-                    {/* Flecha visual */}
-                    <div className="absolute -top-2 left-8 w-5 h-5 overflow-hidden">
-                      <div className="w-4 h-4 bg-gray-900 border-l border-t border-gray-700 rotate-45 mx-auto shadow-lg" />
-                    </div>
-                    <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden animate-slideInRight relative">
-                      <button
-                        onClick={() => setShowMobilePopover(false)}
-                        className="absolute top-2 right-2 p-2 text-gray-400 hover:text-white"
-                        aria-label="Cerrar"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                      <RecentIncidentsPanel
-                        incidents={incidents}
-                        onIncidentClick={(incident) => {
-                          handleIncidentSelected(incident);
-                          setShowMobilePopover(false);
-                        }}
-                        onViewStatsClick={() => { }}
-                        showFilters={false}
-                        setShowFilters={() => { }}
-                        filters={filters}
-                        onFiltersChange={handleFiltersChange}
-                        onNeighborhoodSelect={handleNeighborhoodSelect}
-                        isMobile={true}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+
 
             {/* Mapa principal */}
             <div className="flex-1 h-full relative">
@@ -616,14 +555,7 @@ export default function IncidentsView() {
                 onIncidentUpdate={handleIncidentUpdate}
               />
 
-              {/* Filtros flotantes para pantallas pequeñas */}
-              <div className="absolute top-20 left-4 z-[1000] md:hidden">
-                <IncidentFiltersComponent
-                  filters={filters}
-                  onFiltersChange={handleFiltersChange}
-                  onNeighborhoodSelect={handleNeighborhoodSelect}
-                />
-              </div>
+
 
               {/* Contador de incidentes */}
               <div className="absolute top-4 right-4 z-[1000]">

@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Claridad - Mapa del Crimen 🔎🗺️
 
-First, run the development server:
+Plataforma de visualización de delitos urbanos en Argentina. Este proyecto tiene el objetivo de mapear incidentes públicos de forma clara y accesible, permitiendo el filtrado por tipo, fecha y zona. Está desarrollado con tecnologías modernas y pensado para escalar a futuro.
+
+---
+
+## 📦 Stack Técnico
+
+- **Next.js** (App Router)
+- **Supabase** (Auth + DB)
+- **Leaflet** (mapas)
+- **TailwindCSS** (UI)
+- **Zod**, **Zustand**, **TypeScript**
+
+---
+
+## 📁 Estructura base (resumen útil para el equipo)
+
+src/
+├─ app/ → rutas del sistema
+├─ components/ → componentes visuales
+├─ config/ → claves, constantes, rutas
+├─ hooks/ → lógica reactiva (ej: useCrimeData)
+├─ services/ → llamadas a APIs externas
+├─ utils/ → helpers generales
+├─ types/ → tipos compartidos
+
+---
+
+## 👀 Áreas críticas
+
+| Archivo/Carpeta            | Descripción |
+|----------------------------|-------------|
+| `MapComponent.tsx`         | Mapa principal con render de incidentes |
+| `IncidentFilters.tsx`      | Filtros por tipo, fecha, zona |
+| `hooks/useCrimeData.ts`    | Hook central que maneja la data cruda |
+| `services/incidentServices.ts` | Llamadas a Supabase |
+| `config/maps-key.ts`       | Llaves de Mapbox o Leaflet |
+| `app/admin/`               | Panel de carga y revisión |
+
+---
+
+## ⚙ Setup rápido
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

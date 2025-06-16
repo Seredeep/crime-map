@@ -1,0 +1,12 @@
+{
+  "projectContext": "Claridad es una plataforma de mapeo de delitos geolocalizados en Argentina. Usa Next.js, Supabase y Leaflet. El objetivo es ayudar a visualizar y entender el crimen urbano para ciudadanos, ONGs y periodistas. Este codebase está en evolución, con foco en modularidad, escalabilidad y claridad visual. El equipo puede ir rotando, por eso se prioriza el entendimiento rápido del código.",
+  "goals": [
+    "Mantener el código modular, escalable y entendible, especialmente en los componentes de mapa y filtros.",
+    "Refactorizar componentes grandes o duplicados en piezas reutilizables. Separar lógica de presentación.",
+    "Agregar comentarios explicativos donde sea útil para otros desarrolladores o futuras mejoras.",
+    "Seguir la convención de nomenclatura: PascalCase para componentes, camelCase para funciones, snake_case para claves de supabase.",
+    "Asistir en generación de hooks personalizados para lógica de negocio (ej: `useFilteredIncidents`).",
+    "Ayudar a optimizar la performance de mapas, queries y filtros, especialmente en mobile.",
+    "Detectar responsabilidades mezcladas en componentes como `MapComponent`, `IncidentList`, `Tabs`."
+  ]
+}

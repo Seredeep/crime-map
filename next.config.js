@@ -24,6 +24,21 @@ const nextConfig = {
         path: false,
       };
     }
+
+    // Suprimir warnings específicos de dependencias críticas para Supabase
+    config.module = config.module || {};
+    config.module.exprContextCritical = false;
+    config.module.unknownContextCritical = false;
+    
+    // Configuración específica para suprimir warnings de @supabase/realtime-js
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /node_modules\/@supabase\/realtime-js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+
     return config;
   },
   images: {

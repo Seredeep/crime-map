@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import IncidentsView from './components/IncidentsView';
+import SwipeableIncidentsView from './components/SwipeableIncidentsView';
 import { useSession } from 'next-auth/react';
 import IncidentForm from './components/IncidentForm';
 import IncidentQueue from './components/IncidentQueue';
@@ -10,8 +11,14 @@ import MobileBottomTabs from './components/MobileBottomTabs';
 import MobileStatsView from './components/MobileStatsView';
 import MobileCommunitiesView from './components/MobileCommunitiesView';
 import MobileReportView from './components/MobileReportView';
+import MobileDynamicNavbar from './components/MobileDynamicNavbar';
+import MobileSlidePanel from './components/MobileSlidePanel';
+import MobileSettingsPanel from './components/MobileSettingsPanel';
+import FloatingReportButton from './components/FloatingReportButton';
 import { useCallback, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { IncidentFilters } from '@/lib/types';
+import { Neighborhood } from '@/lib/neighborhoodService';
 
 export default function Home() {
   // State to track sidebar collapse state
@@ -22,6 +29,14 @@ export default function Home() {
   const { status } = useSession();
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('incidents');
+  
+  // Estados para los nuevos paneles móviles
+  const [isFiltersPanelOpen, setIsFiltersPanelOpen] = useState(false);
+  const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
+  const [filters, setFilters] = useState<IncidentFilters>({
+    status: undefined,
+    tags: []
+  });
 
   const handleReportClick = useCallback(() => {
     if (status !== 'authenticated') {
@@ -34,10 +49,26 @@ export default function Home() {
   const handleTabChange = useCallback((tabId: string) => {
     if (status === 'authenticated' || tabId === 'incidents' || tabId === 'communities') {
       setActiveTab(tabId);
-    } else if (tabId === 'report') {
-      handleReportClick();
     }
-  }, [handleReportClick, status]);
+  }, [status]);
+
+  // Callbacks para los paneles móviles
+  const handleFiltersClick = useCallback(() => {
+    setIsFiltersPanelOpen(true);
+  }, []);
+
+  const handleSettingsClick = useCallback(() => {
+    setIsSettingsPanelOpen(true);
+  }, []);
+
+  const handleFiltersChange = useCallback((newFilters: IncidentFilters) => {
+    setFilters(newFilters);
+  }, []);
+
+  const handleNeighborhoodSelect = useCallback((neighborhood: Neighborhood | null) => {
+    // Implementar lógica de selección de barrio si es necesario
+    console.log('Neighborhood selected:', neighborhood);
+  }, []);
 
   // Handle incident selection
   const handleIncidentSelect = useCallback((incidentId: string) => {
@@ -47,7 +78,7 @@ export default function Home() {
   
   // Definir las tabs disponibles basado en el rol del usuario
   const availableTabs = useMemo(() => {
-    const baseTabs = ['incidents', 'stats', 'communities', 'report'];
+    const baseTabs = ['incidents', 'stats', 'communities'];
 
     if (session?.user?.role === 'admin' || session?.user?.role === 'editor') {
       baseTabs.push('queue');
@@ -62,7 +93,7 @@ export default function Home() {
       case 'incidents':
         return (
           <div className="w-full h-full">
-            <IncidentsView />
+            <SwipeableIncidentsView onFiltersOpen={handleFiltersClick} />
           </div>
         );
 
@@ -164,25 +195,41 @@ export default function Home() {
         </div>
 
         {/* Mobile Layout */}
-        <div className="md:hidden w-full relative h-[calc(100vh-4rem-5rem)]">
-          {/* Tab content with animation */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ 
-                duration: 0.4, 
-                ease: [0.4, 0, 0.2, 1],
-                type: "spring",
-                stiffness: 100
-              }}
-              className="w-full h-full"
-            >
-              {renderTabContent()}
-            </motion.div>
-          </AnimatePresence>
+        <div className="md:hidden w-full relative">
+          {/* Nueva navbar dinámica para móvil */}
+          <MobileDynamicNavbar
+            activeTab={activeTab}
+            onFiltersClick={handleFiltersClick}
+            onSettingsClick={handleSettingsClick}
+          />
+
+          {/* Contenido principal con altura ajustada */}
+          <div className="h-[calc(100vh-4rem)] pt-16">
+            {/* Tab content with animation */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ 
+                  duration: 0.4, 
+                  ease: [0.4, 0, 0.2, 1],
+                  type: "spring",
+                  stiffness: 100
+                }}
+                className="w-full h-full"
+              >
+                {renderTabContent()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Botón flotante de reportar - solo visible en el mapa */}
+          <FloatingReportButton
+            onClick={handleReportClick}
+            isVisible={activeTab === 'incidents'}
+          />
 
           {/* Mobile Bottom Tabs */}
           <MobileBottomTabs
@@ -191,6 +238,20 @@ export default function Home() {
             onReportClick={handleReportClick}
             status={status}
             availableTabs={availableTabs}
+          />
+
+          {/* Paneles deslizantes */}
+          <MobileSlidePanel
+            isOpen={isFiltersPanelOpen}
+            onClose={() => setIsFiltersPanelOpen(false)}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onNeighborhoodSelect={handleNeighborhoodSelect}
+          />
+
+          <MobileSettingsPanel
+            isOpen={isSettingsPanelOpen}
+            onClose={() => setIsSettingsPanelOpen(false)}
           />
         </div>
       </div>
