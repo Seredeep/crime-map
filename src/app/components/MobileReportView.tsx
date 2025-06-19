@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiCamera, FiMapPin, FiArrowLeft, FiCheck } from 'react-icons/fi';
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
+import { FiArrowLeft, FiCamera, FiCheck, FiMapPin } from 'react-icons/fi';
 
 interface MobileReportViewProps {
   onBack: () => void;
@@ -52,7 +52,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log('Submitting report:', { formData, images });
+    // Submit report logic
     setIsSubmitting(false);
     onBack();
   };
@@ -112,7 +112,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
           >
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Describe el incidente</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -186,14 +186,14 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
           >
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Información adicional</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     <FiCamera className="inline w-4 h-4 mr-1" />
                     Fotos (opcional)
                   </label>
-                  
+
                   <div className="grid grid-cols-3 gap-3 mb-3">
                     {images.map((image, index) => (
                       <div key={index} className="relative">
@@ -210,7 +210,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                         </button>
                       </div>
                     ))}
-                    
+
                     {images.length < 3 && (
                       <button
                         onClick={() => fileInputRef.current?.click()}
@@ -221,7 +221,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                       </button>
                     )}
                   </div>
-                  
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -321,7 +321,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               Anterior
             </button>
           )}
-          
+
           {currentStep < 3 ? (
             <button
               onClick={() => setCurrentStep(prev => prev + 1)}
@@ -353,4 +353,4 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   );
 };
 
-export default MobileReportView; 
+export default MobileReportView;

@@ -1,12 +1,12 @@
 'use client';
 
-import { motion, PanInfo, AnimatePresence } from 'framer-motion';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { fetchIncidents } from '@/lib/incidentService';
+import { Incident } from '@/lib/types';
+import { formatDate } from '@/lib/utils';
+import { AnimatePresence, PanInfo, motion } from 'framer-motion';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import IncidentsView from './IncidentsView';
 import MapSearchBar from './MapSearchBar';
-import { Incident } from '@/lib/types';
-import { fetchIncidents } from '@/lib/incidentService';
-import { formatDate } from '@/lib/utils';
 
 interface SwipeableIncidentsViewProps {
   onFiltersOpen?: () => void;
@@ -53,7 +53,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
       const touch = e.touches[0];
       const deltaX = touch.clientX - startX;
       const deltaY = touch.clientY - startY;
-      
+
       // Solo considerar swipe horizontal si el movimiento es principalmente horizontal
       if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
         hasMoved = true;
@@ -64,12 +64,12 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
     const handleTouchEnd = (e: TouchEvent) => {
       const touch = e.changedTouches[0];
       const deltaX = touch.clientX - startX;
-      
+
       // Si se deslizó más de 150px hacia la derecha desde el borde izquierdo, abrir filtros
       if (startX < 50 && deltaX > 150 && hasMoved) {
         onFiltersOpen?.();
       }
-      
+
       setIsDraggingHorizontal(false);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
@@ -83,7 +83,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
     const newHeight = bottomSheetHeight - info.offset.y;
     const minHeight = 80; // Más pequeño
     const maxHeight = window.innerHeight * 0.6; // Un poco menos alto
-    
+
     setBottomSheetHeight(Math.max(minHeight, Math.min(newHeight, maxHeight)));
   }, [bottomSheetHeight]);
 
@@ -92,7 +92,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
     const offset = info.offset.y;
     const minHeight = 80;
     const maxHeight = window.innerHeight * 0.6;
-    
+
     // Si se arrastra hacia arriba con suficiente velocidad o distancia, expandir
     if (velocity < -500 || offset < -100) {
       setBottomSheetHeight(maxHeight);
@@ -151,7 +151,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="w-full h-full relative"
       onTouchStart={handleTouchStart}
@@ -167,10 +167,10 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
           >
             <div className="bg-blue-500/30 backdrop-blur-md rounded-r-xl p-4 border-r-2 border-blue-400 shadow-lg">
               <div className="flex items-center space-x-3 text-blue-300">
-                <motion.svg 
-                  className="w-6 h-6" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <motion.svg
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                   animate={{ x: [0, 5, 0] }}
                   transition={{ duration: 1, repeat: Infinity }}
@@ -186,12 +186,12 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
 
       {/* Barra de búsqueda */}
       <div className="absolute top-4 left-4 right-4 z-[100] md:hidden">
-        <MapSearchBar 
+        <MapSearchBar
           onLocationSelect={(coords, address) => {
-            console.log('Location selected:', coords, address);
+            // Handle location selection
           }}
           onIncidentSelect={(incidentId) => {
-            console.log('Incident selected:', incidentId);
+            // Handle incident selection
           }}
         />
       </div>
@@ -204,7 +204,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
       {/* Bottom Sheet con lista de incidentes - arriba de las tabs */}
       <motion.div
         className="fixed left-0 right-0 z-[140] md:hidden bg-gray-900/95 backdrop-blur-lg border-t border-gray-700/50 rounded-t-2xl shadow-2xl"
-        style={{ 
+        style={{
           height: bottomSheetHeight,
           bottom: 80 // 80px arriba de las tabs (altura de tabs = 80px)
         }}
@@ -253,10 +253,10 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
               whileTap={{ scale: 0.95 }}
               className="p-2 rounded-full bg-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
             >
-              <motion.svg 
-                className="w-5 h-5" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <motion.svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
                 animate={{ rotate: isExpanded ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
@@ -327,4 +327,4 @@ const SwipeableIncidentsView = ({ onFiltersOpen }: SwipeableIncidentsViewProps) 
   );
 };
 
-export default SwipeableIncidentsView; 
+export default SwipeableIncidentsView;

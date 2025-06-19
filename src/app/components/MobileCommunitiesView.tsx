@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiUsers, FiMapPin, FiMessageCircle, FiTrendingUp, FiPlus, FiSearch, FiFilter } from 'react-icons/fi';
 import { useState } from 'react';
+import { FiMapPin, FiMessageCircle, FiPlus, FiSearch, FiTrendingUp, FiUsers } from 'react-icons/fi';
 
 interface Community {
   id: string;
@@ -89,7 +89,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
 
   const handleJoinCommunity = (communityId: string) => {
     // Aquí iría la lógica para unirse a una comunidad
-    console.log('Joining community:', communityId);
+    // Handle community join logic
   };
 
   return (
@@ -102,7 +102,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
             <FiPlus className="w-5 h-5" />
           </button>
         </div>
-        
+
         {/* Search bar */}
         <div className="relative mb-4">
           <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -141,7 +141,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
             key={community.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ 
+            transition={{
               delay: index * 0.1,
               duration: 0.3,
               ease: "easeOut"
@@ -168,7 +168,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
                   </div>
                 </div>
               </div>
-              
+
               {community.isJoined && (
                 <div className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">
                   Unido
@@ -245,4 +245,4 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
   );
 };
 
-export default MobileCommunitiesView; 
+export default MobileCommunitiesView;

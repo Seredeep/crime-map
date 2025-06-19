@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import Map from './Map';
-import IncidentDetails from './IncidentDetails';
-import { Incident, IncidentFilters } from '@/lib/types';
 import { fetchIncidents } from '@/lib/incidentService';
-import IncidentFiltersComponent from './IncidentFilters';
 import { Neighborhood } from '@/lib/neighborhoodService';
-import { useSession } from 'next-auth/react';
+import { Incident, IncidentFilters } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSession } from 'next-auth/react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import IncidentCharts from './IncidentCharts';
+import IncidentDetails from './IncidentDetails';
+import IncidentFiltersComponent from './IncidentFilters';
+import Map from './Map';
 
 // Componente para el panel de incidentes recientes
 function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersChange, onNeighborhoodSelect, isMobile = false }: {
@@ -143,28 +143,28 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
       className={`bg-gray-900/95 backdrop-blur-sm text-white h-full shadow-2xl z-10 border-r border-gray-700/50 relative transition-all duration-200 flex flex-col ${isResizing ? 'select-none' : ''} ${isMobile ? 'w-full' : ''}`}
       style={isMobile ? {} : { width: `${panelWidth}px` }}
     >
-              {/* Header con controles */}
-        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
-          <div className={`p-4 ${isMobile ? 'pr-16' : ''}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-xl text-white">Incidentes</h2>
-              {!isMobile && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setShowStats(!showStats)}
-                    className={`p-2.5 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg transform hover:scale-105 ${showStats
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-gray-700/50 hover:bg-gray-600 text-gray-300 border border-gray-600/50'
-                      }`}
-                    title="Ver estadísticas"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
+      {/* Header con controles */}
+      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
+        <div className={`p-4 ${isMobile ? 'pr-16' : ''}`}>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-xl text-white">Incidentes</h2>
+            {!isMobile && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowStats(!showStats)}
+                  className={`p-2.5 rounded-xl transition-all duration-300 ease-in-out hover:shadow-lg transform hover:scale-105 ${showStats
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-700/50 hover:bg-gray-600 text-gray-300 border border-gray-600/50'
+                    }`}
+                  title="Ver estadísticas"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Contenedor de búsqueda y filtros */}
           <div className="relative flex justify-between items-center">
@@ -213,7 +213,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   initial={{ opacity: 0, x: 0 }}
-                  animate={{ 
+                  animate={{
                     opacity: isSearchOpen ? 1 : 0,
                     x: isSearchOpen ? 0 : 0
                   }}
@@ -240,12 +240,12 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                 )}
               </motion.div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <motion.span
                 className="text-gray-400 absolute right-12"
                 initial={{ opacity: 1, x: 0 }}
-                animate={{ 
+                animate={{
                   opacity: isSearchOpen ? 0 : 1,
                   x: isSearchOpen ? 20 : 0
                 }}
@@ -267,7 +267,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
               {filteredIncidents.length} de {incidents.length} incidente{incidents.length !== 1 ? 's' : ''}
             </span>
             {searchTerm && (
-              <span className="text-blue-400">Filtrando por: "{searchTerm}"</span>
+              <span className="text-blue-400">Filtrando por: &quot;{searchTerm}&quot;</span>
             )}
           </div>
         </div>
@@ -543,8 +543,6 @@ export default function IncidentsView() {
               />
             </div>
 
-
-
             {/* Mapa principal */}
             <div className="flex-1 h-full relative">
               <Map
@@ -554,8 +552,6 @@ export default function IncidentsView() {
                 selectedNeighborhood={selectedNeighborhood}
                 onIncidentUpdate={handleIncidentUpdate}
               />
-
-
 
               {/* Contador de incidentes */}
               <div className="absolute top-4 right-4 z-[1000]">

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiPlus, FiAlertTriangle } from 'react-icons/fi';
+import { FiPlus } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
 interface FloatingReportButtonProps {
@@ -29,9 +29,9 @@ const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButto
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0, opacity: 0 }}
-      transition={{ 
-        type: 'spring', 
-        stiffness: 300, 
+      transition={{
+        type: 'spring',
+        stiffness: 300,
         damping: 20,
         delay: 0.2
       }}
@@ -40,7 +40,7 @@ const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButto
       <motion.button
         onClick={onClick}
         onTapStart={() => setIsPressed(true)}
-        onTapEnd={() => setIsPressed(false)}
+        onPointerUp={() => setIsPressed(false)}
         whileTap={{ scale: 0.9 }}
         whileHover={{ scale: 1.05 }}
         className="relative w-14 h-14 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200"
@@ -62,7 +62,7 @@ const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButto
           transition={{ duration: 0.3 }}
           className="relative z-10"
         >
-          <FiAlertTriangle className="w-6 h-6" />
+          <FiPlus className="w-6 h-6" />
         </motion.div>
 
         {/* Efecto de brillo */}
@@ -86,4 +86,4 @@ const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButto
   );
 };
 
-export default FloatingReportButton; 
+export default FloatingReportButton;

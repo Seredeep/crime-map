@@ -1,13 +1,14 @@
-import { MongoClient } from "mongodb";
 import * as fs from "fs";
+import { MongoClient } from "mongodb";
 
-// CONFIGURACIÓN
-const MONGODB_URI = "mongodb+srv://admin:yuZZ2F3KwcBhFf2@mongodbcluster.wwxlb.gcp.mongodb.net/?retryWrites=true&w=majority&appName=MongoDBCluster";
-const DATABASE_NAME = "test";
-const COLLECTION_NAME = "incident_draft";
+// #region Configuration
+const MONGODB_URI = process.env.MONGODB_URI || "";
+const DATABASE_NAME = process.env.DATABASE_NAME || "test";
+const COLLECTION_NAME = process.env.COLLECTION_NAME || "incident_draft";
 
-const GOOGLE_GEOCODING_API_KEY = "AIzaSyBiyCHEjtssku8P63I4pqIztbS-jHYHJQ4";
+const GOOGLE_GEOCODING_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
 const GOOGLE_GEOCODING_URL = "https://maps.googleapis.com/maps/api/geocode/json";
+// #endregion
 
 const BARRIO = "Bosque Peralta Ramos, Mar del Plata, Argentina";
 
@@ -30,30 +31,30 @@ async function geocodeLocation(locationText: string): Promise<{ coordinates: [nu
     console.log(`🔍 Intentando geocodificar: ${fullAddress}`);
     let response = await fetch(url);
     let data = await response.json();
-    
+
     if (data.status === "OK" && data.results.length > 0) {
       const location = data.results[0].geometry.location;
       const formattedAddress = data.results[0].formatted_address;
-      
+
       // Verificar si es una ubicación genérica del barrio
       const isGenericLocation = formattedAddress.includes("Reserva Forestal Bosque Peralta Ramos");
       const hasLocationTypeApproximate = data.results[0].geometry.location_type === "APPROXIMATE";
-      
+
       if (isGenericLocation || hasLocationTypeApproximate) {
         console.log(`⚠️ Resultado demasiado genérico para: ${locationText}`);
-        
+
         // Intentar con calles principales en Mar del Plata
         fullAddress = `${locationText}, Mar del Plata, Argentina`;
         url = `${GOOGLE_GEOCODING_URL}?address=${encodeURIComponent(fullAddress)}&key=${GOOGLE_GEOCODING_API_KEY}`;
-        
+
         console.log(`🔍 Intentando geocodificar con ciudad más amplia: ${fullAddress}`);
         response = await fetch(url);
         data = await response.json();
-        
+
         if (data.status === "OK" && data.results.length > 0) {
           const location = data.results[0].geometry.location;
           const formattedAddress = data.results[0].formatted_address;
-          
+
           // Verificar si esta vez el resultado es más específico
           if (data.results[0].geometry.location_type !== "APPROXIMATE") {
             console.log(`✅ Geocodificación mejorada exitosa: ${formattedAddress}`);
@@ -63,14 +64,14 @@ async function geocodeLocation(locationText: string): Promise<{ coordinates: [nu
             };
           }
         }
-        
+
         // Si aún no tenemos un buen resultado, intentar con la dirección simplificada
         console.log(`⚠️ Intentando con dirección simplificada: ${locationText}`);
         url = `${GOOGLE_GEOCODING_URL}?address=${encodeURIComponent(locationText)}&components=country:ar&key=${GOOGLE_GEOCODING_API_KEY}`;
-        
+
         response = await fetch(url);
         data = await response.json();
-        
+
         if (data.status === "OK" && data.results.length > 0) {
           const location = data.results[0].geometry.location;
           const formattedAddress = data.results[0].formatted_address;
@@ -80,25 +81,25 @@ async function geocodeLocation(locationText: string): Promise<{ coordinates: [nu
             formattedAddress
           };
         }
-        
+
         // Si todos los intentos fallan, generar una ubicación aleatoria cerca del barrio
         // para evitar agrupar todos los incidentes en el mismo punto
         console.log(`⚠️ Generando ubicación aproximada para: ${locationText}`);
-        
+
         // Coordenadas base para Bosque Peralta Ramos
         const baseLat = -38.069919;
         const baseLng = -57.559690;
-        
+
         // Generar un offset aleatorio (+-0.005 grados, aproximadamente +-500 metros)
         const latOffset = (Math.random() - 0.5) * 0.01;
         const lngOffset = (Math.random() - 0.5) * 0.01;
-        
+
         return {
           coordinates: [baseLng + lngOffset, baseLat + latOffset],
           formattedAddress: `${locationText} (ubicación aproximada)`
         };
       }
-      
+
       console.log(`✅ Geocodificación exitosa: ${formattedAddress}`);
       return {
         coordinates: [location.lng, location.lat],
@@ -107,18 +108,18 @@ async function geocodeLocation(locationText: string): Promise<{ coordinates: [nu
     } else {
       console.error(`⛔ Google Maps no encontró resultados para: ${fullAddress}. Status: ${data.status}`);
       console.error(`Error details:`, data.error_message || 'No error message provided');
-      
+
       // Generar ubicación alternativa
       console.log(`⚠️ Generando ubicación aproximada para: ${locationText}`);
-      
+
       // Coordenadas base para Bosque Peralta Ramos
       const baseLat = -38.069919;
       const baseLng = -57.559690;
-      
+
       // Generar un offset aleatorio (+-0.005 grados, aproximadamente +-500 metros)
       const latOffset = (Math.random() - 0.5) * 0.01;
       const lngOffset = (Math.random() - 0.5) * 0.01;
-      
+
       return {
         coordinates: [baseLng + lngOffset, baseLat + latOffset],
         formattedAddress: `${locationText} (ubicación aproximada)`
@@ -126,13 +127,13 @@ async function geocodeLocation(locationText: string): Promise<{ coordinates: [nu
     }
   } catch (error) {
     console.error(`⛔ Error geocoding '${fullAddress}':`, error);
-    
+
     // Generar ubicación aleatoria como último recurso
     const baseLat = -38.069919;
     const baseLng = -57.559690;
     const latOffset = (Math.random() - 0.5) * 0.01;
     const lngOffset = (Math.random() - 0.5) * 0.01;
-    
+
     return {
       coordinates: [baseLng + lngOffset, baseLat + latOffset],
       formattedAddress: `${locationText} (ubicación aproximada por error)`
@@ -183,7 +184,7 @@ async function main() {
 
       const { coordinates, formattedAddress } = geocodeResult;
       const [lon, lat] = coordinates;
-      
+
       // Comprobar si es una ubicación aproximada
       const isApproximate = formattedAddress.includes("ubicación aproximada");
       if (isApproximate) {

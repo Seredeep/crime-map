@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 interface ProtectedRouteProps {
@@ -14,16 +14,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const router = useRouter();
   const pathname = usePathname();
 
+  useEffect(() => {
+    if (status === 'unauthenticated' && pathname !== '/onboarding') {
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`);
+    }
+  }, [status, router, pathname]);
+
   // Si estamos en la página de onboarding, permitimos el acceso
   if (pathname === '/onboarding') {
     return <>{children}</>;
   }
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`);
-    }
-  }, [status, router, pathname]);
 
   // Mientras se verifica la sesión, mostramos un indicador de carga
   if (status === 'loading') {
@@ -71,4 +71,4 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   return <>{children}</>;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;

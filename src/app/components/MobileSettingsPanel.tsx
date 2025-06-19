@@ -84,7 +84,7 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
               stiffness: 200,
               duration: 0.4
             }}
-            className="fixed right-0 top-0 h-full w-[85%] max-w-sm bg-gray-900/98 backdrop-blur-lg border-l border-gray-700/50 z-50 md:hidden shadow-2xl"
+            className="fixed right-0 top-0 h-full w-[100%] max-w-sm bg-gray-900/98 backdrop-blur-lg border-l border-gray-700/50 z-[250] md:hidden shadow-2xl"
           >
             {/* Header del panel */}
             <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
