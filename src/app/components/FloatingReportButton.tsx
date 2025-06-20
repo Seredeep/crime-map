@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { FiPlus } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
 
 interface FloatingReportButtonProps {
   onClick: () => void;
@@ -10,7 +10,6 @@ interface FloatingReportButtonProps {
 }
 
 const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButtonProps) => {
-  const [isPressed, setIsPressed] = useState(false);
   const [showTooltip, setShowTooltip] = useState(true);
 
   // Ocultar tooltip después de 3 segundos
@@ -35,51 +34,95 @@ const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButto
         damping: 20,
         delay: 0.2
       }}
-      className="fixed bottom-40 right-4 z-[120] md:hidden"
+      className="fixed bottom-52 right-4 z-[120] md:hidden"
     >
-      <motion.button
-        onClick={onClick}
-        onTapStart={() => setIsPressed(true)}
-        onPointerUp={() => setIsPressed(false)}
-        whileTap={{ scale: 0.9 }}
-        whileHover={{ scale: 1.05 }}
-        className="relative w-14 h-14 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200"
-        style={{
-          boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3)'
-        }}
+      <motion.div
+        whileTap={{ scale: 0.95 }}
+        animate={{ borderRadius: ['20%', '30%', '24%'] }}
+        transition={{ duration: 2, repeat: Infinity, repeatType: 'mirror' }}
       >
-        {/* Efecto de ondas al presionar */}
-        <motion.div
-          className="absolute inset-0 rounded-full bg-red-400"
-          initial={{ scale: 1, opacity: 0 }}
-          animate={isPressed ? { scale: 1.5, opacity: [0, 0.3, 0] } : { scale: 1, opacity: 0 }}
-          transition={{ duration: 0.6 }}
-        />
-
-        {/* Icono principal */}
-        <motion.div
-          animate={{ rotate: isPressed ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
-          className="relative z-10"
+        <motion.button
+          onClick={onClick}
+          whileHover={{ scale: 1.02 }}
+          className="relative w-20 h-20 p-1 text-gray-800 flex items-center justify-center transition-all duration-300 group"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: `
+              inset 0 0 10px rgba(255,255,255,0.04),
+              0 0 30px rgba(255,255,255,0.02),
+              0 8px 32px rgba(0, 0, 0, 0.08),
+              0 4px 16px rgba(0, 0, 0, 0.06),
+              0 2px 8px rgba(0, 0, 0, 0.04)
+            `,
+            borderRadius: '30px'
+          }}
         >
-          <FiPlus className="w-6 h-6" />
-        </motion.div>
+          {/* Icono principal */}
+          <FiPlus className="w-12 h-12 text-red-500 group-hover:text-red-600 transition-colors stroke-[2.5]" />
 
-        {/* Efecto de brillo */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/20 to-transparent" />
-      </motion.button>
 
-      {/* Tooltip */}
+          {/* Efecto de brillo reducido */}
+          <div
+            className="absolute inset-0 bg-gradient-to-tr from-white/3 to-transparent opacity-40"
+            style={{ borderRadius: '24px' }}
+          />
+
+          {/* Reflejo superior más sutil */}
+          <div
+            className="absolute top-1 left-1 right-1 h-1/3 bg-gradient-to-b from-white/8 to-transparent"
+            style={{ borderRadius: '20px 20px 8px 8px' }}
+          />
+
+          {/* Sombra interior más sutil */}
+          <div
+            className="absolute inset-[2px] bg-gradient-to-b from-transparent via-transparent to-black/2"
+            style={{ borderRadius: '22px' }}
+          />
+
+          <motion.p
+            initial={{ opacity: 0, x: 10, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 10, scale: 0.9 }}
+            transition={{ delay: 1, duration: 0.3 }}
+            className="absolute bottom-1 transform -translate-y-1/2 font-manrope text-xs font-semibold text-[#B5CCF4]"
+          >
+            Reportar
+          </motion.p>
+        </motion.button>
+      </motion.div>
+
+      {/* Tooltip mejorado */}
       {showTooltip && (
         <motion.div
           initial={{ opacity: 0, x: 10, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: 10, scale: 0.9 }}
           transition={{ delay: 1, duration: 0.3 }}
-          className="absolute right-16 top-1/2 transform -translate-y-1/2 bg-gray-900/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap border border-gray-700/50"
+          className="absolute right-16 top-1/2 transform -translate-y-1/2 text-white px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap"
+          style={{
+            background: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(15px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: `
+              inset 0 0 5px rgba(0,255,255,0.05),
+              0 0 20px rgba(0,0,0,0.3),
+              0 8px 25px rgba(0,0,0,0.2),
+              0 4px 12px rgba(0,0,0,0.15)
+            `
+          }}
         >
           Reportar incidente
-          <div className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900/90 rotate-45 border-r border-b border-gray-700/50" />
+          <div
+            className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-2 rotate-45"
+            style={{
+              background: 'rgba(0, 0, 0, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderLeft: 'none',
+              borderTop: 'none'
+            }}
+          />
         </motion.div>
       )}
     </motion.div>

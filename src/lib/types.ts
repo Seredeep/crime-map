@@ -58,4 +58,64 @@ export interface StatisticsResults {
     totalIncidents: number;
     area: number;
   };
-} 
+}
+
+/**
+ * Represents a user in the system
+ */
+export interface User {
+  _id: string;
+  email: string;
+  name?: string;
+  surname?: string;
+  blockNumber?: number;
+  lotNumber?: number;
+  neighborhood?: string;
+  chatId?: string;
+  onboarded: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * Represents a neighborhood chat
+ */
+export interface Chat {
+  _id: string;
+  neighborhood: string;
+  participants: string[]; // Array of user IDs
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * Represents a chat with populated participants
+ */
+export interface ChatWithParticipants {
+  _id: string;
+  neighborhood: string;
+  participants: User[];
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * Represents a panic alert
+ */
+export interface PanicAlert {
+  _id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  neighborhood: string;
+  chatId?: string;
+  blockNumber?: number;
+  lotNumber?: number;
+  timestamp: Date;
+  location: string;
+  status: 'active' | 'resolved';
+  resolved: boolean;
+  resolvedAt?: Date;
+  resolvedBy?: string;
+  createdAt: Date;
+}

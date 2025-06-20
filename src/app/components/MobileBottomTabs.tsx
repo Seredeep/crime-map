@@ -3,7 +3,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
-import { FiBarChart2, FiList, FiMap, FiUsers } from 'react-icons/fi';
+import {
+    FiActivity,
+    FiCheckCircle,
+    FiCompass,
+    FiUsers
+} from 'react-icons/fi';
 
 interface MobileBottomTabsProps {
   activeTab: string;
@@ -33,22 +38,22 @@ const MobileBottomTabs = ({
     {
       id: 'incidents',
       label: 'Mapa',
-      icon: <FiMap className="w-5 h-5" />
+      icon: <FiCompass className="w-5 h-5" />
     },
     {
       id: 'stats',
-      label: 'Stats',
-      icon: <FiBarChart2 className="w-5 h-5" />
+      label: 'Estadísticas',
+      icon: <FiActivity className="w-5 h-5" />
     },
     {
       id: 'communities',
-      label: 'Comunidad',
+      label: 'Comunidades',
       icon: <FiUsers className="w-5 h-5" />
     },
     {
       id: 'queue',
-      label: 'Cola',
-      icon: <FiList className="w-5 h-5" />,
+      label: 'Verificación',
+      icon: <FiCheckCircle className="w-5 h-5" />,
       requiresAuth: true
     }
   ];
@@ -72,11 +77,18 @@ const MobileBottomTabs = ({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] md:hidden h-20">
-      {/* Backdrop blur effect */}
-      <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-lg border-t border-gray-700/50" />
+      {/* Backdrop blur effect mejorado */}
+      <div
+        className="absolute inset-0 border-t"
+        style={{
+          background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%)',
+          backdropFilter: 'blur(20px)',
+          borderColor: 'rgba(139, 181, 255, 0.15)'
+        }}
+      />
 
       {/* Tab container */}
-      <div className="relative px-2 py-3 h-full flex items-center">
+      <div className="relative px-3 py-3 h-full flex items-center">
         <div className="flex items-center justify-around w-full">
           {visibleTabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -85,14 +97,19 @@ const MobileBottomTabs = ({
               <button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
-                className="relative flex flex-col items-center justify-center p-2 min-w-[60px] transition-all duration-200"
+                className="relative flex flex-col items-center justify-center p-2 min-w-[65px] transition-all duration-300"
               >
-                {/* Active indicator */}
+                {/* Active indicator mejorado */}
                 <AnimatePresence>
                   {isActive && (
                     <motion.div
                       layoutId="activeTab"
-                      className="absolute -top-1 left-1/2 w-8 h-1 bg-blue-500 rounded-full"
+                      className="absolute -top-1 left-1/2 w-10 h-1 rounded-full"
+                      style={{
+                        background: 'linear-gradient(90deg, #8BB5FF 0%, #B5CCF4 100%)',
+                        boxShadow: '0 0 8px rgba(139, 181, 255, 0.6)',
+                        x: '-50%'
+                      }}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
@@ -100,20 +117,27 @@ const MobileBottomTabs = ({
                         type: "spring",
                         stiffness: 500,
                         damping: 30,
-                        duration: 0.2
+                        duration: 0.3
                       }}
-                      style={{ x: '-50%' }}
                     />
                   )}
                 </AnimatePresence>
 
-                {/* Icon container */}
+                {/* Icon container mejorado */}
                 <motion.div
-                  className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 relative overflow-hidden ${
                     isActive
-                      ? 'bg-blue-500/20 text-blue-400'
-                      : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800/50'
+                      ? 'text-[#B5CCF4]'
+                      : 'text-gray-400 hover:text-gray-300'
                   }`}
+                  style={isActive ? {
+                    background: 'linear-gradient(135deg, rgba(139, 181, 255, 0.15) 0%, rgba(181, 204, 244, 0.1) 100%)',
+                    border: '1px solid rgba(139, 181, 255, 0.3)',
+                    boxShadow: '0 4px 12px rgba(139, 181, 255, 0.1)'
+                  } : {
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.05)'
+                  }}
                   whileTap={{ scale: 0.95 }}
                   animate={{
                     scale: isActive ? 1.05 : 1,
@@ -126,32 +150,45 @@ const MobileBottomTabs = ({
                   }}
                 >
                   {tab.icon}
+
+                  {/* Efecto de brillo para tab activo */}
+                  {isActive && (
+                    <div
+                      className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent rounded-xl"
+                    />
+                  )}
                 </motion.div>
 
-                {/* Label */}
+                {/* Label mejorado */}
                 <motion.span
-                  className={`text-xs font-medium mt-1 transition-all duration-200 ${
+                  className={`text-xs font-medium mt-1.5 transition-all duration-300 ${
                     isActive
-                      ? 'text-blue-400'
+                      ? 'text-[#B5CCF4] font-semibold'
                       : 'text-gray-500'
                   }`}
+                  style={isActive ? {
+                    textShadow: '0 0 4px rgba(181, 204, 244, 0.3)'
+                  } : {}}
                   animate={{
                     opacity: isActive ? 1 : 0.8,
                     y: isActive ? -1 : 0
                   }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.3 }}
                 >
                   {tab.label}
                 </motion.span>
 
-                {/* Ripple effect on tap */}
+                {/* Ripple effect on tap mejorado */}
                 <motion.div
-                  className="absolute inset-0 rounded-xl bg-blue-500/10"
+                  className="absolute inset-0 rounded-xl"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(139, 181, 255, 0.2) 0%, transparent 70%)'
+                  }}
                   initial={{ scale: 0, opacity: 0 }}
                   whileTap={{
-                    scale: 1.2,
-                    opacity: [0, 0.3, 0],
-                    transition: { duration: 0.3 }
+                    scale: 1.3,
+                    opacity: [0, 0.4, 0],
+                    transition: { duration: 0.4 }
                   }}
                 />
               </button>
@@ -161,7 +198,12 @@ const MobileBottomTabs = ({
       </div>
 
       {/* Safe area padding for devices with home indicator */}
-      <div className="h-safe-area-inset-bottom bg-gray-900/80" />
+      <div
+        className="h-safe-area-inset-bottom"
+        style={{
+          background: 'rgba(30, 41, 59, 0.98)'
+        }}
+      />
     </div>
   );
 };

@@ -1,19 +1,21 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import SwipeableIncidentsView from './components/SwipeableIncidentsView';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import IncidentQueue from './components/IncidentQueue';
-import Sidebar from './components/Sidebar';
-import MobileBottomTabs from './components/MobileBottomTabs';
-import MobileStatsView from './components/MobileStatsView';
-import MobileCommunitiesView from './components/MobileCommunitiesView';
-import MobileReportView from './components/MobileReportView';
-import MobileDynamicNavbar from './components/MobileDynamicNavbar';
-import MobileSettingsPanel from './components/MobileSettingsPanel';
+import { useRouter } from 'next/navigation';
+import { useCallback, useMemo, useState } from 'react';
+import { FiArrowLeft, FiX } from 'react-icons/fi';
 import FloatingReportButton from './components/FloatingReportButton';
-import { useCallback, useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import IncidentForm from './components/IncidentForm';
+import IncidentQueue from './components/IncidentQueue';
+import MobileBottomTabs from './components/MobileBottomTabs';
+import MobileCommunitiesView from './components/MobileCommunitiesView';
+import MobileDynamicNavbar from './components/MobileDynamicNavbar';
+import MobileReportView from './components/MobileReportView';
+import MobileSettingsPanel from './components/MobileSettingsPanel';
+import MobileStatsView from './components/MobileStatsView';
+import Sidebar from './components/Sidebar';
+import SwipeableIncidentsView from './components/SwipeableIncidentsView';
 
 export default function Home() {
 
@@ -29,18 +31,34 @@ export default function Home() {
   // Estados para los nuevos paneles móviles
   const [isFiltersPanelOpen, setIsFiltersPanelOpen] = useState(false);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
+  const [showReportFormInPanel, setShowReportFormInPanel] = useState(false);
 
   const handleReportClick = useCallback(() => {
     if (status !== 'authenticated') {
       router.push('/auth/signin?callbackUrl=/');
     } else {
-      setActiveTab('report');
+      // En móvil, mostrar el formulario en el panel swipeable
+      if (window.innerWidth < 768) {
+        setShowReportFormInPanel(true);
+        setActiveTab('incidents'); // Asegurar que estamos en la tab de incidentes
+      } else {
+        // En desktop, cambiar a la tab de reporte
+        setActiveTab('report');
+      }
     }
   }, [router, status]);
+
+  const handleCloseReportForm = useCallback(() => {
+    setShowReportFormInPanel(false);
+  }, []);
 
   const handleTabChange = useCallback((tabId: string) => {
     if (status === 'authenticated' || tabId === 'incidents' || tabId === 'communities') {
       setActiveTab(tabId);
+      // Cerrar el formulario de reporte si se cambia de tab
+      if (tabId !== 'incidents') {
+        setShowReportFormInPanel(false);
+      }
     }
   }, [status]);
 
@@ -207,11 +225,110 @@ export default function Home() {
               </motion.div>
             </AnimatePresence>
           </div>
-          {/* Botón flotante de reportar - solo visible en el mapa */}
+
+          {/* Panel de reporte swipeable desde la derecha */}
+          <AnimatePresence>
+            {showReportFormInPanel && (
+              <>
+                {/* Overlay de fondo */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] md:hidden"
+                  onClick={handleCloseReportForm}
+                />
+
+                {/* Panel deslizable */}
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{
+                    type: 'spring',
+                    damping: 25,
+                    stiffness: 200,
+                    duration: 0.5
+                  }}
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.1}
+                  onDragEnd={(_, info) => {
+                    // Si se arrastra más del 50% hacia la derecha, cerrar
+                    if (info.offset.x > 150) {
+                      handleCloseReportForm();
+                    }
+                  }}
+                  className="fixed top-0 right-0 bottom-0 w-full bg-gray-900/95 backdrop-blur-lg border-l border-gray-700/50 shadow-2xl z-[210] md:hidden"
+                  style={{
+                    background: 'rgba(17, 24, 39, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: `
+                      -10px 0 50px rgba(0, 0, 0, 0.3),
+                      -5px 0 25px rgba(0, 0, 0, 0.2),
+                      inset 1px 0 0 rgba(255, 255, 255, 0.1)
+                    `
+                  }}
+                >
+                  {/* Handle de arrastre */}
+                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-12 bg-gray-600 rounded-r-full cursor-grab active:cursor-grabbing" />
+
+                  {/* Header del panel */}
+                  <div className="sticky top-0 bg-gray-900/95 backdrop-blur-lg border-b border-gray-700/50 px-4 py-4 z-20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <motion.button
+                          onClick={handleCloseReportForm}
+                          whileTap={{ scale: 0.95 }}
+                          className="p-2 rounded-full bg-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
+                        >
+                          <FiArrowLeft className="w-5 h-5" />
+                        </motion.button>
+                        <div className="p-2 bg-blue-500/20 rounded-lg">
+                          <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-white">Reportar Incidente</h2>
+                          <p className="text-sm text-gray-400">Completa la información del incidente</p>
+                        </div>
+                      </div>
+                      <motion.button
+                        onClick={handleCloseReportForm}
+                        whileTap={{ scale: 0.95 }}
+                        className="p-2 rounded-full bg-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
+                      >
+                        <FiX className="w-5 h-5" />
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Contenido del formulario */}
+                  <div className="flex-1 overflow-y-auto px-4 py-6">
+                    <div
+                      className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/30"
+                      style={{
+                        background: 'rgba(31, 41, 55, 0.5)',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      <IncidentForm />
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
+          {/* Botón flotante de reportar - solo visible en el mapa y cuando no se muestra el formulario */}
           <FloatingReportButton
             onClick={handleReportClick}
-            isVisible={activeTab === 'incidents'}
+            isVisible={activeTab === 'incidents' && !showReportFormInPanel}
           />
+
           {/* Mobile Bottom Tabs */}
           <MobileBottomTabs
             activeTab={activeTab}

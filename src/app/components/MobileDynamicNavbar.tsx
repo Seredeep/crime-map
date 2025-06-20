@@ -11,10 +11,10 @@ interface MobileDynamicNavbarProps {
   onSettingsClick?: () => void;
 }
 
-const MobileDynamicNavbar = ({ 
-  activeTab, 
+const MobileDynamicNavbar = ({
+  activeTab,
   onFiltersClick,
-  onSettingsClick 
+  onSettingsClick
 }: MobileDynamicNavbarProps) => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -23,14 +23,12 @@ const MobileDynamicNavbar = ({
     setMounted(true);
   }, []);
 
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
-
   // Configuración de la navbar según el tab activo
   const getNavbarConfig = () => {
     switch (activeTab) {
       case 'incidents':
         return {
-          title: 'Crime Map',
+          title: 'Claridad',
           leftAction: {
             icon: <FiList className="w-6 h-6" />,
             onClick: onFiltersClick,
@@ -40,31 +38,31 @@ const MobileDynamicNavbar = ({
         };
       case 'stats':
         return {
-          title: 'Estadísticas',
+          title: 'Claridad',
           leftAction: null,
           showThemeToggle: true
         };
       case 'communities':
         return {
-          title: 'Comunidad',
+          title: 'Claridad',
           leftAction: null,
           showThemeToggle: true
         };
       case 'report':
         return {
-          title: 'Reportar',
+          title: 'Claridad',
           leftAction: null,
           showThemeToggle: false
         };
       case 'queue':
         return {
-          title: 'Cola de Revisión',
+          title: 'Claridad',
           leftAction: null,
           showThemeToggle: true
         };
       default:
         return {
-          title: 'Crime Map',
+          title: 'Claridad',
           leftAction: null,
           showThemeToggle: true
         };
@@ -76,22 +74,26 @@ const MobileDynamicNavbar = ({
   if (!mounted) return null;
 
   return (
-    <motion.nav 
+    <motion.nav
       initial={{ y: -64 }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="fixed top-0 left-0 right-0 z-[130] md:hidden bg-gray-900/95 backdrop-blur-lg  shadow-lg"
+      className="fixed top-0 left-0 right-0 z-[130] md:hidden bg-[#040910] backdrop-blur-lg  shadow-lg"
     >
       <div className="flex items-center justify-between h-16 px-4">
-       
+
         {/* Centro - Título */}
-        <motion.h1 
+        <motion.h1
           key={config.title}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="text-lg font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent"
+          className="font-manrope text-2xl font-semibold text-[#B5CCF4] "
+          style={{
+            textShadow: '0 0 12px rgba(140,200,255,0.8))'
+          }}
         >
+
           {config.title}
         </motion.h1>
 
@@ -120,4 +122,4 @@ const MobileDynamicNavbar = ({
   );
 };
 
-export default MobileDynamicNavbar; 
+export default MobileDynamicNavbar;

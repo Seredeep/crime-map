@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -18,13 +20,13 @@
   --alert: #FF7F11;
   --text: #333333;
   --background: #F8F9FA;
-  
+
   /* Dark mode colors */
   --bg-dark: #121417;
   --bg-surface: #1B1D22;
   --text-inverted: #F8F9FA;
   --border-dark: #2A2E35;
-  
+
   /* Additional dark mode variables */
   --text-secondary: #9CA3AF;
   --text-muted: #6B7280;
@@ -32,13 +34,13 @@
   --warning: #F59E0B;
   --error: #EF4444;
   --info: #3B82F6;
-  
+
   /* Shadows and overlays */
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.15);
   --shadow-heavy: rgba(0, 0, 0, 0.25);
   --overlay: rgba(0, 0, 0, 0.5);
-  
+
   /* Transitions */
   --transition-fast: 0.15s ease-out;
   --transition-normal: 0.3s ease-out;
@@ -52,7 +54,7 @@
   --text-secondary: #D1D5DB;
   --text-muted: #9CA3AF;
   --border: var(--border-dark);
-  
+
   /* Adjust shadows for dark mode */
   --shadow-light: rgba(0, 0, 0, 0.3);
   --shadow-medium: rgba(0, 0, 0, 0.4);
@@ -71,7 +73,7 @@ html, body {
 }
 
 body {
-  font-family: var(--font-inter, Arial, Helvetica, sans-serif);
+  font-family: 'Manrope', var(--font-inter, Arial, Helvetica, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-dark);
@@ -375,7 +377,7 @@ input::placeholder, textarea::placeholder {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
-  
+
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
@@ -411,4 +413,60 @@ input::placeholder, textarea::placeholder {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Icon styles with glassmorphism effect */
+.icon {
+  @apply text-[#8BB5FF] text-xl transition-all duration-200 ease-in-out;
+  filter: drop-shadow(0 0 3px rgba(139, 181, 255, 0.4));
+}
+
+.icon:hover {
+  filter: drop-shadow(0 0 5px rgba(139, 181, 255, 0.7));
+  transform: scale(1.05);
+}
+
+/* Glassmorphism navbar */
+.navbar-glass {
+  @apply flex justify-around items-center px-6 py-3 rounded-2xl w-[280px] mx-auto;
+  background: rgba(30, 41, 59, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+/* Tab glassmorphism styling */
+.tab-glass {
+  @apply flex justify-center items-center space-x-1 px-2 py-2 rounded-2xl mb-8 w-fit mx-auto;
+  background: rgba(30, 41, 59, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.tab-button {
+  @apply p-3 rounded-xl font-medium text-sm focus:outline-none transition-all duration-200 ease-in-out flex items-center justify-center min-w-[50px];
+}
+
+.tab-button.active {
+  @apply text-[#8BB5FF];
+  background: rgba(139, 181, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(139, 181, 255, 0.2);
+}
+
+.tab-button.inactive {
+  @apply text-slate-400 hover:text-slate-300;
+}
+
+.tab-button.inactive:hover {
+  background: rgba(71, 85, 105, 0.2);
+}
+
+/* Title styling */
+.app-title {
+  @apply text-center text-3xl font-light tracking-wide mb-8;
+  color: #8BB5FF;
+  text-shadow: 0 0 10px rgba(139, 181, 255, 0.3);
 }

@@ -49,6 +49,9 @@ export default {
   				'5': 'hsl(var(--chart-5))'
   			}
   		},
+  		fontFamily: {
+  			manrope: ['Manrope', 'sans-serif'],
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
@@ -64,10 +67,25 @@ export default {
   			'safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
   			'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
   		},
-  		minHeight: {
-  			'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
-  		}
-  	}
-  },
+  				minHeight: {
+			'screen-safe': 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))'
+		},
+		keyframes: {
+			'word-cycle': {
+				'10%': { transform: 'translateY(-102%)' },
+				'25%': { transform: 'translateY(-100%)' },
+				'35%': { transform: 'translateY(-202%)' },
+				'50%': { transform: 'translateY(-200%)' },
+				'60%': { transform: 'translateY(-302%)' },
+				'75%': { transform: 'translateY(-300%)' },
+				'85%': { transform: 'translateY(-402%)' },
+				'100%': { transform: 'translateY(-400%)' }
+			}
+		},
+		animation: {
+			'word-cycle': 'word-cycle 4s infinite'
+		}
+	}
+},
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;

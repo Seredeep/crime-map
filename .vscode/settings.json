@@ -7,7 +7,7 @@
   "editor.lineHeight": 22,
   "editor.tabSize": 2,
   "editor.minimap.enabled": true,
-  "editor.cursorSmoothCaretAnimation": true,
+  "editor.cursorSmoothCaretAnimation": "on",
   "editor.cursorBlinking": "phase",
   "editor.renderWhitespace": "all",
   "editor.guides.indentation": true,
@@ -15,8 +15,8 @@
     "strings": true
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true,
-    "source.organizeImports": true
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
   },
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
