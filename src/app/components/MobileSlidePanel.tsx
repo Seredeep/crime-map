@@ -63,9 +63,9 @@ const MobileSlidePanel = ({
             initial={{ x: '-100%', scale: 0.95 }}
             animate={{ x: 0, scale: 1 }}
             exit={{ x: '-100%', scale: 0.95 }}
-            transition={{ 
-              type: 'spring', 
-              damping: 30, 
+            transition={{
+              type: 'spring',
+              damping: 30,
               stiffness: 300,
               duration: 0.5
             }}
@@ -104,7 +104,7 @@ const MobileSlidePanel = ({
               <div className="space-y-4">
                 <IncidentFiltersComponent
                   filters={filters}
-                  onFiltersChange={onFiltersChange}
+                  onFiltersChangeAction={onFiltersChange}
                   onNeighborhoodSelect={onNeighborhoodSelect}
                 />
               </div>
@@ -140,4 +140,4 @@ const MobileSlidePanel = ({
   );
 };
 
-export default MobileSlidePanel; 
+export default MobileSlidePanel;

@@ -26,11 +26,18 @@ export async function GET() {
       });
     }
 
+    // Obtener información del usuario actual para debugging
+    const client = await (await import('@/lib/mongodb')).default;
+    const db = client.db();
+    const currentUser = await db.collection('users').findOne({ email: session.user.email });
+
     return NextResponse.json({
       success: true,
       message: 'Chat obtenido exitosamente',
       data: {
         chatId: userChat._id,
+        userId: currentUser?._id?.toString(),
+        userName: currentUser?.name || currentUser?.email,
         neighborhood: userChat.neighborhood,
         participantsCount: userChat.participants.length,
         participants: userChat.participants.map(participant => ({

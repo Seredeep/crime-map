@@ -5,20 +5,24 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// Default values to prevent errors when Supabase is not configured
+const defaultUrl = 'https://placeholder.supabase.co';
+const defaultKey = 'placeholder-key';
+
 // Create a Supabase client for client-side usage
 // Ensure we have valid values and provide more helpful error messages
 if (!supabaseUrl) {
-  console.error('NEXT_PUBLIC_SUPABASE_URL is not defined in environment variables');
+  console.warn('NEXT_PUBLIC_SUPABASE_URL is not defined in environment variables. Using placeholder.');
 }
 
 if (!supabaseAnonKey) {
-  console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined in environment variables');
+  console.warn('NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined in environment variables. Using placeholder.');
 }
 
 // Create the client with additional options for better compatibility
 const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || '',
+  supabaseUrl || defaultUrl,
+  supabaseAnonKey || defaultKey,
   {
     auth: {
       persistSession: true,
@@ -31,5 +35,12 @@ const supabase = createClient(
     },
   }
 );
+
+// Helper function to check if Supabase is properly configured
+export const isSupabaseConfigured = () => {
+  return !!(supabaseUrl && supabaseAnonKey &&
+           supabaseUrl !== defaultUrl &&
+           supabaseAnonKey !== defaultKey);
+};
 
 export default supabase;

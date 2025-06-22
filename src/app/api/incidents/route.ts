@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
-import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
+import { ROLES, Role, hasRequiredRole } from '@/lib/config/roles';
+import clientPromise from '@/lib/mongodb';
 import { Incident } from '@/lib/types';
-import { Filter, ObjectId } from 'mongodb';
-import { ROLES, hasRequiredRole, Role } from '@/lib/config/roles';
 import { createClient } from '@supabase/supabase-js';
+import { Filter, ObjectId } from 'mongodb';
+import { getServerSession } from 'next-auth/next';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Initialize Supabase client with environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -19,18 +19,26 @@ const EVIDENCE_BUCKET = 'incident-evidence';
 
 // Ensure the bucket exists (run once during initialization)
 async function ensureBucketExists() {
+  // Skip bucket creation if Supabase is not properly configured
+  if (!supabaseUrl || !supabaseServiceKey ||
+      supabaseUrl.includes('placeholder') ||
+      supabaseServiceKey.includes('placeholder')) {
+    console.warn('Supabase not configured. Skipping bucket creation.');
+    return;
+  }
+
   try {
     // Check if bucket exists
     const { data: buckets } = await supabase.storage.listBuckets();
     const bucketExists = buckets?.some(bucket => bucket.name === EVIDENCE_BUCKET);
-    
+
     if (!bucketExists) {
       // Create bucket with public access
       const { error } = await supabase.storage.createBucket(EVIDENCE_BUCKET, {
         public: true, // Makes files publicly accessible
         fileSizeLimit: 10485760 // 10MB limit
       });
-      
+
       if (error) {
         console.error('Error creating bucket:', error);
       } else {
@@ -80,12 +88,12 @@ async function ensureIndexes() {
   try {
     const client = await clientPromise;
     const db = client.db();
-    
+
     const indexes = await db.collection('incident_draft').indexes();
-    const hasGeoIndex = indexes.some(index => 
+    const hasGeoIndex = indexes.some(index =>
       index.key && index.key.location === '2dsphere'
     );
-    
+
     if (!hasGeoIndex) {
       await db.collection('incident_draft').createIndex(
         { location: '2dsphere' },
@@ -100,12 +108,12 @@ async function ensureIndexes() {
 export async function GET(request: NextRequest) {
   try {
     await ensureIndexes();
-    
+
     const { searchParams } = new URL(request.url);
-    
+
     const client = await clientPromise;
     const db = client.db();
-    
+
     const neighborhoodId = searchParams.get('neighborhoodId');
     const date = searchParams.get('date');
     const dateFrom = searchParams.get('dateFrom');
@@ -116,10 +124,10 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') as 'pending' | 'verified' | 'resolved' | null;
     const tags = searchParams.getAll('tag');
     const location = searchParams.get('location');
-    
+
     // Build MongoDB query based on filters
     const query: MongoQuery = {};
-    
+
     // Add neighborhood filter if provided
     if (neighborhoodId) {
       const neighborhoodIdNum = parseInt(neighborhoodId, 10);
@@ -132,7 +140,7 @@ export async function GET(request: NextRequest) {
         };
       }
     }
-    
+
     // Add date filters
     if (date) {
       const startOfDay = new Date(date);
@@ -156,7 +164,7 @@ export async function GET(request: NextRequest) {
         query.date = dateQuery;
       }
     }
-    
+
     // Add time filters
     if (time) {
       const [hours, minutes] = time.split(':').map(Number);
@@ -176,17 +184,17 @@ export async function GET(request: NextRequest) {
         query.time = timeQuery;
       }
     }
-    
+
     // Add status filter if provided
     if (status) {
       query.status = status;
     }
-    
+
     // Add tags filter if provided
     if (tags.length > 0) {
       query.tags = { $in: tags };
     }
-    
+
     // Add location filter if provided
     if (location) {
       try {
@@ -203,7 +211,7 @@ export async function GET(request: NextRequest) {
         console.error('Error parsing location:', error);
       }
     }
-    
+
     // Execute the query
     const incidents = await db.collection<Incident>('incident_draft').find(query).toArray();
 
@@ -233,7 +241,7 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
-    
+
     const formData = await request.formData();
     const client = await clientPromise;
     const db = client.db();
@@ -251,8 +259,8 @@ export async function POST(request: Request) {
     }
 
     // Validate coordinates
-    if (!location || 
-        !location.coordinates || 
+    if (!location ||
+        !location.coordinates ||
         !Array.isArray(location.coordinates) ||
         location.coordinates.length !== 2 ||
         typeof location.coordinates[0] !== 'number' ||
@@ -276,14 +284,14 @@ export async function POST(request: Request) {
         // Create a unique file name with timestamp and random string
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        
+
         // Store files in a user-specific folder for better organization
         const filePath = `${session.user.id}/${fileName}`;
-        
+
         // Convert the file to array buffer for upload
         const arrayBuffer = await file.arrayBuffer();
         const buffer = new Uint8Array(arrayBuffer);
-        
+
         // Upload to the dedicated bucket
         const { data, error } = await supabase
           .storage
@@ -292,18 +300,18 @@ export async function POST(request: Request) {
             contentType: file.type,
             upsert: false
           });
-        
+
         if (error) {
           console.error('Error uploading file to Supabase:', error);
           continue; // Skip this file but continue with the others
         }
-        
+
         // Get public URL using the correct bucket
         const { data: urlData } = supabase
           .storage
           .from(EVIDENCE_BUCKET)
           .getPublicUrl(filePath);
-        
+
         // Store file metadata with the public URL
         uploadedEvidences.push({
           name: file.name,
@@ -349,8 +357,8 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message: 'Incident draft created successfully',
       id: result.insertedId.toString()
     });
@@ -406,10 +414,10 @@ export async function PATCH(request: Request) {
         coordinates: [number, number];
       };
     }> = {};
-    
+
     // Campos que se pueden actualizar
     const allowedFields = ['description', 'address', 'date', 'time', 'status', 'location'];
-    
+
     // Filtrar solo los campos permitidos y validar el formato de la hora
     Object.keys(updates).forEach(key => {
       if (allowedFields.includes(key)) {
@@ -474,8 +482,8 @@ export async function PATCH(request: Request) {
       },
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message: 'Incidente actualizado exitosamente',
       incident: updatedIncident
     });

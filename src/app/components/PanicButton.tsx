@@ -49,6 +49,99 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
     setPanicState('alerting');
 
     try {
+      // Verificar soporte de geolocalización
+      let location = null;
+
+      if (!navigator.geolocation) {
+        console.error('❌ Geolocalización no soportada por este navegador');
+        // No mostrar alert aquí ya que el botón está en estado alerting
+      } else {
+        console.log('🔍 Solicitando permisos de ubicación...');
+
+        // Verificar permisos primero
+        try {
+          const permission = await navigator.permissions.query({ name: 'geolocation' });
+          console.log('📋 Estado de permisos de geolocalización:', permission.state);
+        } catch (permissionError) {
+          console.log('⚠️ No se pudo verificar permisos:', permissionError);
+        }
+
+        // Intentar obtener ubicación con alta precisión
+        try {
+          console.log('🎯 Obteniendo ubicación de alta precisión...');
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                console.log('✅ Ubicación obtenida exitosamente');
+                resolve(pos);
+              },
+              (error) => {
+                console.error('❌ Error obteniendo ubicación:', error);
+                console.error('Código de error:', error.code);
+                console.error('Mensaje:', error.message);
+                reject(error);
+              },
+              {
+                timeout: 15000, // Más tiempo para obtener ubicación
+                enableHighAccuracy: true,
+                maximumAge: 0
+              }
+            );
+          });
+
+          location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: position.timestamp
+          };
+          console.log(`📍 Ubicación GPS obtenida:`, {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: `${position.coords.accuracy}m`,
+            timestamp: new Date(position.timestamp).toLocaleString()
+          });
+
+        } catch (error: any) {
+          console.error('❌ Error en geolocalización de alta precisión:', error);
+
+          // Intentar fallback sin mostrar alerts (el botón está en modo alerting)
+          if (error.code === 3) { // TIMEOUT
+            console.log('⏱️ Timeout en alta precisión, intentando fallback...');
+
+            try {
+              const fallbackPosition = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                  resolve,
+                  reject,
+                  {
+                    timeout: 10000,
+                    enableHighAccuracy: false,
+                    maximumAge: 60000
+                  }
+                );
+              });
+
+              location = {
+                lat: fallbackPosition.coords.latitude,
+                lng: fallbackPosition.coords.longitude,
+                accuracy: fallbackPosition.coords.accuracy,
+                timestamp: fallbackPosition.timestamp,
+                fallback: true
+              };
+              console.log(`📍 Ubicación fallback obtenida con precisión de ${fallbackPosition.coords.accuracy}m`);
+
+            } catch (fallbackError) {
+              console.error('❌ También falló el fallback:', fallbackError);
+              location = null;
+            }
+          } else {
+            console.error(`❌ Error de geolocalización (código ${error.code}):`, error.message);
+            location = null;
+          }
+        }
+      }
+
       const response = await fetch('/api/panic/send', {
         method: 'POST',
         headers: {
@@ -56,12 +149,17 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
         },
         body: JSON.stringify({
           timestamp: new Date().toISOString(),
-          location: 'current' // Se podría agregar geolocalización aquí
+          location
         }),
       });
 
       const result = await response.json();
-      console.log('Alerta enviada:', result);
+
+      if (!result.success) {
+        throw new Error(result.message || 'Error al enviar la alerta');
+      }
+
+      console.log('Alerta enviada:', result.data);
     } catch (error) {
       console.error('Error al enviar alerta:', error);
       // En caso de error, volver al estado normal

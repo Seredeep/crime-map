@@ -10,14 +10,13 @@ export default function StatsPage() {
   const { data: session } = useSession();
   const isEditorOrAdmin = session?.user?.role === 'editor' || session?.user?.role === 'admin';
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // Set default date range to last 30 days
   const [filters, setFilters] = useState<IncidentFilters>(() => {
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
-    
+
     return {
       dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
@@ -39,7 +38,7 @@ export default function StatsPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-200">Estadísticas de Incidentes</h1>
-        
+
         <button
           onClick={() => setShowFiltersModal(true)}
           className="flex items-center space-x-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
@@ -69,8 +68,8 @@ export default function StatsPage() {
           <div>
             <h3 className="text-sm font-medium text-gray-400 mb-1">Estado</h3>
             <p className="text-gray-200">
-              {filters.status === 'verified' ? 'Verificados' : 
-               filters.status === 'pending' ? 'Pendientes' : 
+              {filters.status === 'verified' ? 'Verificados' :
+               filters.status === 'pending' ? 'Pendientes' :
                filters.status === 'resolved' ? 'Resueltos' : 'Todos'}
             </p>
           </div>
@@ -92,7 +91,7 @@ export default function StatsPage() {
           <h2 className="text-xl font-semibold text-gray-200 mb-6">Estadísticas Generales</h2>
           <IncidentStatistics filters={filters} />
         </div>
-        
+
         {/* Temporal Analysis */}
         <div className="bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-700/50">
           <h2 className="text-xl font-semibold text-gray-200 mb-6">Análisis Temporal</h2>
@@ -100,7 +99,7 @@ export default function StatsPage() {
             <IncidentStatistics filters={filters} viewType="temporal" />
           </div>
         </div>
-        
+
         {/* Geographic Analysis */}
         <div className="bg-gray-800/80 rounded-xl p-6 shadow-lg border border-gray-700/50">
           <h2 className="text-xl font-semibold text-gray-200 mb-6">Análisis Geográfico</h2>
@@ -125,14 +124,14 @@ export default function StatsPage() {
                 </svg>
               </button>
             </div>
-            
+
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)] z-[1000]">
-              <IncidentFiltersComponent 
-                filters={filters} 
-                onFiltersChange={handleFiltersChange}
+              <IncidentFiltersComponent
+                filters={filters}
+                onFiltersChangeAction={handleFiltersChange}
               />
             </div>
-            
+
             <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
               <div className="text-sm text-gray-600">
                 Los cambios se aplicarán al cerrar

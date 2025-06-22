@@ -1,11 +1,12 @@
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
-import SessionProvider from "./components/SessionProvider";
-import Navbar from "./components/Navbar";
-import { Analytics } from "@vercel/analytics/react"
 import { ImageModalProvider } from "../lib/ImageModalContext";
+import GlobalPanicButton from "./components/GlobalPanicButton";
 import ImageModal from "./components/ImageModal";
+import Navbar from "./components/Navbar";
+import SessionProvider from "./components/SessionProvider";
+import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -56,6 +57,7 @@ export default function RootLayout({
           <ImageModalProvider>
             {children}
             <ImageModal />
+            <GlobalPanicButton />
           </ImageModalProvider>
         </SessionProvider>
         <Analytics />
