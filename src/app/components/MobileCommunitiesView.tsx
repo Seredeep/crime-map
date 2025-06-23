@@ -1,6 +1,8 @@
 'use client';
 
+import { useFirestoreChat } from '@/lib/hooks/useFirestoreChat';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiMessageCircle, FiUsers } from 'react-icons/fi';
 import FloatingPanicButton from './FloatingPanicButton';
@@ -201,21 +203,41 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
-  const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [isLoadingChat, setIsLoadingChat] = useState(true);
   const [isLoadingMessage, setIsLoadingMessage] = useState(true);
+
+  // Usar Firestore para obtener el último mensaje
+  const { chatData } = useFirestoreChat({
+    enabled: true
+  });
+
+  const { data: session } = useSession();
+
+    // Función para convertir Timestamp a Date
+  const toDate = (timestamp: any): Date => {
+    if (!timestamp) return new Date();
+    if (timestamp.toDate) return timestamp.toDate();
+    if (timestamp instanceof Date) return timestamp;
+    return new Date(timestamp);
+  };
+
+  // Obtener el último mensaje de Firestore
+  const lastMessage = chatData.messages.length > 0
+    ? {
+        ...chatData.messages[chatData.messages.length - 1],
+        timestamp: toDate(chatData.messages[chatData.messages.length - 1].timestamp).toISOString(),
+        isOwn: false // Se determinará en el componente
+      }
+    : null;
   // #endregion
 
   // #region Effects
   useEffect(() => {
     loadChatData();
-  }, []);
+  }, [session]);
 
-  useEffect(() => {
-    if (chatInfo) {
-      loadLastMessage();
-    }
-  }, [chatInfo]);
+  // Ya no necesitamos cargar el último mensaje por separado
+  // porque Firestore nos da los mensajes en tiempo real
   // #endregion
 
   // #region API Calls
@@ -223,9 +245,25 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
    * Carga la información del chat del usuario desde la API
    */
   const loadChatData = async () => {
+    // No hacer llamada si no hay sesión
+    if (!session?.user) {
+      setIsLoadingChat(false);
+      return;
+    }
+
     try {
       setIsLoadingChat(true);
       const response = await fetch('/api/chat/mine');
+
+      // Verificar si la respuesta es exitosa
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Usuario no autenticado - esto es normal');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -241,23 +279,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
   /**
    * Carga el último mensaje del chat desde la API
    */
-  const loadLastMessage = async () => {
-    if (!chatInfo) return;
-
-    try {
-      setIsLoadingMessage(true);
-      const response = await fetch('/api/chat/messages?limit=1');
-      const result = await response.json();
-
-      if (result.success && result.data.messages.length > 0) {
-        setLastMessage(result.data.messages[0]);
-      }
-    } catch (error) {
-      console.error('Error al cargar último mensaje:', error);
-    } finally {
-      setIsLoadingMessage(false);
-    }
-  };
+  // Ya no necesitamos loadLastMessage ya que usamos Firestore en tiempo real
   // #endregion
 
   // #region Event Handlers
@@ -267,10 +289,8 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
 
   const handleBackFromChat = () => {
     setViewMode('main');
-    // Recargar último mensaje al volver
-    if (chatInfo) {
-      loadLastMessage();
-    }
+    // Ya no necesitamos recargar mensajes manualmente
+    // Firestore se actualiza automáticamente
   };
 
   const handlePanicClick = async () => {

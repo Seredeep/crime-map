@@ -2,6 +2,8 @@ import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ImageModalProvider } from "../lib/ImageModalContext";
+import FirebaseErrorBoundary from "./components/FirebaseErrorBoundary";
+import FirebaseStatusIndicator from "./components/FirebaseStatusIndicator";
 import GlobalPanicButton from "./components/GlobalPanicButton";
 import ImageModal from "./components/ImageModal";
 import Navbar from "./components/Navbar";
@@ -51,15 +53,17 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased min-h-full`}
         suppressHydrationWarning
       >
-
-        <SessionProvider>
-          <Navbar />
-          <ImageModalProvider>
-            {children}
-            <ImageModal />
-            <GlobalPanicButton />
-          </ImageModalProvider>
-        </SessionProvider>
+        <FirebaseErrorBoundary>
+          <SessionProvider>
+            <Navbar />
+            <ImageModalProvider>
+              {children}
+              <ImageModal />
+              <GlobalPanicButton />
+              <FirebaseStatusIndicator />
+            </ImageModalProvider>
+          </SessionProvider>
+        </FirebaseErrorBoundary>
         <Analytics />
       </body>
     </html>

@@ -1,4 +1,7 @@
-import { ChatMessage } from './hooks/useChatMessages';
+import { AdaptedMessage } from './chatServiceAdapter';
+
+// Alias para compatibilidad
+type ChatMessage = AdaptedMessage;
 
 /**
  * Represents a single cache entry for a chat

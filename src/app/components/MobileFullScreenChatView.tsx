@@ -1,6 +1,6 @@
 'use client';
 
-import { useChatMessages } from '@/lib/hooks/useChatMessages';
+import { useFirestoreChat } from '@/lib/hooks/useFirestoreChat';
 import { PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
@@ -34,36 +34,53 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Usar el hook de mensajes con WebSockets y cache
+  // Función para convertir Timestamp a Date - MOVIDA AQUÍ ANTES DE SU USO
+  const toDate = (timestamp: any): Date => {
+    if (!timestamp) return new Date();
+    if (timestamp.toDate) return timestamp.toDate();
+    if (timestamp instanceof Date) return timestamp;
+    return new Date(timestamp);
+  };
+
+  // Usar el hook de Firestore en lugar de WebSockets
   const {
-    messages,
-    loading,
-    error,
     chatData,
-    isConnected,
     typingUsers,
+    isConnected,
+    error,
     sendMessage,
     sendPanicMessage,
     startTyping,
     stopTyping,
     loadMoreMessages
-  } = useChatMessages({
-    pollingInterval: 3000,
-    enabled: true,
-    useWebSockets: true
+  } = useFirestoreChat({
+    enabled: true
   });
+
+  // Convertir mensajes de Firestore a formato esperado
+  const messages = chatData.messages.map(msg => ({
+    ...msg,
+    timestamp: toDate(msg.timestamp),
+    createdAt: toDate(msg.timestamp)
+  }));
+
+  const loading = chatData.isLoading;
 
   // Cargar información del chat
   useEffect(() => {
-    loadChatInfo();
-    loadChatStats();
-  }, []);
+    if (session?.user) {
+      loadChatInfo();
+      loadChatStats();
+    }
+  }, [session]);
 
   // Recargar stats cada 30 segundos
   useEffect(() => {
-    const interval = setInterval(loadChatStats, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    if (session?.user) {
+      const interval = setInterval(loadChatStats, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [session]);
 
   // Auto-scroll a mensajes nuevos
   useEffect(() => {
@@ -71,8 +88,21 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   }, [messages]);
 
   const loadChatInfo = async () => {
+    // No hacer llamada si no hay sesión
+    if (!session?.user) return;
+
     try {
       const response = await fetch('/api/chat/mine');
+
+      // Verificar si la respuesta es exitosa
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Usuario no autenticado - esto es normal');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
 
       if (result.success && result.data) {
@@ -83,17 +113,9 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
   };
 
+  // Estadísticas temporalmente deshabilitadas para evitar errores 404
   const loadChatStats = async () => {
-    try {
-      const response = await fetch('/api/chat/stats');
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setChatStats(result.data);
-      }
-    } catch (error) {
-      console.error('Error al cargar estadísticas del chat:', error);
-    }
+    // No cargar estadísticas por ahora
   };
 
   const scrollToBottom = () => {
@@ -233,7 +255,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
               </div>
               <div className="text-left">
                 <h2 className="text-lg font-semibold text-white">
-                  {chatData.neighborhood || 'Chat Barrial'}
+                  {chat?.neighborhood || 'Chat Barrial'}
                 </h2>
                 <div className="flex items-center space-x-2">
                   <p className="text-sm text-gray-400">
@@ -286,7 +308,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         >
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-200">Participantes del {chatData.neighborhood}</h3>
+              <h3 className="text-sm font-semibold text-gray-200">Participantes del {chat?.neighborhood || 'Barrio'}</h3>
               <span className="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded-full">
                 {chat.participants.length} miembros
               </span>
@@ -336,7 +358,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 <FiUsers className="w-8 h-8 text-blue-400" />
               </div>
               <h3 className="text-lg font-semibold text-gray-300 mb-2">
-                ¡Bienvenido al chat de {chatData.neighborhood}!
+                ¡Bienvenido al chat de {chat?.neighborhood || 'tu barrio'}!
               </h3>
               <p className="text-gray-500 text-sm">
                 Sé el primero en enviar un mensaje a tus vecinos
