@@ -2,12 +2,11 @@ import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ImageModalProvider } from "../lib/ImageModalContext";
-import FirebaseErrorBoundary from "./components/FirebaseErrorBoundary";
-import FirebaseStatusIndicator from "./components/FirebaseStatusIndicator";
 import GlobalPanicButton from "./components/GlobalPanicButton";
 import ImageModal from "./components/ImageModal";
 import Navbar from "./components/Navbar";
 import SessionProvider from "./components/SessionProvider";
+import SessionRefresh from "./components/SessionRefresh";
 import "./globals.css";
 
 const inter = Inter({
@@ -53,17 +52,15 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased min-h-full`}
         suppressHydrationWarning
       >
-        <FirebaseErrorBoundary>
-          <SessionProvider>
-            <Navbar />
-            <ImageModalProvider>
-              {children}
-              <ImageModal />
-              <GlobalPanicButton />
-              <FirebaseStatusIndicator />
-            </ImageModalProvider>
-          </SessionProvider>
-        </FirebaseErrorBoundary>
+        <SessionProvider>
+          <SessionRefresh />
+          <Navbar />
+          <ImageModalProvider>
+            {children}
+            <ImageModal />
+            <GlobalPanicButton />
+          </ImageModalProvider>
+        </SessionProvider>
         <Analytics />
       </body>
     </html>

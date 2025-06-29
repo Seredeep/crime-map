@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
@@ -31,12 +30,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Si el usuario está autenticado pero no ha completado el onboarding
-  if (token && !token.onboarded && !isOnboardingPage && !isAuthPage) {
+  if (token && token.onboarded === false && !isOnboardingPage && !isAuthPage) {
     return NextResponse.redirect(new URL('/onboarding', request.url));
   }
 
   // Si el usuario ya completó el onboarding y trata de acceder a la página de onboarding
-  if (token?.onboarded && isOnboardingPage) {
+  if (token && token.onboarded === true && isOnboardingPage) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -54,4 +53,4 @@ export const config = {
      */
     '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
-}; 
+};

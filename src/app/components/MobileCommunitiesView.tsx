@@ -1,10 +1,10 @@
 'use client';
 
-import { useFirestoreChat } from '@/lib/hooks/useFirestoreChat';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiMessageCircle, FiUsers } from 'react-icons/fi';
+import { simpleChatCache } from '../../lib/chatCache';
 import FloatingPanicButton from './FloatingPanicButton';
 import MobileExploreCommunitiesView from './MobileExploreCommunitiesView';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
@@ -49,9 +49,9 @@ type ViewMode = 'main' | 'fullscreenChat';
 
 // #region Components
 /**
- * Componente para mostrar el último mensaje con datos reales
+ * Vista previa del último mensaje estilo WhatsApp
  */
-const RealMessagePreview = ({
+const WhatsAppMessagePreview = ({
   message,
   isLoading,
   formatTime
@@ -62,77 +62,68 @@ const RealMessagePreview = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="border-t border-gray-800/50 pt-4">
-        <div className="flex items-start space-x-3">
-          <div className="loading-skeleton w-6 h-6 rounded-full"></div>
-          <div className="flex-1 space-y-2">
-            <div className="loading-skeleton h-3 w-3/4"></div>
-            <div className="loading-skeleton h-3 w-1/2"></div>
-          </div>
+      <div className="flex items-center space-x-3 py-2">
+        <div className="loading-skeleton w-8 h-8 rounded-full"></div>
+        <div className="flex-1 space-y-1">
+          <div className="loading-skeleton h-3 w-20"></div>
+          <div className="loading-skeleton h-4 w-3/4"></div>
         </div>
+        <div className="loading-skeleton h-3 w-8"></div>
       </div>
     );
   }
 
   if (!message) {
     return (
-      <div className="border-t border-gray-800/50 pt-4">
-        <div className="text-center py-3">
-          <div className="w-8 h-8 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-2">
-            <FiMessageCircle className="w-4 h-4 text-gray-500" />
-          </div>
-          <p className="text-sm text-gray-500 font-medium mb-1">
-            No hay mensajes aún
-          </p>
-          <p className="text-xs text-gray-600">
-            ¡Sé el primero en saludar! 👋
-          </p>
+      <div className="flex items-center space-x-3 py-2">
+        <div className="w-8 h-8 bg-gray-700/50 rounded-full flex items-center justify-center">
+          <FiMessageCircle className="w-4 h-4 text-gray-500" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm text-gray-500">No hay mensajes</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="border-t border-gray-800/50 pt-4">
-      <div className="flex items-start space-x-3">
-        {/* Avatar mejorado */}
-        <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-          <span className="text-xs font-bold text-white">
-            {message.isOwn ? 'T' : message.userName?.charAt(0)?.toUpperCase() || '?'}
-          </span>
-        </div>
+    <div className="flex items-center space-x-3 py-2">
+      {/* Avatar pequeño */}
+      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+        <span className="text-xs font-bold text-white">
+          {message.isOwn ? 'T' : message.userName?.charAt(0)?.toUpperCase() || '?'}
+        </span>
+      </div>
 
-        {/* Contenido del mensaje mejorado */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="text-xs font-semibold text-blue-400">
-              {message.isOwn ? 'Tú' : message.userName?.split(' ')[0] || 'Usuario'}
-            </span>
-                         <div className="flex items-center space-x-1">
-               <span className="text-xs text-gray-500">•</span>
-               <span className="text-xs text-gray-500">
-                 {formatTime(message.timestamp)}
-               </span>
-             </div>
-            {message.type === 'panic' && (
-              <div className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">
-                ⚠️ PÁNICO
-              </div>
-            )}
-          </div>
-          <p className="message-preview text-gray-300 leading-relaxed">
-            {message.message}
-          </p>
+      {/* Contenido del mensaje */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center space-x-1 mb-0.5">
+          <span className="text-sm font-medium text-gray-300">
+            {message.isOwn ? 'Tú:' : `${message.userName?.split(' ')[0] || 'Usuario'}:`}
+          </span>
+          {message.type === 'panic' && (
+            <span className="text-xs text-red-400">⚠️</span>
+          )}
         </div>
+        <p className="text-sm text-gray-400 truncate leading-tight">
+          {message.message}
+        </p>
+      </div>
+
+      {/* Hora */}
+      <div className="flex flex-col items-end">
+        <span className="text-xs text-gray-500">
+          {formatTime(message.timestamp)}
+        </span>
       </div>
     </div>
   );
 };
 
 /**
- * Card minimalista del chat del barrio
+ * Card del chat estilo WhatsApp - más minimalista
  */
-const NeighborhoodChatCard = ({
+const WhatsAppChatCard = ({
   chatInfo,
   lastMessage,
   isLoadingMessage,
@@ -149,49 +140,29 @@ const NeighborhoodChatCard = ({
     <motion.div
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="community-card-minimal p-5 cursor-pointer"
+      className="whatsapp-chat-card"
     >
-      {/* Header del chat */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center space-x-4">
-          {/* Icono del barrio con efecto mejorado */}
-          <div className="neighborhood-avatar">
-            <FiHome className="w-6 h-6 text-white" />
-          </div>
-
-          {/* Info del barrio */}
-          <div>
-            <h3 className="text-white font-bold text-lg mb-1">
-              {chatInfo?.neighborhood || 'Mi Barrio'}
-            </h3>
-            <div className="flex items-center space-x-4 text-sm text-gray-400">
-              <div className="flex items-center space-x-1">
-                <FiUsers className="w-3 h-3" />
-                <span>{chatInfo?.participantsCount || 0} vecinos</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-400">En línea</span>
-              </div>
-            </div>
-          </div>
+      {/* Header simplificado */}
+      <div className="flex items-center space-x-3 mb-4">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <FiHome className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-white font-semibold text-lg">
+            {chatInfo?.neighborhood || 'Mi Barrio'}
+          </h3>
+          <p className="text-sm text-gray-400">
+            {chatInfo?.participantsCount || 0} participantes
+          </p>
         </div>
       </div>
 
-      {/* Vista previa del último mensaje */}
-      <RealMessagePreview
+      {/* Vista previa del último mensaje estilo WhatsApp */}
+      <WhatsAppMessagePreview
         message={lastMessage}
         isLoading={isLoadingMessage}
         formatTime={formatTime}
       />
-
-      {/* Indicador de acción mejorado */}
-      <div className="flex items-center justify-center mt-5 pt-4 border-t border-gray-800/50">
-        <div className="flex items-center space-x-2 text-blue-400 text-sm font-semibold">
-          <FiMessageCircle className="w-4 h-4" />
-          <span>Abrir chat del barrio</span>
-        </div>
-      </div>
     </motion.div>
   );
 };
@@ -199,98 +170,173 @@ const NeighborhoodChatCard = ({
 
 // #region Main Component
 const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) => {
-  // #region State Management
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
-  const [isLoadingChat, setIsLoadingChat] = useState(true);
+  const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(true);
+  const [lastMessageTimestamp, setLastMessageTimestamp] = useState<number>(0);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isActive, setIsActive] = useState(true);
 
-  // Usar Firestore para obtener el último mensaje
-  const { chatData } = useFirestoreChat({
-    enabled: true
-  });
-
-  const { data: session } = useSession();
-
-    // Función para convertir Timestamp a Date
+  // Función para convertir timestamp a Date
   const toDate = (timestamp: any): Date => {
     if (!timestamp) return new Date();
-    if (timestamp.toDate) return timestamp.toDate();
     if (timestamp instanceof Date) return timestamp;
     return new Date(timestamp);
   };
 
-  // Obtener el último mensaje de Firestore
-  const lastMessage = chatData.messages.length > 0
-    ? {
-        ...chatData.messages[chatData.messages.length - 1],
-        timestamp: toDate(chatData.messages[chatData.messages.length - 1].timestamp).toISOString(),
-        isOwn: false // Se determinará en el componente
-      }
-    : null;
-  // #endregion
-
-  // #region Effects
-  useEffect(() => {
-    loadChatData();
-  }, [session]);
-
-  // Ya no necesitamos cargar el último mensaje por separado
-  // porque Firestore nos da los mensajes en tiempo real
-  // #endregion
-
-  // #region API Calls
-  /**
-   * Carga la información del chat del usuario desde la API
-   */
-  const loadChatData = async () => {
-    // No hacer llamada si no hay sesión
-    if (!session?.user) {
-      setIsLoadingChat(false);
-      return;
+  // Polling inteligente - solo cuando es necesario
+  const startIntelligentPolling = useCallback(() => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
     }
 
-    try {
-      setIsLoadingChat(true);
-      const response = await fetch('/api/chat/mine');
+    const interval = setInterval(async () => {
+      if (!isActive || !session?.user || activeTab !== 'chat') return;
 
-      // Verificar si la respuesta es exitosa
-      if (!response.ok) {
-        if (response.status === 401) {
-          console.log('Usuario no autenticado - esto es normal');
-          return;
+      try {
+        // Solo hacer polling si tenemos un timestamp de referencia
+        if (lastMessageTimestamp > 0) {
+          const response = await fetch(`/api/chat/messages?limit=1&since=${lastMessageTimestamp}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data && result.data.length > 0) {
+              const message = result.data[0];
+              const messageTimestamp = new Date(message.timestamp).getTime();
+
+              // Solo actualizar si es realmente un mensaje nuevo
+              if (messageTimestamp > lastMessageTimestamp) {
+                setLastMessage({
+                  ...message,
+                  isOwn: message.userId === session.user?.id || message.userName === session.user?.name
+                });
+                setLastMessageTimestamp(messageTimestamp);
+              }
+            }
+          }
         }
-        throw new Error(`HTTP error! status: ${response.status}`);
+      } catch (error) {
+        console.error('Error en polling inteligente:', error);
+      }
+    }, 15000); // Polling cada 15 segundos (menos agresivo)
+
+    setPollingInterval(interval);
+  }, [session, activeTab, lastMessageTimestamp, isActive]);
+
+  // Cargar datos iniciales del chat
+  useEffect(() => {
+    if (session?.user && activeTab === 'chat') {
+      loadChatData();
+      loadInitialMessage();
+    }
+  }, [session, activeTab]);
+
+  // Iniciar polling inteligente
+  useEffect(() => {
+    if (session?.user && activeTab === 'chat' && lastMessageTimestamp > 0) {
+      startIntelligentPolling();
+    }
+
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [session, activeTab, lastMessageTimestamp, startIntelligentPolling]);
+
+  // Detectar cuando la ventana está activa/inactiva
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsActive(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  const loadChatData = async () => {
+    if (!session?.user) return;
+
+    try {
+      // Intentar obtener desde caché primero
+      const cachedChatInfo = simpleChatCache.getCachedChatInfo('user-chat');
+      if (cachedChatInfo) {
+        setChatInfo(cachedChatInfo);
+        return;
       }
 
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setChatInfo(result.data);
+      // Si no hay caché, obtener desde API
+      const response = await fetch('/api/chat/mine');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setChatInfo(result.data);
+          // Guardar en caché
+          simpleChatCache.setCachedChatInfo('user-chat', result.data);
+        }
       }
     } catch (error) {
       console.error('Error al cargar datos del chat:', error);
-    } finally {
-      setIsLoadingChat(false);
     }
   };
 
-  /**
-   * Carga el último mensaje del chat desde la API
-   */
-  // Ya no necesitamos loadLastMessage ya que usamos Firestore en tiempo real
-  // #endregion
+  const loadInitialMessage = async () => {
+    if (!session?.user) return;
 
-  // #region Event Handlers
+    setIsLoadingMessage(true);
+    try {
+      // Intentar obtener desde caché primero
+      const cachedMessages = simpleChatCache.getCachedMessages('user-chat');
+      if (cachedMessages && cachedMessages.messages.length > 0) {
+        const lastMessage = cachedMessages.messages[cachedMessages.messages.length - 1];
+        setLastMessage({
+          ...lastMessage,
+          isOwn: lastMessage.userId === session.user?.id || lastMessage.userName === session.user?.name
+        });
+        setLastMessageTimestamp(cachedMessages.lastMessageTimestamp);
+        setIsLoadingMessage(false);
+        return;
+      }
+
+      // Si no hay caché, obtener desde API
+      const response = await fetch('/api/chat/messages?limit=1');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data && result.data.length > 0) {
+          const message = result.data[0];
+          setLastMessage({
+            ...message,
+            isOwn: message.userId === session.user?.id || message.userName === session.user?.name
+          });
+          // Establecer timestamp de referencia para polling
+          const messageTimestamp = new Date(message.timestamp).getTime();
+          setLastMessageTimestamp(messageTimestamp);
+
+          // Guardar en caché
+          simpleChatCache.setCachedMessages('user-chat', result.data);
+        } else {
+          setLastMessage(null);
+          setLastMessageTimestamp(Date.now()); // Usar timestamp actual si no hay mensajes
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar último mensaje:', error);
+      setLastMessage(null);
+    } finally {
+      setIsLoadingMessage(false);
+    }
+  };
+
   const handleChatOpen = () => {
     setViewMode('fullscreenChat');
   };
 
   const handleBackFromChat = () => {
     setViewMode('main');
-    // Ya no necesitamos recargar mensajes manualmente
-    // Firestore se actualiza automáticamente
+    // Recargar datos cuando regresamos del chat
+    loadInitialMessage();
   };
 
   const handlePanicClick = async () => {
@@ -301,41 +347,30 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          timestamp: new Date().toISOString(),
-          location: 'current'
+          message: '🚨 ALERTA DE PÁNICO - Necesito ayuda urgente',
+          location: null, // Podrías agregar geolocalización aquí
         }),
       });
 
-      const result = await response.json();
-      console.log('Alerta de pánico enviada:', result);
+      if (response.ok) {
+        // Recargar mensajes para mostrar el mensaje de pánico
+        loadInitialMessage();
+      }
     } catch (error) {
-      console.error('Error al enviar alerta de pánico:', error);
+      console.error('Error al enviar mensaje de pánico:', error);
     }
   };
-  // #endregion
 
-  // #region Utility Functions
-  /**
-   * Formatea el tiempo de manera inteligente
-   */
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInMinutes < 1) return 'ahora';
+    if (diffInMinutes < 1) return 'Ahora';
     if (diffInMinutes < 60) return `${diffInMinutes}m`;
-    if (diffInHours < 24) return `${diffInHours}h`;
-    if (diffInDays < 7) return `${diffInDays}d`;
-
-    return new Intl.DateTimeFormat('es-ES', {
-      day: 'numeric',
-      month: 'short'
-    }).format(date);
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
+    return `${Math.floor(diffInMinutes / 1440)}d`;
   };
-  // #endregion
 
   // #region Render
   return (
@@ -393,7 +428,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
             <div className="flex-1 overflow-hidden">
               {activeTab === 'chat' && (
                 <div className="p-6">
-                  {isLoadingChat ? (
+                  {isLoadingMessage ? (
                     // Loading state mejorado
                     <div className="community-card-minimal p-5">
                       <div className="flex items-center space-x-4 mb-5">
@@ -429,7 +464,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
                     </div>
                   ) : (
                     // Chat card
-                    <NeighborhoodChatCard
+                    <WhatsAppChatCard
                       chatInfo={chatInfo}
                       lastMessage={lastMessage}
                       isLoadingMessage={isLoadingMessage}

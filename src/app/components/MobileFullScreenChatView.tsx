@@ -1,11 +1,9 @@
 'use client';
 
-import { useFirestoreChat } from '@/lib/hooks/useFirestoreChat';
 import { PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiChevronRight, FiMapPin, FiSend, FiUsers } from 'react-icons/fi';
-import ChatInfo from './ChatInfo';
+import { FiAlertTriangle, FiArrowLeft, FiMapPin, FiSend, FiUsers } from 'react-icons/fi';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -25,62 +23,54 @@ interface ChatInfo {
   participants: ChatParticipant[];
 }
 
+interface Message {
+  id: string;
+  userId: string;
+  userName: string;
+  message: string;
+  timestamp: Date;
+  type: 'normal' | 'panic';
+  isOwn: boolean;
+  metadata?: Record<string, any>;
+}
+
 const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenChatViewProps) => {
   const { data: session } = useSession();
   const [chat, setChat] = useState<ChatInfo | null>(null);
-  const [chatStats, setChatStats] = useState<any>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Función para convertir Timestamp a Date - MOVIDA AQUÍ ANTES DE SU USO
-  const toDate = (timestamp: any): Date => {
-    if (!timestamp) return new Date();
-    if (timestamp.toDate) return timestamp.toDate();
-    if (timestamp instanceof Date) return timestamp;
-    return new Date(timestamp);
-  };
-
-  // Usar el hook de Firestore en lugar de WebSockets
-  const {
-    chatData,
-    typingUsers,
-    isConnected,
-    error,
-    sendMessage,
-    sendPanicMessage,
-    startTyping,
-    stopTyping,
-    loadMoreMessages
-  } = useFirestoreChat({
-    enabled: true
-  });
-
-  // Convertir mensajes de Firestore a formato esperado
-  const messages = chatData.messages.map(msg => ({
-    ...msg,
-    timestamp: toDate(msg.timestamp),
-    createdAt: toDate(msg.timestamp)
-  }));
-
-  const loading = chatData.isLoading;
-
-  // Cargar información del chat
+  // Cargar información del chat y mensajes en paralelo
   useEffect(() => {
     if (session?.user) {
-      loadChatInfo();
-      loadChatStats();
+      setLoading(true);
+      Promise.all([
+        loadChatInfo(),
+        loadMessages()
+      ]).finally(() => {
+        setLoading(false);
+      });
     }
   }, [session]);
 
-  // Recargar stats cada 30 segundos
+  // Polling optimizado - solo cuando hay actividad
   useEffect(() => {
-    if (session?.user) {
-      const interval = setInterval(loadChatStats, 30000);
+    if (session?.user && !loading) {
+      const interval = setInterval(() => {
+        // Solo hacer polling si la ventana está activa
+        if (!document.hidden) {
+          loadMessages();
+        }
+      }, 8000); // Polling menos agresivo
       return () => clearInterval(interval);
     }
-  }, [session]);
+  }, [session, loading]);
 
   // Auto-scroll a mensajes nuevos
   useEffect(() => {
@@ -88,13 +78,11 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   }, [messages]);
 
   const loadChatInfo = async () => {
-    // No hacer llamada si no hay sesión
     if (!session?.user) return;
 
     try {
       const response = await fetch('/api/chat/mine');
 
-      // Verificar si la respuesta es exitosa
       if (!response.ok) {
         if (response.status === 401) {
           console.log('Usuario no autenticado - esto es normal');
@@ -110,17 +98,99 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       }
     } catch (error) {
       console.error('Error al cargar información del chat:', error);
+      setError('Error al cargar información del chat');
     }
   };
 
-  // Estadísticas temporalmente deshabilitadas para evitar errores 404
-  const loadChatStats = async () => {
-    // No cargar estadísticas por ahora
+  const loadMessages = async () => {
+    if (!session?.user) return;
+
+    try {
+      const response = await fetch('/api/chat/messages');
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const formattedMessages = result.data.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+            isOwn: msg.userId === session.user?.id || msg.userName === session.user?.name
+          }));
+          setMessages(formattedMessages);
+          setIsConnected(true);
+          setError(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar mensajes:', error);
+      setError('Error al cargar mensajes');
+      setIsConnected(false);
+    }
   };
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const sendMessage = async (message: string): Promise<boolean> => {
+    if (!session?.user || !message.trim()) return false;
+
+    try {
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          type: 'normal'
+        }),
+      });
+
+      if (response.ok) {
+        // Recargar mensajes después de enviar
+        await loadMessages();
+        return true;
+      } else {
+        setError('Error enviando mensaje');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error enviando mensaje:', error);
+      setError('Error enviando mensaje');
+      return false;
+    }
+  };
+
+  const sendPanicMessage = async (message: string, location?: { lat: number; lng: number }): Promise<boolean> => {
+    if (!session?.user || !message.trim()) return false;
+
+    try {
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          type: 'panic',
+          metadata: { location }
+        }),
+      });
+
+      if (response.ok) {
+        await loadMessages();
+        return true;
+      } else {
+        setError('Error enviando mensaje de pánico');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error enviando mensaje de pánico:', error);
+      setError('Error enviando mensaje de pánico');
+      return false;
     }
   };
 
@@ -234,7 +304,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* Hidden drag indicator - minimal but functional */}
       <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-0.5 h-16 bg-gray-600/30 rounded-r-full"></div>
 
-      {/* Enhanced Header with full-width participants button */}
+      {/* Header simplificado */}
       <div className="bg-gray-800 border-b border-gray-700/50">
         <div className="flex items-center px-4 py-3">
           <button
@@ -244,101 +314,63 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             <FiArrowLeft className="w-5 h-5 text-gray-400" />
           </button>
 
-          {/* Full-width clickable header area */}
+          <div className="flex items-center space-x-3 flex-1">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <FiMapPin className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-white">
+                {chat?.neighborhood || 'Chat Barrial'}
+              </h2>
+              <p className="text-sm text-gray-400">
+                {chat?.participants.length || 0} participantes
+              </p>
+            </div>
+          </div>
+
           <button
             onClick={() => setShowParticipants(!showParticipants)}
-            className="flex-1 flex items-center justify-between hover:bg-gray-700/30 rounded-lg p-2 transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
           >
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <FiMapPin className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-left">
-                <h2 className="text-lg font-semibold text-white">
-                  {chat?.neighborhood || 'Chat Barrial'}
-                </h2>
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm text-gray-400">
-                    {chat?.participants.length || 0} participantes
-                  </p>
-                  {typingUsers.length > 0 && (
-                    <span className="text-xs text-blue-400">
-                      • {typingUsers.join(', ')} escribiendo...
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <FiUsers className="w-5 h-5 text-gray-400" />
-              <FiChevronRight
-                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                  showParticipants ? 'rotate-90' : ''
-                }`}
-              />
-            </div>
+            <FiUsers className="w-5 h-5 text-gray-400" />
           </button>
         </div>
-
-        {/* Chat Info */}
-        <ChatInfo
-          todayMessages={chatStats?.todayMessages || messages.filter(m => {
-            const today = new Date();
-            return m.timestamp.toDateString() === today.toDateString();
-          }).length}
-          activeUsers={chatStats?.activeUsers || chat?.participants.length || 0}
-          lastActivity={chatStats?.lastActivity ? new Date(chatStats.lastActivity) :
-            (messages.length > 0 ? messages[messages.length - 1].timestamp : undefined)}
-          safetyLevel={chatStats?.safetyLevel || "medium"}
-          emergencyLevel={chatStats?.emergencyLevel || "normal"}
-          recentIncidents={chatStats?.recentIncidents || 0}
-          panicMessages={chatStats?.panicMessages || 0}
-          className="px-4 py-2"
-        />
       </div>
 
-      {/* Enhanced Participants panel */}
+      {/* Panel de participantes simplificado */}
       {showParticipants && chat && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="bg-gray-800/80 backdrop-blur-sm border-b border-gray-700/50"
+          className="participants-panel"
         >
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-200">Participantes del {chat?.neighborhood || 'Barrio'}</h3>
-              <span className="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded-full">
-                {chat.participants.length} miembros
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-gray-300">Participantes</h3>
+              <span className="text-xs text-gray-500 bg-gray-700/50 px-2 py-1 rounded">
+                {chat.participants.length}
               </span>
             </div>
 
-            <div className="grid gap-3 max-h-48 overflow-y-auto">
+            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
               {chat.participants.map((participant: ChatParticipant) => (
-                <div key={participant._id} className="flex items-center space-x-3 p-2 hover:bg-gray-700/30 rounded-lg transition-colors">
-                  <div className="relative">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-semibold text-white">
-                        {participant.name?.charAt(0)?.toUpperCase() || 'U'}
-                      </span>
-                    </div>
-                    {/* Online indicator - you can implement this later */}
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full"></div>
+                <div key={participant._id} className="participant-item">
+                  <div className="participant-avatar">
+                    <span className="text-xs font-medium text-white">
+                      {participant.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
                   </div>
-
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm text-white truncate">
                       {participant.name} {participant.surname}
                     </p>
-                    <p className="text-xs text-gray-400">
-                      Manzana {participant.blockNumber} • Vecino
+                    <p className="text-xs text-gray-500">
+                      Manzana {participant.blockNumber}
                     </p>
                   </div>
-
-                  {/* Current user indicator */}
                   {session?.user?.email && participant.name === session.user.name && (
-                    <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-1 rounded-full">
+                    <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded">
                       Tú
                     </span>
                   )}
@@ -350,7 +382,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       )}
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         {messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center h-full">
             <div className="text-center">
@@ -372,64 +404,72 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 formatDate(messages[index - 1].timestamp) !== formatDate(message.timestamp);
 
               const isPanicMessage = message.type === 'panic';
-              const isOwn = isMessageOwn(message); // Use improved ownership detection
+              const isOwn = isMessageOwn(message);
 
-              // Crear una key única que incluya el timestamp para evitar duplicados
-              const uniqueKey = `${message.id}-${message.timestamp.getTime()}-${index}`;
+              // Crear una key única más robusta
+              const messageKey = message.id || `msg-${message.timestamp.getTime()}-${index}`;
+              const dateKey = `date-${formatDate(message.timestamp)}`;
 
-              return (
-                <div key={uniqueKey}>
-                  {showDateDivider && (
-                    <div className="flex justify-center my-4">
-                      <span className="px-3 py-1 bg-gray-800 text-gray-400 text-xs rounded-full">
-                        {formatDate(message.timestamp)}
-                      </span>
-                    </div>
-                  )}
+              const elements = [];
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.02 }}
-                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3`}
-                  >
-                    <div className={`max-w-[80%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                      {!isOwn && (
-                        <p className="text-xs text-blue-400 mb-1 px-1 font-medium">
-                          {message.userName.split(' ')[0]}
-                        </p>
+              // Agregar divisor de fecha si es necesario
+              if (showDateDivider) {
+                elements.push(
+                  <div key={dateKey} className="flex justify-center my-4">
+                    <span className="px-3 py-1 bg-gray-800 text-gray-400 text-xs rounded-full">
+                      {formatDate(message.timestamp)}
+                    </span>
+                  </div>
+                );
+              }
+
+              // Agregar mensaje
+              elements.push(
+                <motion.div
+                  key={messageKey}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 message-enter`}
+                >
+                  <div className={`max-w-[80%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                    {!isOwn && (
+                      <p className="text-xs text-blue-400 mb-1 px-1 font-medium">
+                        {message.userName.split(' ')[0]}
+                      </p>
+                    )}
+                    <div
+                      className={`px-4 py-2 rounded-2xl ${
+                        isPanicMessage
+                          ? 'bg-red-500/20 border border-red-500/30 text-red-100'
+                          : isOwn
+                          ? 'bg-blue-500 text-white ml-2'
+                          : 'bg-gray-800 text-gray-100 mr-2'
+                      }`}
+                    >
+                      {isPanicMessage && (
+                        <div className="flex items-center space-x-2 mb-2">
+                          <FiAlertTriangle className="w-4 h-4 text-red-400" />
+                          <span className="text-xs font-semibold text-red-400">ALERTA DE PÁNICO</span>
+                        </div>
                       )}
-                      <div
-                        className={`px-4 py-2 rounded-2xl ${
-                          isPanicMessage
-                            ? 'bg-red-500/20 border border-red-500/30 text-red-100'
-                            : isOwn
-                            ? 'bg-blue-500 text-white ml-2'
-                            : 'bg-gray-800 text-gray-100 mr-2'
-                        }`}
-                      >
-                        {isPanicMessage && (
-                          <div className="flex items-center space-x-2 mb-2">
-                            <FiAlertTriangle className="w-4 h-4 text-red-400" />
-                            <span className="text-xs font-semibold text-red-400">ALERTA DE PÁNICO</span>
-                          </div>
-                        )}
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.message}</p>
-                        <p className={`text-xs mt-1 ${
-                          isPanicMessage
-                            ? 'text-red-300'
-                            : isOwn
-                            ? 'text-blue-100'
-                            : 'text-gray-400'
-                        }`}>
-                          {formatTime(message.timestamp)}
-                        </p>
-                      </div>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.message}</p>
+                      <p className={`text-xs mt-1 ${
+                        isPanicMessage
+                          ? 'text-red-300'
+                          : isOwn
+                          ? 'text-blue-100'
+                          : 'text-gray-400'
+                      }`}>
+                        {formatTime(message.timestamp)}
+                      </p>
                     </div>
-                  </motion.div>
-                </div>
+                  </div>
+                </motion.div>
               );
-            })}
+
+              return elements;
+            }).flat()}
             <div ref={messagesEndRef} />
           </>
         )}
@@ -445,9 +485,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Escribe un mensaje..."
-              className="flex-1 bg-transparent text-white placeholder-gray-400 resize-none outline-none max-h-20 min-h-[1.5rem]"
+              className="message-input"
               rows={1}
-              style={{ lineHeight: '1.5rem' }}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = 'auto';
@@ -458,11 +497,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           <button
             onClick={handleSendMessage}
             disabled={!newMessage.trim()}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-              newMessage.trim()
-                ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-            }`}
+            className={`send-button ${newMessage.trim() ? 'active' : 'inactive'}`}
           >
             <FiSend className="w-4 h-4" />
           </button>

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 interface OnboardingFormData {
@@ -56,11 +56,12 @@ export default function OnboardingPage() {
       }
 
       // Actualizar la sesión para reflejar que el usuario ha completado el onboarding
-      await update();
-      
-      // Cerrar sesión y redirigir al usuario a la página principal
-      await signOut({ redirect: false });
+      await update({ onboarded: true });
+
+      // Esperar un momento para que la sesión se actualice
+      setTimeout(() => {
       router.push('/');
+      }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Hubo un error al guardar tu información. Por favor, intenta de nuevo.');
       console.error('Error en onboarding:', err);
@@ -86,7 +87,7 @@ export default function OnboardingPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto bg-gray-800 rounded-lg shadow-lg p-6">
           <h1 className="text-2xl font-bold mb-6 text-center">Completa tu Perfil</h1>
-          
+
           {error && (
             <div className="mb-4 p-3 bg-red-500 text-white rounded-md">
               {error}
@@ -170,4 +171,4 @@ export default function OnboardingPage() {
       </div>
     </div>
   );
-} 
+}

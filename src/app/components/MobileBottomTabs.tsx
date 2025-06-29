@@ -7,6 +7,7 @@ import {
     FiActivity,
     FiCheckCircle,
     FiCompass,
+    FiUser,
     FiUsers
 } from 'react-icons/fi';
 
@@ -23,6 +24,7 @@ interface TabItem {
   label: string;
   icon: React.ReactNode;
   requiresAuth?: boolean;
+  adminOnly?: boolean;
 }
 
 const MobileBottomTabs = ({
@@ -51,9 +53,10 @@ const MobileBottomTabs = ({
       icon: <FiUsers className="w-5 h-5" />
     },
     {
-      id: 'queue',
-      label: 'Verificación',
-      icon: <FiCheckCircle className="w-5 h-5" />,
+      id: 'profile',
+      label: session?.user?.role === 'admin' || session?.user?.role === 'editor' ? 'Admin' : 'Perfil',
+      icon: session?.user?.role === 'admin' || session?.user?.role === 'editor' ?
+        <FiCheckCircle className="w-5 h-5" /> : <FiUser className="w-5 h-5" />,
       requiresAuth: true
     }
   ];
@@ -61,15 +64,15 @@ const MobileBottomTabs = ({
   // Filtrar tabs disponibles y verificar autenticación
   const visibleTabs = useMemo(() => {
     return allTabs.filter(tab => {
-      // Verificar si el tab está en la lista de tabs disponibles
-      if (!availableTabs.includes(tab.id)) return false;
+      // Verificar si el tab está en la lista de tabs disponibles (excepto profile que siempre se muestra si está autenticado)
+      if (tab.id !== 'profile' && !availableTabs.includes(tab.id)) return false;
 
       // Si requiere autenticación, verificar que el usuario esté autenticado
       if (tab.requiresAuth && status !== 'authenticated') return false;
 
       return true;
     });
-  }, [allTabs, availableTabs, status]);
+  }, [allTabs, availableTabs, status, session?.user?.role]);
 
   const handleTabClick = (tabId: string) => {
     onTabChange(tabId);

@@ -17,9 +17,6 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@firebase/firestore']
-  },
   webpack(config, { dev, isServer }) {
     config.module.exprContextCritical = false
 
@@ -40,42 +37,8 @@ const nextConfig = {
       }
     }
 
-    // Configuración de webpack para solucionar problemas de Firebase
-    if (!isServer) {
-      // Configuración para el cliente
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        crypto: false,
-        stream: false,
-        url: false,
-        zlib: false,
-        http: false,
-        https: false,
-        assert: false,
-        os: false,
-        path: false,
-      };
-    }
-
-    // Ignorar módulos problemáticos de gRPC para Firebase
-    if (!isServer) {
-      config.externals = config.externals || [];
-      config.externals.push({
-        '@grpc/grpc-js': 'commonjs @grpc/grpc-js',
-        '@grpc/proto-loader': 'commonjs @grpc/proto-loader',
-      });
-    }
-
-    // Resolver problemas específicos de Firebase
-    config.resolve.alias = {
-      ...config.resolve.alias,
-    };
-
     return config
-  }
+  },
 }
 
 export default nextConfig

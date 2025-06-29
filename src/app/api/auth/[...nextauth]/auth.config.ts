@@ -1,10 +1,10 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
+import { getDefaultRole, Role } from "@/lib/config/roles";
 import clientPromise from "@/lib/mongodb";
 import { verifyPassword } from "@/lib/utils";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { getDefaultRole, Role } from "@/lib/config/roles";
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 
 // Extender los tipos de Next-Auth
 declare module 'next-auth' {
@@ -14,7 +14,7 @@ declare module 'next-auth' {
     enabled?: boolean;
     onboarded?: boolean;
   }
-  
+
   interface Session {
     user: {
       id: string;
@@ -73,11 +73,11 @@ export const authOptions: NextAuthOptions = {
         try {
           const client = await clientPromise;
           const db = client.db();
-          
+
           const user = await db.collection("users").findOne({
             email: credentials.email,
           });
-          
+
           if (!user || !(await verifyPassword(credentials.password, user.password))) {
             return null;
           }
@@ -85,14 +85,14 @@ export const authOptions: NextAuthOptions = {
           if (user.enabled === false) {
             throw new Error("Tu cuenta está pendiente de aprobación por un administrador.");
           }
-          
+
           return {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
             role: user.role || getDefaultRole(),
             enabled: user.enabled,
-            onboarded: user.onboarded || false,
+            onboarded: user.onboarded || user.isOnboarded || false,
           };
         } catch (error) {
           console.error("Error durante la autenticación:", error);
@@ -106,29 +106,63 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google") {
         const client = await clientPromise;
         const db = client.db();
-        
+
         const dbUser = await db.collection("users").findOne({
           email: user.email,
         });
-        
+
         if (dbUser && dbUser.enabled === false) {
           return false;
         }
+
+        // Actualizar el objeto user con los datos de la base de datos
+        if (dbUser) {
+          user.onboarded = dbUser.onboarded || dbUser.isOnboarded || false;
+          user.enabled = dbUser.enabled;
+          user.role = dbUser.role || getDefaultRole();
+        }
       }
-      
+
       return true;
     },
-    jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.enabled = user.enabled;
         token.onboarded = user.onboarded;
       }
+
+      // Actualizar token cuando se actualiza la sesión
+      if (trigger === "update" && session) {
+        if (session.onboarded !== undefined) {
+          token.onboarded = session.onboarded;
+        }
+
+        // Refrescar datos del usuario desde la base de datos
+        if (token.id) {
+          try {
+            const client = await clientPromise;
+            const db = client.db();
+            const dbUser = await db.collection("users").findOne({
+              _id: new (require('mongodb')).ObjectId(token.id)
+            });
+
+            if (dbUser) {
+              token.onboarded = dbUser.onboarded || dbUser.isOnboarded || false;
+              token.enabled = dbUser.enabled;
+              token.role = dbUser.role || token.role;
+            }
+          } catch (error) {
+            console.error('Error refreshing user data:', error);
+          }
+        }
+      }
+
       return token;
     },
-    session({ session, token }) {
-      if (session?.user) {
+    async session({ session, token }) {
+      if (session?.user && token) {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.enabled = token.enabled;
@@ -139,7 +173,11 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 30 * 24 * 60 * 60, // 30 días
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   secret: process.env.NEXTAUTH_SECRET,
-}; 
+  debug: process.env.NODE_ENV === 'development',
+};

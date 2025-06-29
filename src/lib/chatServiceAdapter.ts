@@ -1,6 +1,4 @@
-import { FirestoreMessage } from './firestoreChatService';
-
-// Adaptador para mensajes que funciona con ambos sistemas
+// Adaptador para mensajes que funciona con el sistema de chat basado en API
 export interface AdaptedMessage {
   id: string;
   userId: string;
@@ -26,98 +24,107 @@ export interface ChatServiceAdapter {
   refresh: () => void;
 }
 
-// Función para determinar si Firebase está disponible
-const isFirebaseAvailable = (): boolean => {
-  return typeof window !== 'undefined' &&
-         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== 'demo-project' &&
-         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== undefined;
-};
-
-// Función para convertir mensajes de Firestore al formato esperado
-const adaptFirestoreMessage = (msg: FirestoreMessage, currentUserId?: string): AdaptedMessage => {
-  // Convertir timestamp de Firestore a Date
-  let timestamp: Date;
-  if (msg.timestamp?.toDate) {
-    timestamp = msg.timestamp.toDate();
-  } else if (msg.timestamp instanceof Date) {
-    timestamp = msg.timestamp;
-  } else {
-    timestamp = new Date();
-  }
-
-  return {
-    id: msg.id,
-    userId: msg.userId,
-    userName: msg.userName,
-    message: msg.message,
-    timestamp,
-    type: msg.type,
-    isOwn: msg.userId === currentUserId || msg.userName === currentUserId,
-    metadata: msg.metadata
-  };
-};
-
-// Servicio de fallback que simula mensajes cuando Firebase no está disponible
-class FallbackChatService {
-  private messages: AdaptedMessage[] = [
-    {
-      id: 'demo-1',
-      userId: 'demo-user',
-      userName: 'Sistema',
-      message: '¡Bienvenido! Firebase no está configurado. Configura Firebase para usar el chat en tiempo real.',
-      timestamp: new Date(),
-      type: 'normal',
-      isOwn: false,
-      metadata: {}
-    }
-  ];
-
+// Servicio de chat basado en API REST
+class ChatService {
+  private messages: AdaptedMessage[] = [];
   private listeners: ((messages: AdaptedMessage[]) => void)[] = [];
+  private isLoading = false;
 
   subscribeToMessages(callback: (messages: AdaptedMessage[]) => void) {
     this.listeners.push(callback);
-    callback(this.messages);
+    this.loadMessages().then(() => {
+      callback(this.messages);
+    });
+
+    // Simular actualizaciones en tiempo real cada 5 segundos
+    const interval = setInterval(() => {
+      this.loadMessages().then(() => {
+        callback(this.messages);
+      });
+    }, 5000);
 
     return () => {
       const index = this.listeners.indexOf(callback);
       if (index > -1) {
         this.listeners.splice(index, 1);
       }
+      clearInterval(interval);
     };
+  }
+
+  private async loadMessages(): Promise<void> {
+    try {
+      const response = await fetch('/api/chat/messages');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          this.messages = result.data.map((msg: any) => ({
+            id: msg.id,
+            userId: msg.userId,
+            userName: msg.userName,
+            message: msg.message,
+            timestamp: new Date(msg.timestamp),
+            type: msg.type || 'normal',
+            isOwn: false, // Se determinará en el componente
+            metadata: msg.metadata || {}
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error cargando mensajes:', error);
+    }
   }
 
   async sendMessage(userId: string, userName: string, message: string): Promise<boolean> {
-    const newMessage: AdaptedMessage = {
-      id: `demo-${Date.now()}`,
-      userId,
-      userName,
-      message,
-      timestamp: new Date(),
-      type: 'normal',
-      isOwn: true,
-      metadata: {}
-    };
+    try {
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          type: 'normal'
+        }),
+      });
 
-    this.messages.push(newMessage);
-    this.notifyListeners();
-    return true;
+      if (response.ok) {
+        // Recargar mensajes después de enviar
+        await this.loadMessages();
+        this.notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error enviando mensaje:', error);
+      return false;
+    }
   }
 
-  async sendPanicMessage(userId: string, userName: string, message: string): Promise<boolean> {
-    const newMessage: AdaptedMessage = {
-      id: `panic-${Date.now()}`,
-      userId,
-      userName,
-      message,
-      timestamp: new Date(),
-      type: 'panic',
-      isOwn: true,
-      metadata: {}
-    };
+  async sendPanicMessage(userId: string, userName: string, message: string, location?: { lat: number; lng: number }): Promise<boolean> {
+    try {
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          type: 'panic',
+          metadata: { location }
+        }),
+      });
 
-    this.messages.push(newMessage);
-    this.notifyListeners();
-    return true;
+      if (response.ok) {
+        await this.loadMessages();
+        this.notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error enviando mensaje de pánico:', error);
+      return false;
+    }
   }
 
   private notifyListeners() {
@@ -125,19 +132,25 @@ class FallbackChatService {
   }
 
   subscribeToTypingUsers(callback: (users: string[]) => void) {
+    // No implementado para el sistema basado en API
     callback([]);
     return () => {};
   }
 
   async startTyping(): Promise<void> {
-    // No-op en modo demo
+    // No implementado para el sistema basado en API
   }
 
   async stopTyping(): Promise<void> {
-    // No-op en modo demo
+    // No implementado para el sistema basado en API
+  }
+
+  async getHistoricalMessages(limit: number = 50): Promise<AdaptedMessage[]> {
+    await this.loadMessages();
+    return this.messages.slice(-limit);
   }
 }
 
-const fallbackService = new FallbackChatService();
+const chatService = new ChatService();
 
-export { adaptFirestoreMessage, fallbackService, isFirebaseAvailable };
+export { chatService };

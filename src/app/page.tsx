@@ -7,10 +7,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { FiArrowLeft, FiX } from 'react-icons/fi';
 import FloatingReportButton from './components/FloatingReportButton';
 import IncidentForm from './components/IncidentForm';
-import IncidentQueue from './components/IncidentQueue';
 import MobileBottomTabs from './components/MobileBottomTabs';
 import MobileCommunitiesView from './components/MobileCommunitiesView';
 import MobileDynamicNavbar from './components/MobileDynamicNavbar';
+import MobileProfileView from './components/MobileProfileView';
 import MobileReportView from './components/MobileReportView';
 import MobileSettingsPanel from './components/MobileSettingsPanel';
 import MobileStatsView from './components/MobileStatsView';
@@ -119,27 +119,12 @@ export default function Home() {
           </div>
         );
 
-      case 'queue':
-        if (session?.user?.role === 'admin' || session?.user?.role === 'editor') {
-          return (
-            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700/50">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-200">Cola de Revisión</h2>
-                <button
-                  onClick={() => setActiveTab('incidents')}
-                  className="flex items-center space-x-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  <span>Volver al mapa</span>
-                </button>
-              </div>
-              <IncidentQueue />
-            </div>
-          );
-        }
-        return null;
+      case 'profile':
+        return (
+          <div className="w-full h-full">
+            <MobileProfileView />
+          </div>
+        );
 
       default:
         return null;

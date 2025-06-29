@@ -100,6 +100,31 @@ export interface ChatWithParticipants {
 }
 
 /**
+ * Represents a chat message
+ */
+export interface Message {
+  id: string;
+  userId: string;
+  userName: string;
+  message: string;
+  timestamp: Date | string;
+  type: 'normal' | 'panic';
+  isOwn?: boolean;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Represents chat data for the optimized service
+ */
+export interface ChatData {
+  id: string;
+  neighborhood: string;
+  participants: any[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+/**
  * Represents a panic alert
  */
 export interface PanicAlert {
