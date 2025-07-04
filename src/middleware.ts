@@ -1,56 +1,46 @@
+// src/middleware.ts
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
-  const isOnboardingPage = request.nextUrl.pathname === '/onboarding';
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api');
-  const isPublicApiRoute = request.nextUrl.pathname.startsWith('/api/auth') ||
-    request.nextUrl.pathname === '/api/register' ||
-    request.nextUrl.pathname === '/api/user/onboarding';
+// ───────── CONFIG ───────────────────────────
+const authPages = ['/login', '/register'];       // ajusta si usas otras
+const apiRouteExempt = '/api/device/alert';      // ← botón de pánico
+// ─────────────────────────────────────────────
 
-  // Permitir acceso a rutas públicas
-  if (isPublicApiRoute || isAuthPage || isOnboardingPage) {
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  /* 1. Dejar pasar la ruta del botón TAL CUAL */
+  if (pathname === apiRouteExempt) {
     return NextResponse.next();
   }
 
-  if (isApiRoute && !token) {
-    return NextResponse.json(
-      { success: false, message: 'No autorizado' },
-      { status: 401 }
-    );
+  /* 2. Permitir páginas públicas sin sesión */
+  if (authPages.includes(pathname)) {
+    return NextResponse.next();
   }
 
-  // Si el usuario no está autenticado y no está en una página de auth
-  if (!token && !isAuthPage) {
-    const url = new URL('/auth/signin', request.url);
-    url.searchParams.set('callbackUrl', request.nextUrl.pathname);
-    return NextResponse.redirect(url);
-  }
+  /* 3. Para todo lo demás, exige token (NextAuth) */
+  const token = await getToken({ req });
+  if (!token) {
+    // Si es API → 401; si es página → redirect a /login
+    if (pathname.startsWith('/api')) {
+      return NextResponse.json(
+        { success: false, message: 'No autorizado' },
+        { status: 401 }
+      );
+    }
 
-  // Si el usuario está autenticado pero no ha completado el onboarding
-  if (token && token.onboarded === false && !isOnboardingPage && !isAuthPage) {
-    return NextResponse.redirect(new URL('/onboarding', request.url));
-  }
-
-  // Si el usuario ya completó el onboarding y trata de acceder a la página de onboarding
-  if (token && token.onboarded === true && isOnboardingPage) {
-    return NextResponse.redirect(new URL('/', request.url));
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
+/* Opcional: limitar a rutas concretas
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
-  ],
+  matcher: ['/((?!_next/).*)'],   // protege todo salvo archivos estáticos
 };
+*/
