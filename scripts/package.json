@@ -1,5 +1,10 @@
 {
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "@types/node": "^24.0.7",
+    "dotenv": "^17.0.0",
+    "firebase-admin": "^13.4.0",
+    "mongodb": "^6.17.0",
+    "node-fetch": "^2.7.0",
+    "ts-node": "^10.9.2"
   }
 }

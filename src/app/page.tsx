@@ -6,12 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { FiArrowLeft, FiX } from 'react-icons/fi';
 import FloatingReportButton from './components/FloatingReportButton';
-import IncidentForm from './components/IncidentForm';
 import MobileBottomTabs from './components/MobileBottomTabs';
 import MobileCommunitiesView from './components/MobileCommunitiesView';
 import MobileDynamicNavbar from './components/MobileDynamicNavbar';
 import MobileProfileView from './components/MobileProfileView';
-import MobileReportView from './components/MobileReportView';
+import MobileReportForm from './components/MobileReportForm';
 import MobileSettingsPanel from './components/MobileSettingsPanel';
 import MobileStatsView from './components/MobileStatsView';
 import Sidebar from './components/Sidebar';
@@ -20,7 +19,7 @@ import SwipeableIncidentsView from './components/SwipeableIncidentsView';
 export default function Home() {
 
   // State to track sidebar collapse state
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // Start collapsed
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const router = useRouter();
@@ -109,13 +108,6 @@ export default function Home() {
         return (
           <div className="w-full h-full">
             <MobileCommunitiesView />
-          </div>
-        );
-
-      case 'report':
-        return (
-          <div className="w-full h-full">
-            <MobileReportView onBack={() => setActiveTab('incidents')} />
           </div>
         );
 
@@ -291,16 +283,16 @@ export default function Home() {
                   </div>
 
                   {/* Contenido del formulario */}
-                  <div className="flex-1 overflow-y-auto px-4 py-6">
+                  <div className="flex-1 px-4 py-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
                     <div
-                      className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/30"
+                      className="bg-gray-800/50 rounded-2xl p-4 border border-gray-700/30"
                       style={{
                         background: 'rgba(31, 41, 55, 0.5)',
                         backdropFilter: 'blur(10px)',
                         boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.2)'
                       }}
                     >
-                      <IncidentForm />
+                      <MobileReportForm />
                     </div>
                   </div>
                 </motion.div>

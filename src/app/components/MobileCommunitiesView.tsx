@@ -301,11 +301,11 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
       }
 
       // Si no hay caché, obtener desde API
-      const response = await fetch('/api/chat/messages?limit=1');
+      const response = await fetch('/api/chat/firestore-messages?limit=1');
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data && result.data.length > 0) {
-          const message = result.data[0];
+        if (result.success && result.data && result.data.messages && result.data.messages.length > 0) {
+          const message = result.data.messages[0];
           setLastMessage({
             ...message,
             isOwn: message.userId === session.user?.id || message.userName === session.user?.name
@@ -315,7 +315,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
           setLastMessageTimestamp(messageTimestamp);
 
           // Guardar en caché
-          simpleChatCache.setCachedMessages('user-chat', result.data);
+          simpleChatCache.setCachedMessages('user-chat', result.data.messages);
         } else {
           setLastMessage(null);
           setLastMessageTimestamp(Date.now()); // Usar timestamp actual si no hay mensajes

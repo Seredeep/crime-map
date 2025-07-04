@@ -138,16 +138,16 @@ class ChatServiceOptimized {
 
     try {
       const url = since
-        ? `/api/chat/messages?chatId=${this.chatId}&since=${since}&limit=50`
-        : `/api/chat/messages?chatId=${this.chatId}&limit=50`;
+        ? `/api/chat/firestore-messages?limit=50&since=${since}`
+        : `/api/chat/firestore-messages?limit=50`;
 
       const response = await fetch(url);
 
       if (response.ok) {
         const data = await response.json();
 
-        if (data.success && data.messages) {
-          const messages = data.messages || data.data || [];
+        if (data.success && data.data && data.data.messages) {
+          const messages = data.data.messages || [];
 
           if (since) {
             // Es un polling, agregar a caché existente
@@ -525,3 +525,4 @@ class ChatServiceOptimized {
 // Singleton instance
 export const chatServiceOptimized = new ChatServiceOptimized();
 export type { OnlineUser, TypingUser };
+

@@ -426,7 +426,15 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
   );
 }
 
-export default function IncidentsView() {
+export default function IncidentsView({
+  incidents: externalIncidents,
+  onIncidentUpdate: externalOnIncidentUpdate,
+  onIncidentSelect: externalOnIncidentSelect
+}: {
+  incidents?: Incident[];
+  onIncidentUpdate?: (updatedIncident: Incident) => void;
+  onIncidentSelect?: (incident: Incident) => void;
+} = {}) {
   const { data: session } = useSession();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -435,6 +443,10 @@ export default function IncidentsView() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const isEditorOrAdmin = session?.user?.role === 'editor' || session?.user?.role === 'admin';
+
+  // Usar incidentes externos si se proporcionan, de lo contrario usar el estado interno
+  const currentIncidents = externalIncidents || incidents;
+  const isExternalMode = !!externalIncidents;
 
   const [filters, setFilters] = useState<IncidentFilters>(() => {
     // Set default date range to last 30 days
@@ -452,8 +464,10 @@ export default function IncidentsView() {
 
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
 
-  // Function to load incidents based on filters
+  // Function to load incidents based on filters - solo si no estamos en modo externo
   const loadIncidents = useCallback(async () => {
+    if (isExternalMode) return; // No cargar si estamos en modo externo
+
     setLoading(true);
     setError(null);
 
@@ -466,31 +480,43 @@ export default function IncidentsView() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, isExternalMode]);
 
-  // Load incidents on component mount and when filters change
+  // Load incidents on component mount and when filters change - solo si no estamos en modo externo
   useEffect(() => {
-    loadIncidents();
-  }, [loadIncidents]);
+    if (!isExternalMode) {
+      loadIncidents();
+    } else {
+      setLoading(false); // En modo externo, no hay loading
+    }
+  }, [loadIncidents, isExternalMode]);
 
   const handleIncidentSelected = (incident: Incident) => {
     setSelectedIncident(incident);
     setShowDetailsModal(true);
+    // Llamar al handler externo si existe
+    externalOnIncidentSelect?.(incident);
   };
 
   const handleIncidentUpdate = (updatedIncident: Incident) => {
     // Actualizar el incidente en la lista local
-    setIncidents(incidents.map(inc =>
-      inc._id === updatedIncident._id ? updatedIncident : inc
-    ));
+    if (!isExternalMode) {
+      setIncidents(incidents.map(inc =>
+        inc._id === updatedIncident._id ? updatedIncident : inc
+      ));
+    }
     // Actualizar el incidente seleccionado si es el mismo
     if (selectedIncident?._id === updatedIncident._id) {
       setSelectedIncident(updatedIncident);
     }
+    // Llamar al handler externo si existe
+    externalOnIncidentUpdate?.(updatedIncident);
   };
 
-  // Handler for when filters change
+  // Handler for when filters change - solo si no estamos en modo externo
   const handleFiltersChange = useCallback((newFilters: IncidentFilters) => {
+    if (isExternalMode) return; // No cambiar filtros en modo externo
+
     // Si el usuario no es editor o admin, forzar el estado a 'verified'
     if (!isEditorOrAdmin) {
       newFilters.status = 'verified';
@@ -499,7 +525,7 @@ export default function IncidentsView() {
     if (selectedIncident) {
       setSelectedIncident(null);
     }
-  }, [isEditorOrAdmin, selectedIncident]);
+  }, [isEditorOrAdmin, selectedIncident, isExternalMode]);
 
   // Handler cuando se selecciona un barrio
   const handleNeighborhoodSelect = useCallback((neighborhood: Neighborhood | null) => {
@@ -531,7 +557,7 @@ export default function IncidentsView() {
             {/* Panel de incidentes recientes - Desktop */}
             <div className="hidden md:block h-full z-20 relative">
               <RecentIncidentsPanel
-                incidents={incidents}
+                incidents={currentIncidents}
                 onIncidentClick={handleIncidentSelected}
                 onViewStatsClick={() => { }}
                 showFilters={false}
@@ -546,7 +572,7 @@ export default function IncidentsView() {
             {/* Mapa principal */}
             <div className="flex-1 h-full relative">
               <Map
-                incidents={incidents}
+                incidents={currentIncidents}
                 onIncidentSelect={handleIncidentSelected}
                 mode="incidents"
                 selectedNeighborhood={selectedNeighborhood}

@@ -1,9 +1,9 @@
-import { sendMessageToFirestore } from '@/lib/firestoreChatService';
+import { getChatMessagesFromFirestore } from '@/lib/firestoreChatService';
 import clientPromise from '@/lib/mongodb';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     // Verificar autenticación
     const session = await getServerSession();
@@ -14,17 +14,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener datos del cuerpo
-    const body = await request.json();
-    const { message, type = 'normal', metadata = {} } = body;
-
-    // Validar mensaje
-    if (!message || typeof message !== 'string' || !message.trim()) {
-      return NextResponse.json(
-        { success: false, error: 'Mensaje requerido' },
-        { status: 400 }
-      );
-    }
+    // Obtener parámetros de consulta
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
 
     // Buscar usuario en MongoDB
     const client = await clientPromise;
@@ -46,28 +38,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enviar mensaje a Firestore
-    const messageId = await sendMessageToFirestore(
-      user.chatId,
-      user._id.toString(),
-      user.name || user.email.split('@')[0],
-      message.trim(),
-      type,
-      metadata
-    );
+    // Obtener mensajes desde Firestore
+    const messages = await getChatMessagesFromFirestore(user.chatId, limit);
 
-    console.log(`💬 Mensaje enviado a Firestore: ${user.name || user.email} → ${user.chatId}`);
+    // Formatear mensajes para el frontend
+    const formattedMessages = messages.map(msg => ({
+      id: msg.id,
+      userId: msg.userId,
+      userName: msg.userName,
+      message: msg.message,
+      timestamp: msg.timestamp?.toDate?.() || msg.timestamp,
+      type: msg.type,
+      isOwn: msg.userId === user._id.toString(),
+      metadata: msg.metadata
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        id: messageId,
-        message: 'Mensaje enviado correctamente'
+        messages: formattedMessages,
+        chatId: user.chatId,
+        neighborhood: user.neighborhood
       }
     });
 
   } catch (error) {
-    console.error('Error al enviar mensaje:', error);
+    console.error('Error al obtener mensajes:', error);
     return NextResponse.json(
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }

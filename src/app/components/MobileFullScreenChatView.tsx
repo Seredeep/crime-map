@@ -106,12 +106,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     if (!session?.user) return;
 
     try {
-      const response = await fetch('/api/chat/messages');
+      const response = await fetch('/api/chat/firestore-messages');
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data) {
-          const formattedMessages = result.data.map((msg: any) => ({
+        if (result.success && result.data && result.data.messages) {
+          const formattedMessages = result.data.messages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
             isOwn: msg.userId === session.user?.id || msg.userName === session.user?.name
@@ -447,19 +447,23 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                           : 'bg-gray-800 text-gray-100 mr-2'
                       }`}
                     >
-                      {isPanicMessage && (
-                        <div className="flex items-center space-x-2 mb-2">
-                          <FiAlertTriangle className="w-4 h-4 text-red-400" />
-                          <span className="text-xs font-semibold text-red-400">ALERTA DE PÁNICO</span>
+                      {message.type === 'panic' ? (
+                        <div className="flex items-center space-x-2 text-red-100 mb-1">
+                          <FiAlertTriangle className="w-4 h-4" />
+                          <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
                         </div>
+                      ) : null}
+                      <p className="text-sm">{message.message}</p>
+                      {message.type === 'panic' && message.metadata?.gpsAddress && (
+                        <p className="text-xs mt-1 text-red-200">
+                          {message.metadata.gpsAddress}
+                          {message.metadata.hasGPS && message.metadata.gpsLocation ? (
+                            ` (${message.metadata.gpsLocation})`
+                          ) : null}
+                        </p>
                       )}
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.message}</p>
                       <p className={`text-xs mt-1 ${
-                        isPanicMessage
-                          ? 'text-red-300'
-                          : isOwn
-                          ? 'text-blue-100'
-                          : 'text-gray-400'
+                        message.isOwn ? 'text-blue-100' : 'text-gray-400'
                       }`}>
                         {formatTime(message.timestamp)}
                       </p>

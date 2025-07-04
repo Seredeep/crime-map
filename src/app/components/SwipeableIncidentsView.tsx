@@ -64,8 +64,6 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
     loadIncidents();
   }, [loadIncidents]);
 
-
-
   // Handler para cambios de filtros
   const handleFiltersChange = useCallback((newFilters: IncidentFiltersType) => {
     if (!isEditorOrAdmin) {
@@ -78,6 +76,23 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
   const handleNeighborhoodSelect = useCallback((neighborhood: Neighborhood | null) => {
     setSelectedNeighborhood(neighborhood);
   }, []);
+
+  // Handler para actualización de incidentes
+  const handleIncidentUpdate = useCallback((updatedIncident: Incident) => {
+    setIncidents(prevIncidents =>
+      prevIncidents.map(inc =>
+        inc._id === updatedIncident._id ? updatedIncident : inc
+      )
+    );
+  }, []);
+
+  // Handler para selección de incidentes
+  const handleIncidentSelect = useCallback((incident: Incident) => {
+    // Navegar al incidente en el mapa
+    if (incident.location?.coordinates) {
+      onIncidentNavigate?.([incident.location.coordinates[1], incident.location.coordinates[0]], incident);
+    }
+  }, [onIncidentNavigate]);
 
   // Detectar swipe horizontal para filtros
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -182,18 +197,6 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
     }
   }, [isExpanded]);
 
-  // Función para manejar click en incidente
-  const handleIncidentClick = useCallback((incident: Incident) => {
-    // Un solo click: navegar al incidente en el mapa y cerrar el panel
-    if (incident.coordinates) {
-      onIncidentNavigate?.(incident.coordinates, incident);
-      // Cerrar el panel después de navegar
-      const minHeight = 80;
-      setBottomSheetHeight(minHeight);
-      setIsExpanded(false);
-    }
-  }, [onIncidentNavigate]);
-
   const getIncidentTypeColor = (type?: string) => {
     switch (type?.toLowerCase()) {
       case 'robo': return 'bg-red-500';
@@ -257,23 +260,10 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
               animate={{ borderRadius: ['20%', '30%', '24%'] }}
               transition={{ duration: 2, repeat: Infinity, repeatType: 'mirror' }}
             >
-              <motion.button
-                onClick={() => setShowFiltersPopover(!showFiltersPopover)}
+              <motion.div
                 whileHover={{ scale: 1.02 }}
-                className="relative w-12 h-12 text-gray-800 flex items-center justify-center transition-all duration-300 group"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                  boxShadow: `
-                    inset 0 0 10px rgba(255,255,255,0.04),
-                    0 0 30px rgba(255,255,255,0.02),
-                    0 8px 32px rgba(0, 0, 0, 0.08),
-                    0 4px 16px rgba(0, 0, 0, 0.06),
-                    0 2px 8px rgba(0, 0, 0, 0.04)
-                  `,
-                  borderRadius: '24px'
-                }}
+                className="relative w-12 h-12 text-gray-800 flex items-center justify-center transition-all duration-300 group cursor-pointer bg-white/[0.03] backdrop-blur-[20px] border border-white/[0.08] rounded-[24px] shadow-[inset_0_0_10px_rgba(255,255,255,0.04),0_0_30px_rgba(255,255,255,0.02),0_8px_32px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.04)]"
+                onClick={() => setShowFiltersPopover(!showFiltersPopover)}
               >
                 <FiFilter className="w-6 h-6 text-gray-700 group-hover:text-gray-800 transition-colors" />
 
@@ -294,7 +284,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                   className="absolute inset-[2px] bg-gradient-to-b from-transparent via-transparent to-black/2"
                   style={{ borderRadius: '22px' }}
                 />
-              </motion.button>
+              </motion.div>
             </motion.div>
 
             {/* Popover de filtros directo */}
@@ -341,14 +331,14 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                       {/* Separator */}
                       <div style={{ borderTop: '1.5px solid #42434a' }}></div>
 
-                                             {/* Contenido de filtros sin el botón trigger */}
-                       <div className="px-4">
-                         <IncidentFiltersContent
-                           filters={filters}
-                           onFiltersChangeAction={handleFiltersChange}
-                           onNeighborhoodSelect={handleNeighborhoodSelect}
-                         />
-                       </div>
+                      {/* Contenido de filtros sin el botón trigger */}
+                      <div className="px-4">
+                        <IncidentFiltersContent
+                          filters={filters}
+                          onFiltersChangeAction={handleFiltersChange}
+                          onNeighborhoodSelect={handleNeighborhoodSelect}
+                        />
+                      </div>
                     </div>
                   </motion.div>
                 </>
@@ -360,7 +350,11 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
 
       {/* Contenido principal del mapa */}
       <div className="w-full h-full relative z-10">
-        <IncidentsView />
+        <IncidentsView
+          incidents={incidents}
+          onIncidentUpdate={handleIncidentUpdate}
+          onIncidentSelect={handleIncidentSelect}
+        />
       </div>
 
       {/* Overlay para bloquear interacción del mapa cuando el panel está expandido */}
@@ -438,8 +432,8 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                 </div>
                 <p className="text-sm text-gray-400 mt-0.5">
                   {incidents.length === 0 ? 'No hay incidentes' :
-                   incidents.length === 1 ? '1 incidente verificado' :
-                   `${incidents.length} incidentes verificados`}
+                    incidents.length === 1 ? '1 incidente verificado' :
+                      `${incidents.length} incidentes verificados`}
                 </p>
               </div>
             </div>
@@ -514,7 +508,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                         borderColor: 'rgba(139, 181, 255, 0.4)',
                         y: -2
                       }}
-                      onClick={() => handleIncidentClick(incident)}
+                      onClick={() => handleIncidentSelect(incident)}
                     >
                       <div className="flex items-start space-x-4">
                         <motion.div

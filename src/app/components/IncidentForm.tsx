@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, ChangeEvent, useEffect } from 'react';
-import { DateTime } from 'luxon';
-import GeocodeSearch from './GeocodeSearch';
 import { GeocodingResult } from '@/lib/geocoding';
+import { DateTime } from 'luxon';
+import { ChangeEvent, useEffect, useState } from 'react';
+import GeocodeSearch from './GeocodeSearch';
 import Map from './Map';
-import supabase from '@/lib/supabase';
 
 // Lista de etiquetas comunes para incidents
 const COMMON_TAGS = [
@@ -13,7 +12,7 @@ const COMMON_TAGS = [
   'asalto',
   'vandalismo',
   'disturbio',
-  'amenaza', 
+  'amenaza',
   'sospechoso',
   'violencia'
 ];
@@ -84,7 +83,7 @@ export default function IncidentForm() {
 
   const handleMapMarkerChange = (position: [number, number], address?: string) => {
     const [latitude, longitude] = position;
-    
+
     setFormData((prev) => ({
       ...prev,
       location: {
@@ -100,7 +99,7 @@ export default function IncidentForm() {
       const newTags = prev.tags.includes(tag)
         ? prev.tags.filter((t) => t !== tag)
         : [...prev.tags, tag];
-      
+
       return {
         ...prev,
         tags: newTags
@@ -112,7 +111,7 @@ export default function IncidentForm() {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitMessage(null);
-    
+
     if (!formData.location) {
       setSubmitMessage({
         type: 'error',
@@ -121,14 +120,14 @@ export default function IncidentForm() {
       setIsSubmitting(false);
       return;
     }
-    
+
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('description', formData.description);
       formDataToSend.append('address', formData.address);
       formDataToSend.append('time', formData.time);
       formDataToSend.append('date', formData.date);
-      
+
       // Add text fields
       formDataToSend.append('description', formData.description);
       formDataToSend.append('address', formData.address);
@@ -190,23 +189,24 @@ export default function IncidentForm() {
           {submitMessage.message}
         </div>
       )}
-      
-      <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
-        <div className="md:w-1/2 w-full">
-          <Map
-            markerPosition={
-              formData.location
-                ? [formData.location.coordinates[1], formData.location.coordinates[0]]
-                : undefined
-            }
-            onMarkerPositionChange={handleMapMarkerChange}
-            draggable={true}
-            setMarkerOnClick={true}
-            mode="form"
-          />
-        </div>
 
-        <div className="md:w-1/2 w-full space-y-4">
+      <div className="flex flex-col space-y-6 md:flex-row md:space-x-6 md:space-y-0">
+        <div className="w-full md:w-1/2">
+          <div className="w-full md:w-auto" style={{ height: '200px', maxHeight: 250, minHeight: 180 }}>
+            <Map
+              markerPosition={
+                formData.location
+                  ? [formData.location.coordinates[1], formData.location.coordinates[0]]
+                  : undefined
+              }
+              onMarkerPositionChange={handleMapMarkerChange}
+              draggable={true}
+              setMarkerOnClick={true}
+              mode="form"
+            />
+          </div>
+        </div>
+        <div className="w-full md:w-1/2 space-y-4">
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1">
               Descripción
@@ -227,7 +227,7 @@ export default function IncidentForm() {
             <label htmlFor="address" className="block text-sm font-medium mb-1">
               Ubicación
             </label>
-            <GeocodeSearch 
+            <GeocodeSearch
               onLocationSelect={handleLocationSelect}
               placeholder="Busca una dirección o lugar"
               className="w-full"
@@ -320,7 +320,7 @@ export default function IncidentForm() {
                 />
               </label>
             </div>
-            
+
             {formData.evidence.length > 0 && (
               <div className="mt-3">
                 <h4 className="text-sm font-medium mb-2">Archivos subidos:</h4>
@@ -358,4 +358,4 @@ export default function IncidentForm() {
       </div>
     </form>
   );
-} 
+}

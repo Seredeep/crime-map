@@ -54,11 +54,11 @@ class ChatService {
 
   private async loadMessages(): Promise<void> {
     try {
-      const response = await fetch('/api/chat/messages');
+      const response = await fetch('/api/chat/firestore-messages');
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data) {
-          this.messages = result.data.map((msg: any) => ({
+        if (result.success && result.data && result.data.messages) {
+          this.messages = result.data.messages.map((msg: any) => ({
             id: msg.id,
             userId: msg.userId,
             userName: msg.userName,

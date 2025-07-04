@@ -3,7 +3,7 @@
 import { ChatWithParticipants } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { FiArrowLeft, FiMapPin, FiSend, FiUsers } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiMapPin, FiSend, FiUsers } from 'react-icons/fi';
 
 interface Message {
   id: string;
@@ -11,7 +11,9 @@ interface Message {
   userName: string;
   message: string;
   timestamp: Date;
+  type: 'normal' | 'panic';
   isOwn: boolean;
+  metadata?: Record<string, any>;
 }
 
 interface MobileChatViewProps {
@@ -38,33 +40,22 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
 
       if (result.success && result.data) {
         setChat(result.data);
-        // Simular algunos mensajes de ejemplo
-        setMessages([
-          {
-            id: '1',
-            userId: 'user1',
-            userName: 'María González',
-            message: '¡Hola vecinos! ¿Alguien más escuchó esos ruidos extraños anoche?',
-            timestamp: new Date(Date.now() - 3600000),
-            isOwn: false
-          },
-          {
-            id: '2',
-            userId: 'user2',
-            userName: 'Juan Pérez',
-            message: 'Sí, yo también los escuché. Parecían venir de la manzana 15.',
-            timestamp: new Date(Date.now() - 3000000),
-            isOwn: true
-          },
-          {
-            id: '3',
-            userId: 'user3',
-            userName: 'Ana Rodríguez',
-            message: 'Deberíamos reportarlo en la app. Mejor prevenir.',
-            timestamp: new Date(Date.now() - 1800000),
-            isOwn: false
+        // Cargar mensajes reales desde Firestore
+        const messagesResponse = await fetch('/api/chat/firestore-messages');
+        if (messagesResponse.ok) {
+          const messagesResult = await messagesResponse.json();
+          if (messagesResult.success && messagesResult.data && messagesResult.data.messages) {
+            setMessages(messagesResult.data.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+              isOwn: msg.userId === result.data._id || msg.userName === result.data.userName
+            })));
+          } else {
+            setMessages([]);
           }
-        ]);
+        } else {
+          setMessages([]);
+        }
       }
     } catch (error) {
       console.error('Error al cargar el chat:', error);
@@ -81,6 +72,7 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
         userName: 'Tú',
         message: newMessage.trim(),
         timestamp: new Date(),
+        type: 'normal',
         isOwn: true
       };
 
@@ -236,7 +228,21 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
                       : 'bg-gray-700 text-gray-100 rounded-bl-md'
                   }`}
                 >
+                  {message.type === 'panic' ? (
+                    <div className="flex items-center space-x-2 text-red-100 mb-1">
+                      <FiAlertTriangle className="w-4 h-4" />
+                      <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
+                    </div>
+                  ) : null}
                   <p className="text-sm">{message.message}</p>
+                  {message.type === 'panic' && message.metadata?.gpsAddress && (
+                    <p className="text-xs mt-1 text-red-200">
+                      {message.metadata.gpsAddress}
+                      {message.metadata.hasGPS && message.metadata.gpsLocation ? (
+                        ` (${message.metadata.gpsLocation})`
+                      ) : null}
+                    </p>
+                  )}
                   <p className={`text-xs mt-1 ${
                     message.isOwn ? 'text-blue-100' : 'text-gray-400'
                   }`}>
