@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiArrowLeft, FiX } from 'react-icons/fi';
 import FloatingReportButton from './components/FloatingReportButton';
 import MobileBottomTabs from './components/MobileBottomTabs';
@@ -17,9 +17,9 @@ import Sidebar from './components/Sidebar';
 import SwipeableIncidentsView from './components/SwipeableIncidentsView';
 
 export default function Home() {
-
   // State to track sidebar collapse state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [appLoading, setAppLoading] = useState(true);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const router = useRouter();
@@ -31,6 +31,64 @@ export default function Home() {
   const [isFiltersPanelOpen, setIsFiltersPanelOpen] = useState(false);
   const [isSettingsPanelOpen, setIsSettingsPanelOpen] = useState(false);
   const [showReportFormInPanel, setShowReportFormInPanel] = useState(false);
+
+  // Carga inicial de la aplicación
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // Si el usuario está autenticado, precargar datos del chat
+        if (status === 'authenticated' && session?.user) {
+          try {
+            // Precargar información del chat
+            const chatResponse = await fetch('/api/chat/mine');
+            if (chatResponse.ok) {
+              const chatResult = await chatResponse.json();
+              // Los datos se almacenarán en caché automáticamente
+            }
+
+            // Precargar mensajes recientes
+            const messagesResponse = await fetch('/api/chat/firestore-messages?limit=10');
+            if (messagesResponse.ok) {
+              const messagesResult = await messagesResponse.json();
+              // Los datos se almacenarán en caché automáticamente
+            }
+          } catch (error) {
+            console.log('Error precargando datos del chat:', error);
+            // No es crítico, la app puede funcionar sin estos datos
+          }
+        }
+      } catch (error) {
+        console.error('Error en la inicialización:', error);
+      } finally {
+        // Dar un pequeño delay para que la carga se vea natural
+        setTimeout(() => {
+          setAppLoading(false);
+        }, 500);
+      }
+    };
+
+    // Solo inicializar cuando tengamos información del estado de sesión
+    if (status !== 'loading') {
+      initializeApp();
+    }
+  }, [status, session]);
+
+    // Escuchar evento para abrir chat del barrio (desde desktop)
+  useEffect(() => {
+    const handleOpenNeighborhoodChat = () => {
+      setActiveTab('communities');
+      // Disparar evento para que MobileCommunitiesView abra el chat
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('openFullscreenChat'));
+      }, 100);
+    };
+
+    window.addEventListener('openNeighborhoodChat', handleOpenNeighborhoodChat);
+
+    return () => {
+      window.removeEventListener('openNeighborhoodChat', handleOpenNeighborhoodChat);
+    };
+  }, []);
 
   const handleReportClick = useCallback(() => {
     if (status !== 'authenticated') {
@@ -88,7 +146,7 @@ export default function Home() {
   }, [session?.user?.role]);
 
   // Componente para renderizar el contenido de cada tab
-  const renderTabContent = () => {
+  const renderTabContent = useCallback(() => {
     switch (activeTab) {
       case 'incidents':
         return (
@@ -121,12 +179,17 @@ export default function Home() {
       default:
         return null;
     }
-  };
+  }, [activeTab, handleFiltersClick]);
 
   // Handle sidebar collapse state change
   const handleSidebarCollapse = useCallback((isCollapsed: boolean) => {
     setIsSidebarCollapsed(isCollapsed);
   }, []);
+
+  // Si la app está cargando, no renderizar nada
+  if (appLoading) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col w-screen bg-gray-900 dark:bg-gray-900 ">
@@ -304,6 +367,7 @@ export default function Home() {
           <FloatingReportButton
             onClick={handleReportClick}
             isVisible={activeTab === 'incidents' && !showReportFormInPanel}
+            className="bottom-80"
           />
 
           {/* Mobile Bottom Tabs */}

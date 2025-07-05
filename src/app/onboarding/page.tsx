@@ -2,14 +2,24 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+// Añadir: Interfaz para los barrios
+interface Neighborhood {
+  _id: string;
+  name: string;
+  properties: {
+    soc_fomen: string;
+  };
+}
 
 interface OnboardingFormData {
   name: string;
   surname: string;
   blockNumber: string;
   lotNumber: string;
+  neighborhood: string;
   email: string;
 }
 
@@ -18,25 +28,59 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]); // Añadir: Estado para la lista de barrios
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>(''); // Añadir: Estado para el barrio seleccionado
 
   const {
     register,
     handleSubmit,
+    setValue, // Añadir: setValue para el formulario
     formState: { errors },
   } = useForm<OnboardingFormData>({
     defaultValues: {
-      email: session?.user?.email || ''
+      email: session?.user?.email || '',
+      neighborhood: '',
+      blockNumber: '',
+      lotNumber: '',
     }
   });
+
+  // Añadir: useEffect para cargar los barrios
+  useEffect(() => {
+    const fetchNeighborhoods = async () => {
+      try {
+        const response = await fetch('/api/neighborhoods');
+        if (!response.ok) {
+          throw new Error('Error al cargar los barrios');
+        }
+        const data = await response.json();
+        setNeighborhoods(data);
+      } catch (err) {
+        console.error('Error fetching neighborhoods:', err);
+        setError(err instanceof Error ? err.message : 'Error al cargar la lista de barrios.');
+      }
+    };
+    fetchNeighborhoods();
+  }, []);
+
+  // Sincronizar email del usuario de la sesión con el formulario
+  useEffect(() => {
+    if (session?.user?.email) {
+      setValue('email', session.user.email);
+    }
+  }, [session, setValue]);
 
   const onSubmit = async (data: OnboardingFormData) => {
     try {
       setIsSubmitting(true);
       setError('');
 
-      // Asegurarnos de que tenemos el email
       if (!session?.user?.email) {
         throw new Error('No se encontró el email del usuario');
+      }
+
+      if (!data.neighborhood) {
+        throw new Error('Por favor, selecciona un barrio.');
       }
 
       const response = await fetch('/api/user/onboarding', {
@@ -55,13 +99,9 @@ export default function OnboardingPage() {
         throw new Error(errorData.message || 'Error al guardar la información');
       }
 
-      // Actualizar la sesión para reflejar que el usuario ha completado el onboarding
       await update({ onboarded: true });
 
-      // Esperar un momento para que la sesión se actualice
-      setTimeout(() => {
       router.push('/');
-      }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Hubo un error al guardar tu información. Por favor, intenta de nuevo.');
       console.error('Error en onboarding:', err);
@@ -134,7 +174,7 @@ export default function OnboardingPage() {
               <input
                 id="blockNumber"
                 type="text"
-                {...register('blockNumber', { required: 'El número de manzana es requerido' })}
+                {...register('blockNumber')}
                 className="w-full px-3 py-2 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Número de manzana"
               />
@@ -150,12 +190,35 @@ export default function OnboardingPage() {
               <input
                 id="lotNumber"
                 type="text"
-                {...register('lotNumber', { required: 'El número de lote es requerido' })}
+                {...register('lotNumber')}
                 className="w-full px-3 py-2 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Número de lote"
               />
               {errors.lotNumber && (
                 <p className="mt-1 text-sm text-red-500">{errors.lotNumber.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="neighborhood-select" className="block text-sm font-medium mb-1">
+                Selecciona tu Barrio
+              </label>
+              <select
+                id="neighborhood-select"
+                {...register('neighborhood', { required: 'El barrio es requerido' })}
+                className="w-full px-3 py-2 bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Selecciona un barrio --</option>
+                {neighborhoods
+                  .sort((a, b) => a.properties.soc_fomen.localeCompare(b.properties.soc_fomen))
+                  .map((n) => (
+                    <option key={n._id} value={n.properties.soc_fomen}>
+                      {n.properties.soc_fomen}
+                    </option>
+                  ))}
+              </select>
+              {errors.neighborhood && (
+                <p className="mt-1 text-sm text-red-500">{errors.neighborhood.message}</p>
               )}
             </div>
 

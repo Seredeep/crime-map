@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { formatAddress, reverseGeocode } from '../../lib/geocoding';
 
 interface PanicButtonProps {
   isVisible?: boolean;
@@ -51,6 +52,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
     try {
       // Verificar soporte de geolocalización
       let location = null;
+      let formattedAddress = null;
 
       if (!navigator.geolocation) {
         console.error('❌ Geolocalización no soportada por este navegador');
@@ -95,6 +97,18 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             accuracy: position.coords.accuracy,
             timestamp: position.timestamp
           };
+
+          // Realizar geocodificación inversa
+          try {
+            const geoResponse = await reverseGeocode(location.lat, location.lng);
+            if (geoResponse.features && geoResponse.features.length > 0) {
+              formattedAddress = formatAddress(geoResponse.features[0]);
+              console.log(`📍 Dirección obtenida: ${formattedAddress}`);
+            }
+          } catch (geoError) {
+            console.error('❌ Error en geocodificación inversa:', geoError);
+          }
+
           console.log(`📍 Ubicación GPS obtenida:`, {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
@@ -129,6 +143,18 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                 timestamp: fallbackPosition.timestamp,
                 fallback: true
               };
+
+              // Realizar geocodificación inversa para el fallback
+              try {
+                const geoResponse = await reverseGeocode(location.lat, location.lng);
+                if (geoResponse.features && geoResponse.features.length > 0) {
+                  formattedAddress = formatAddress(geoResponse.features[0]);
+                  console.log(`📍 Dirección fallback obtenida: ${formattedAddress}`);
+                }
+              } catch (geoError) {
+                console.error('❌ Error en geocodificación inversa para fallback:', geoError);
+              }
+
               console.log(`📍 Ubicación fallback obtenida con precisión de ${fallbackPosition.coords.accuracy}m`);
 
             } catch (fallbackError) {
@@ -149,7 +175,8 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
         },
         body: JSON.stringify({
           timestamp: new Date().toISOString(),
-          location
+          location,
+          address: formattedAddress
         }),
       });
 
@@ -221,7 +248,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
           <motion.button
             onClick={handlePanicClick}
             whileHover={{ scale: 1.02 }}
-            className={`relative w-14 h-14 text-gray-800 flex items-center justify-center transition-all duration-300 group ${
+            className={`relative w-20 h-20 text-gray-800 flex items-center justify-center transition-all duration-300 group ${
               panicState === 'alerting' ? 'animate-pulse' : ''
             }`}
             style={{
@@ -244,7 +271,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                   inset 0 0 10px rgba(255,255,255,0.04),
                   0 0 30px rgba(255,255,255,0.02),
                   0 8px 32px rgba(0, 0, 0, 0.08),
-                  0 4px 16px rgba(0, 0, 0, 0.06),
+                  0 44px 16px rgba(0, 0, 0, 0.06),
                   0 2px 8px rgba(0, 0, 0, 0.04)
                 `,
               borderRadius: '30px'
@@ -272,6 +299,16 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               className="absolute inset-[2px] bg-gradient-to-b from-transparent via-transparent to-black/2"
               style={{ borderRadius: '22px' }}
             />
+
+            {/* Texto "Pánico" flotante */}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              className="absolute bottom-2 text-xs font-semibold text-orange-500"
+            >
+              Pánico
+            </motion.p>
           </motion.button>
         </motion.div>
 

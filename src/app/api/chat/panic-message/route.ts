@@ -1,6 +1,5 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
-import clientPromise from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { firestore } from '@/lib/firebase';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 
@@ -16,38 +15,40 @@ export async function POST(request: Request) {
       );
     }
 
-    const { location } = await request.json();
+    const { location, address } = await request.json();
 
-    // Conectar a la base de datos
-    const client = await clientPromise;
-    const db = client.db();
+    // Buscar usuario para obtener información del barrio y chat en Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
 
-    // Buscar usuario para obtener información del barrio y chat
-    const user = await db.collection('users').findOne({ email: session.user.email });
-
-    if (!user) {
+    if (userSnapshot.empty) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
+        { success: false, message: 'Usuario no encontrado en Firestore' },
         { status: 404 }
       );
     }
 
-    if (!user.chatId || !user.neighborhood) {
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id;
+
+    if (!userData.chatId || !userData.neighborhood) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no asignado a un barrio' },
+        { success: false, message: 'Usuario no asignado a un barrio o chat' },
         { status: 400 }
       );
     }
 
     // Crear mensaje de pánico
-    const locationText = location
-      ? `📍 Ubicación: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
-      : `📍 Manzana ${user.blockNumber || 'N/A'}, Lote ${user.lotNumber || 'N/A'}`;
+    const locationText = address
+      ? `📍 Ubicación: ${address}`
+      : location
+        ? `📍 Ubicación: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`
+        : `📍 Manzana ${userData.blockNumber || 'N/A'}, Lote ${userData.lotNumber || 'N/A'}`;
 
-    const panicMessage = {
-      chatId: user.chatId,
-      userId: user._id.toString(),
-      userName: `${user.name} ${user.surname}`,
+    const panicMessageData = {
+      chatId: userData.chatId,
+      userId: userId,
+      userName: `${userData.name} ${userData.surname || ''}`,
       message: `🚨 ¡ALERTA DE PÁNICO! 🚨\n\nNecesito ayuda urgente.\n${locationText}\n\n⚠️ Esta es una situación de emergencia. Por favor, contacten a las autoridades si es necesario.`,
       timestamp: new Date(),
       type: 'panic',
@@ -55,27 +56,29 @@ export async function POST(request: Request) {
       metadata: {
         alertType: 'panic',
         location,
-        blockNumber: user.blockNumber,
-        lotNumber: user.lotNumber,
-        neighborhood: user.neighborhood
+        address,
+        blockNumber: userData.blockNumber || null,
+        lotNumber: userData.lotNumber || null,
+        neighborhood: userData.neighborhood
       }
     };
 
-    // Guardar mensaje en la colección de mensajes
-    const messageResult = await db.collection('messages').insertOne(panicMessage);
+    // Guardar mensaje en la colección de mensajes de Firestore
+    const messageRef = await firestore.collection('chats').doc(userData.chatId).collection('messages').add(panicMessageData);
 
-    // También crear un registro en panic_alerts para tracking
-    const panicAlert = {
-      userId: user._id,
-      userEmail: user.email,
-      userName: `${user.name} ${user.surname}`,
-      neighborhood: user.neighborhood,
-      chatId: user.chatId,
-      messageId: messageResult.insertedId,
-      blockNumber: user.blockNumber,
-      lotNumber: user.lotNumber,
+    // También crear un registro en panic_alerts en Firestore para tracking
+    const panicAlertData = {
+      userId: userId,
+      userEmail: userData.email,
+      userName: `${userData.name} ${userData.surname || ''}`,
+      neighborhood: userData.neighborhood,
+      chatId: userData.chatId,
+      messageId: messageRef.id,
+      blockNumber: userData.blockNumber || null,
+      lotNumber: userData.lotNumber || null,
       timestamp: new Date(),
       location,
+      address,
       status: 'active',
       createdAt: new Date(),
       resolved: false,
@@ -83,34 +86,29 @@ export async function POST(request: Request) {
       resolvedBy: null
     };
 
-    await db.collection('panic_alerts').insertOne(panicAlert);
+    await firestore.collection('panic_alerts').add(panicAlertData);
 
-    // Actualizar el chat con el último mensaje
-    await db.collection('chats').updateOne(
-      { _id: new ObjectId(user.chatId) },
-      {
-        $set: {
-          lastMessage: panicMessage.message,
-          lastMessageAt: panicMessage.timestamp,
-          updatedAt: new Date()
-        }
-      }
-    );
+    // Actualizar el chat con el último mensaje en Firestore
+    await firestore.collection('chats').doc(userData.chatId).update({
+      lastMessage: panicMessageData.message,
+      lastMessageAt: panicMessageData.timestamp,
+      updatedAt: new Date()
+    });
 
-    console.log(`🚨 MENSAJE DE PÁNICO ENVIADO - ${user.neighborhood}:`, {
-      user: `${user.name} ${user.surname}`,
-      chatId: user.chatId,
-      messageId: messageResult.insertedId.toString()
+    console.log(`🚨 MENSAJE DE PÁNICO ENVIADO - ${userData.neighborhood}:`, {
+      user: `${userData.name} ${userData.surname}`,
+      chatId: userData.chatId,
+      messageId: messageRef.id,
     });
 
     return NextResponse.json({
       success: true,
       message: 'Mensaje de pánico enviado al chat del barrio',
       data: {
-        messageId: messageResult.insertedId.toString(),
-        chatId: user.chatId,
-        neighborhood: user.neighborhood,
-        timestamp: panicMessage.timestamp
+        messageId: messageRef.id,
+        chatId: userData.chatId,
+        neighborhood: userData.neighborhood,
+        timestamp: panicMessageData.timestamp
       }
     });
 

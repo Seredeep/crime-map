@@ -8,9 +8,9 @@ import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiFilter, FiX } from 'react-icons/fi';
-import CustomLoader from './CustomLoader';
 import IncidentFiltersContent from './IncidentFiltersContent';
 import IncidentsView from './IncidentsView';
+import { IncidentLoader } from './LoaderExamples';
 import MapSearchBar from './MapSearchBar';
 
 interface SwipeableIncidentsViewProps {
@@ -466,13 +466,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
         {/* Lista de incidentes */}
         <div className="flex-1 overflow-y-auto px-4 py-3" style={{ maxHeight: isExpanded ? '600px' : 'auto' }}>
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <CustomLoader
-                loadingText="cargando"
-                words={["incidentes", "reportes", "datos", "ubicaciones", "información"]}
-                className="h-20"
-              />
-            </div>
+            <IncidentLoader message="Cargando incidentes y reportes de la comunidad..." />
           ) : incidents.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">

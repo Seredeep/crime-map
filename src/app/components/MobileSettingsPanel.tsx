@@ -1,10 +1,10 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect } from 'react';
-import { FiX, FiUser, FiLogOut, FiLogIn, FiSettings, FiInfo, FiShield } from 'react-icons/fi';
-import { useSession, signOut } from 'next-auth/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { FiInfo, FiLogIn, FiLogOut, FiSettings, FiShield, FiUser, FiX } from 'react-icons/fi';
 
 interface MobileSettingsPanelProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
   }, [isOpen]);
 
   const menuItems = [
-    ...(status === 'authenticated' 
+    ...(status === 'authenticated'
       ? [
           {
             icon: <FiUser className="w-5 h-5" />,
@@ -78,9 +78,9 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ 
-              type: 'spring', 
-              damping: 25, 
+            transition={{
+              type: 'spring',
+              damping: 25,
               stiffness: 200,
               duration: 0.4
             }}
@@ -125,7 +125,7 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
                         {session?.user?.name || 'Usuario'}
                       </h3>
                       <p className="text-sm text-gray-400">
-                        {session?.user?.role === 'admin' ? 'Administrador' : 
+                        {session?.user?.role === 'admin' ? 'Administrador' :
                          session?.user?.role === 'editor' ? 'Editor' : 'Usuario'}
                       </p>
                     </div>
@@ -201,4 +201,4 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
   );
 };
 
-export default MobileSettingsPanel; 
+export default MobileSettingsPanel;

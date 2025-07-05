@@ -1,6 +1,6 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { getChatParticipants } from '@/lib/chatService';
-import clientPromise from '@/lib/mongodb';
+import { firestore } from '@/lib/firebase';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 
@@ -27,21 +27,20 @@ export async function GET(request: Request) {
       );
     }
 
-    // Verificar que el usuario pertenece a este chat
-    const client = await clientPromise;
-    const db = client.db();
+    // Verificar que el usuario pertenece a este chat usando Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
 
-    const user = await db.collection('users').findOne({ email: session.user.email });
-
-    if (!user) {
+    if (userSnapshot.empty) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
+        { success: false, message: 'Usuario no encontrado en Firestore' },
         { status: 404 }
       );
     }
 
+    const userData = userSnapshot.docs[0].data();
+
     // Verificar que el usuario tiene acceso a este chat
-    if (user.chatId !== chatId) {
+    if (userData.chatId !== chatId) {
       return NextResponse.json(
         { success: false, message: 'No tienes acceso a este chat' },
         { status: 403 }
@@ -60,10 +59,7 @@ export async function GET(request: Request) {
         participants: participants.map(participant => ({
           id: participant._id,
           name: participant.name,
-          surname: participant.surname,
           email: participant.email,
-          blockNumber: participant.blockNumber,
-          lotNumber: participant.lotNumber,
           neighborhood: participant.neighborhood
         }))
       }

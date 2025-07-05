@@ -1,5 +1,5 @@
 import { getUserChatById } from '@/lib/chatService';
-import clientPromise from '@/lib/mongodb';
+import { firestore } from '@/lib/firebase';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -14,25 +14,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db();
+    // Buscar usuario por email en Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
 
-    // Buscar usuario por email
-    const user = await db.collection('users').findOne({ email: session.user.email });
-
-    if (!user) {
+    if (userSnapshot.empty) {
       return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado' },
+        { success: false, error: 'Usuario no encontrado en Firestore' },
         { status: 404 }
       );
     }
 
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id; // ID del documento de Firestore
+
     // Obtener el chat del usuario
-    const userChat = await getUserChatById(user._id.toString());
+    const userChat = await getUserChatById(userId);
 
     if (!userChat) {
       return NextResponse.json(
-        { success: false, error: 'Chat no encontrado' },
+        { success: false, error: 'Chat no encontrado para este usuario' },
         { status: 404 }
       );
     }
@@ -40,17 +41,15 @@ export async function GET(request: NextRequest) {
     // Formatear la respuesta
     const chatInfo = {
       chatId: userChat._id,
-      userId: user._id.toString(),
-      userName: user.name || user.email.split('@')[0],
+      userId: userId,
+      userName: userData.name || userData.email.split('@')[0],
       neighborhood: userChat.neighborhood,
       participantsCount: userChat.participants.length,
       participants: userChat.participants.map(p => ({
         id: p._id,
         name: p.name,
-        surname: p.surname || '',
         email: p.email,
-        blockNumber: p.blockNumber || 0,
-        lotNumber: p.lotNumber || 0
+        neighborhood: p.neighborhood
       })),
       createdAt: userChat.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: userChat.updatedAt?.toISOString() || new Date().toISOString()

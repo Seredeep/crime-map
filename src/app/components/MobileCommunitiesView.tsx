@@ -1,11 +1,11 @@
 'use client';
 
+import { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiMessageCircle, FiUsers } from 'react-icons/fi';
 import { simpleChatCache } from '../../lib/chatCache';
-import FloatingPanicButton from './FloatingPanicButton';
 import MobileExploreCommunitiesView from './MobileExploreCommunitiesView';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
 
@@ -26,17 +26,6 @@ interface ChatInfo {
   }>;
   createdAt: string;
   updatedAt: string;
-}
-
-interface Message {
-  id: string;
-  userId: string;
-  userName: string;
-  message: string;
-  timestamp: string;
-  type: 'normal' | 'panic';
-  isOwn: boolean;
-  metadata?: Record<string, any>;
 }
 
 interface MobileCommunitiesViewProps {
@@ -113,7 +102,7 @@ const WhatsAppMessagePreview = ({
       {/* Hora */}
       <div className="flex flex-col items-end">
         <span className="text-xs text-gray-500">
-          {formatTime(message.timestamp)}
+          {formatTime(new Date(message.timestamp).toISOString())}
         </span>
       </div>
     </div>
@@ -199,7 +188,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
       try {
         // Solo hacer polling si tenemos un timestamp de referencia
         if (lastMessageTimestamp > 0) {
-          const response = await fetch(`/api/chat/messages?limit=1&since=${lastMessageTimestamp}`);
+          const response = await fetch(`/api/chat/firestore-messages?limit=1&since=${lastMessageTimestamp}`);
           if (response.ok) {
             const result = await response.json();
             if (result.success && result.data && result.data.length > 0) {
@@ -210,6 +199,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
               if (messageTimestamp > lastMessageTimestamp) {
                 setLastMessage({
                   ...message,
+                  timestamp: new Date(message.timestamp).toISOString(),
                   isOwn: message.userId === session.user?.id || message.userName === session.user?.name
                 });
                 setLastMessageTimestamp(messageTimestamp);
@@ -256,6 +246,21 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+    // Escuchar evento para abrir chat fullscreen (desde desktop)
+  useEffect(() => {
+    const handleOpenFullscreenChat = () => {
+      if (chatInfo) {
+        setViewMode('fullscreenChat');
+      }
+    };
+
+    window.addEventListener('openFullscreenChat', handleOpenFullscreenChat);
+
+    return () => {
+      window.removeEventListener('openFullscreenChat', handleOpenFullscreenChat);
+    };
+  }, [chatInfo]);
+
   const loadChatData = async () => {
     if (!session?.user) return;
 
@@ -291,10 +296,12 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
       const cachedMessages = simpleChatCache.getCachedMessages('user-chat');
       if (cachedMessages && cachedMessages.messages.length > 0) {
         const lastMessage = cachedMessages.messages[cachedMessages.messages.length - 1];
-        setLastMessage({
+        const formattedMessage = {
           ...lastMessage,
+          timestamp: new Date(lastMessage.timestamp).toISOString(),
           isOwn: lastMessage.userId === session.user?.id || lastMessage.userName === session.user?.name
-        });
+        };
+        setLastMessage(formattedMessage);
         setLastMessageTimestamp(cachedMessages.lastMessageTimestamp);
         setIsLoadingMessage(false);
         return;
@@ -306,10 +313,12 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
         const result = await response.json();
         if (result.success && result.data && result.data.messages && result.data.messages.length > 0) {
           const message = result.data.messages[0];
-          setLastMessage({
+          const formattedMessage = {
             ...message,
+            timestamp: new Date(message.timestamp).toISOString(),
             isOwn: message.userId === session.user?.id || message.userName === session.user?.name
-          });
+          };
+          setLastMessage(formattedMessage);
           // Establecer timestamp de referencia para polling
           const messageTimestamp = new Date(message.timestamp).getTime();
           setLastMessageTimestamp(messageTimestamp);
@@ -329,6 +338,10 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     }
   };
 
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+  }, []);
+
   const handleChatOpen = () => {
     setViewMode('fullscreenChat');
   };
@@ -337,28 +350,6 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     setViewMode('main');
     // Recargar datos cuando regresamos del chat
     loadInitialMessage();
-  };
-
-  const handlePanicClick = async () => {
-    try {
-      const response = await fetch('/api/panic/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: '🚨 ALERTA DE PÁNICO - Necesito ayuda urgente',
-          location: null, // Podrías agregar geolocalización aquí
-        }),
-      });
-
-      if (response.ok) {
-        // Recargar mensajes para mostrar el mensaje de pánico
-        loadInitialMessage();
-      }
-    } catch (error) {
-      console.error('Error al enviar mensaje de pánico:', error);
-    }
   };
 
   const formatTime = (dateString: string) => {
@@ -399,7 +390,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
             <div className="bg-gray-900/95 px-6 pb-4">
               <div className="flex bg-gray-800/50 rounded-xl p-1">
                 <button
-                  onClick={() => setActiveTab('chat')}
+                  onClick={() => handleTabChange('chat')}
                   className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeTab === 'chat'
                       ? 'bg-blue-600 text-white shadow-lg'
@@ -410,7 +401,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
                   Mi Barrio
                 </button>
                 <button
-                  onClick={() => setActiveTab('explore')}
+                  onClick={() => handleTabChange('explore')}
                   className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeTab === 'explore'
                       ? 'bg-blue-600 text-white shadow-lg'
@@ -483,13 +474,6 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* #region Floating Panic Button */}
-      <FloatingPanicButton
-        onClick={handlePanicClick}
-        isVisible={true}
-      />
-      {/* #endregion */}
     </div>
   );
 };

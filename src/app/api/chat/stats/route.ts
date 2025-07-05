@@ -1,3 +1,4 @@
+import { firestore } from '@/lib/firebase';
 import clientPromise from '@/lib/mongodb';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,27 +15,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db('crime-map');
+    // Obtener usuario actual desde Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
 
-    // Obtener usuario actual
-    const user = await db.collection('users').findOne({
-      email: session.user.email
-    });
-
-    if (!user) {
+    if (userSnapshot.empty) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
+        { success: false, message: 'Usuario no encontrado en Firestore' },
         { status: 404 }
       );
     }
 
-    // Obtener chat del usuario
-    const chat = await db.collection('chats').findOne({
-      participants: user._id
-    });
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id;
 
-    if (!chat) {
+    // Obtener chat del usuario desde Firestore
+    const chatDoc = await firestore.collection('chats').doc(userData.chatId).get();
+
+    if (!chatDoc.exists) {
       return NextResponse.json({
         success: true,
         data: {
@@ -50,49 +48,70 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const chatData = chatDoc.data();
+    const chatId = chatDoc.id;
+
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Estadísticas de mensajes
-    const [totalMessages, todayMessages, recentMessages] = await Promise.all([
+    // Estadísticas de mensajes desde Firestore
+    const [totalMessagesSnapshot, todayMessagesSnapshot, recentMessagesSnapshot, lastMessageSnapshot, panicMessagesSnapshot] = await Promise.all([
       // Total de mensajes del chat
-      db.collection('messages').countDocuments({ chatId: chat._id }),
+      firestore.collection('chats').doc(chatId).collection('messages').get(),
 
       // Mensajes de hoy
-      db.collection('messages').countDocuments({
-        chatId: chat._id,
-        timestamp: { $gte: startOfDay }
-      }),
+      firestore.collection('chats').doc(chatId).collection('messages').where('timestamp', '>=', startOfDay).get(),
 
       // Mensajes de la última semana para actividad
-      db.collection('messages').find({
-        chatId: chat._id,
-        timestamp: { $gte: weekAgo }
-      }).sort({ timestamp: -1 }).limit(100).toArray()
+      firestore.collection('chats').doc(chatId).collection('messages').where('timestamp', '>=', weekAgo).orderBy('timestamp', 'desc').limit(100).get(),
+
+      // Última actividad
+      firestore.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'desc').limit(1).get(),
+
+      // Mensajes de pánico recientes
+      firestore.collection('chats').doc(chatId).collection('messages').where('type', '==', 'panic').where('timestamp', '>=', weekAgo).get(),
     ]);
 
-    // Última actividad
-    const lastMessage = await db.collection('messages')
-      .findOne({ chatId: chat._id }, { sort: { timestamp: -1 } });
+    const totalMessages = totalMessagesSnapshot.size;
+    const todayMessages = todayMessagesSnapshot.size;
+    const recentMessages = recentMessagesSnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => doc.data());
+    const lastMessage = lastMessageSnapshot.docs[0]?.data()?.timestamp?.toDate() || null;
+    const panicMessages = panicMessagesSnapshot.size;
 
-    // Usuarios activos (que han enviado mensajes en las últimas 24h)
-    const activeUsers = await db.collection('messages').distinct('userId', {
-      chatId: chat._id,
-      timestamp: { $gte: startOfDay }
-    });
+    // Usuarios activos (que han enviado mensajes en las últimas 24h) desde Firestore
+    const activeUserMessagesSnapshot = await firestore.collection('chats').doc(chatId).collection('messages').where('timestamp', '>=', startOfDay).get();
+    const activeUsersSet = new Set<string>();
+    activeUserMessagesSnapshot.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => activeUsersSet.add(doc.data().userId));
+    const activeUsersCount = activeUsersSet.size;
 
-    // Incidentes recientes en el área (últimos 7 días)
-    const recentIncidents = await db.collection('incidents').countDocuments({
-      neighborhood: chat.neighborhood,
+    // Actividad semanal (mensajes por día) desde Firestore
+    const weeklyActivity = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+      const dayMessagesSnapshot = await firestore.collection('chats').doc(chatId).collection('messages').where('timestamp', '>=', dayStart).where('timestamp', '<', dayEnd).get();
+      weeklyActivity.push({
+        date: dayStart.toISOString().split('T')[0],
+        messages: dayMessagesSnapshot.size
+      });
+    }
+
+    // Incidentes recientes en el área (últimos 7 días) - Mantiene en MongoDB
+    const client = await clientPromise;
+    const db = client.db('crime-map');
+    const recentIncidents = await (db.collection('incidents') as any).countDocuments({
+      neighborhood: chatData.neighborhood,
       createdAt: { $gte: weekAgo }
     });
 
-    // Calcular nivel de seguridad basado en incidentes recientes
+    // Calcular nivel de seguridad basado en incidentes recientes y mensajes de pánico
     let safetyLevel: 'high' | 'medium' | 'low' = 'high';
     let emergencyLevel: 'normal' | 'elevated' | 'high' = 'normal';
 
-    if (recentIncidents > 10) {
+    if (recentIncidents > 10 || panicMessages > 0) {
       safetyLevel = 'low';
       emergencyLevel = 'high';
     } else if (recentIncidents > 5) {
@@ -100,50 +119,20 @@ export async function GET(request: NextRequest) {
       emergencyLevel = 'elevated';
     }
 
-    // Mensajes de pánico recientes
-    const panicMessages = await db.collection('messages').countDocuments({
-      chatId: chat._id,
-      type: 'panic',
-      timestamp: { $gte: weekAgo }
-    });
-
-    if (panicMessages > 0) {
-      safetyLevel = 'low';
-      emergencyLevel = 'high';
-    }
-
-    // Actividad semanal (mensajes por día)
-    const weeklyActivity = [];
-    for (let i = 6; i >= 0; i--) {
-      const dayStart = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-
-      const dayMessages = await db.collection('messages').countDocuments({
-        chatId: chat._id,
-        timestamp: { $gte: dayStart, $lt: dayEnd }
-      });
-
-      weeklyActivity.push({
-        date: dayStart.toISOString().split('T')[0],
-        messages: dayMessages
-      });
-    }
-
     return NextResponse.json({
       success: true,
       data: {
         totalMessages,
         todayMessages,
-        activeUsers: activeUsers.length,
-        lastActivity: lastMessage?.timestamp || null,
+        activeUsers: activeUsersCount,
+        lastActivity: lastMessage,
         safetyLevel,
         emergencyLevel,
         weeklyActivity,
         recentIncidents,
         panicMessages,
-        neighborhood: chat.neighborhood,
-        participantCount: chat.participants.length
+        neighborhood: chatData.neighborhood,
+        participantCount: chatData.participants.length
       }
     });
 

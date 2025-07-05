@@ -1,30 +1,30 @@
 'use client';
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { FiMenu, FiX, FiSun, FiMoon, FiMap, FiAlertTriangle, FiUser, FiLogIn, FiLogOut } from 'react-icons/fi';
-import { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { FiAlertTriangle, FiLogIn, FiLogOut, FiMap, FiMenu, FiMessageCircle, FiMoon, FiSettings, FiSun, FiUser, FiX } from 'react-icons/fi';
 
 // NavLink component for desktop navigation
-const NavLink = ({ 
-  href, 
-  icon, 
-  children, 
-  active = false, 
-  className = '' 
-}: { 
-  href: string; 
-  icon: React.ReactNode; 
-  children: React.ReactNode; 
+const NavLink = ({
+  href,
+  icon,
+  children,
+  active = false,
+  className = ''
+}: {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
   active?: boolean;
   className?: string;
 }) => (
-  <Link 
+  <Link
     href={href}
     className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-      active 
-        ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2' 
+      active
+        ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2'
         : 'text-gray-300 hover:bg-gray-800 hover:text-blue-300 hover:border-l-2 hover:border-blue-500 hover:pl-2'
     } ${className}`}
   >
@@ -34,24 +34,24 @@ const NavLink = ({
 );
 
 // MobileNavLink component for mobile navigation
-const MobileNavLink = ({ 
-  href, 
-  icon, 
-  children, 
-  active = false, 
-  className = '' 
-}: { 
-  href: string; 
-  icon: React.ReactNode; 
-  children: React.ReactNode; 
+const MobileNavLink = ({
+  href,
+  icon,
+  children,
+  active = false,
+  className = ''
+}: {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
   active?: boolean;
   className?: string;
 }) => (
-  <Link 
+  <Link
     href={href}
     className={`flex items-center px-3 py-3 rounded-md text-base font-medium transition-all duration-200 ${
-      active 
-        ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2' 
+      active
+        ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2'
         : 'text-gray-300 hover:bg-gray-800 hover:text-blue-300 hover:border-l-2 hover:border-blue-500 hover:pl-2'
     } ${className}`}
   >
@@ -80,6 +80,12 @@ const Navbar = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
   const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
+  // Función para abrir el chat del barrio
+  const openNeighborhoodChat = () => {
+    // Cambiar a la tab de comunidades y luego abrir el chat
+    window.dispatchEvent(new CustomEvent('openNeighborhoodChat'));
+  };
+
   if (!mounted) return null;
 
   return (
@@ -104,6 +110,19 @@ const Navbar = () => {
               <NavLink href="/" icon={<FiMap />} active={pathname === '/'}>
                 Mapa
               </NavLink>
+
+              {/* Botón de chat del barrio - solo para usuarios autenticados */}
+              {status === 'authenticated' && (
+                <button
+                  onClick={openNeighborhoodChat}
+                  className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-blue-300 hover:border-l-2 hover:border-blue-500 hover:pl-2 transition-all duration-200"
+                  title="Chat del barrio"
+                >
+                  <FiMessageCircle className="mr-2 text-blue-400" />
+                  Chat del Barrio
+                </button>
+              )}
+
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-full text-blue-400 hover:bg-blue-900/40 hover:text-blue-300 transition-all duration-200"
@@ -114,8 +133,8 @@ const Navbar = () => {
 
               {status === 'authenticated' ? (
                 <>
-                  <NavLink href="/profile" icon={<FiUser />}>
-                    Perfil
+                  <NavLink href="/profile" icon={<FiSettings />}>
+                    Configuración
                   </NavLink>
                   <button
                     onClick={() => signOut({ callbackUrl: '/' })}
@@ -126,8 +145,8 @@ const Navbar = () => {
                   </button>
                 </>
               ) : (
-                <NavLink 
-                  href="/auth/signin" 
+                <NavLink
+                  href="/auth/signin"
                   icon={<FiLogIn />}
                   className="bg-blue-600 text-white hover:bg-blue-700 border-none pl-3"
                 >
@@ -164,8 +183,8 @@ const Navbar = () => {
           <MobileNavLink href="/" icon={<FiMap />} active={pathname === '/'}>
             Mapa
           </MobileNavLink>
-          <MobileNavLink 
-            href="/incidents" 
+          <MobileNavLink
+            href="/incidents"
             icon={<FiAlertTriangle />}
             active={pathname === '/incidents'}
           >
@@ -173,8 +192,8 @@ const Navbar = () => {
           </MobileNavLink>
           {status === 'authenticated' ? (
             <>
-              <MobileNavLink href="/profile" icon={<FiUser />}>
-                Perfil
+              <MobileNavLink href="/profile" icon={<FiSettings />}>
+                Configuración
               </MobileNavLink>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
@@ -186,14 +205,14 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link 
+              <Link
                 href="/auth/signin"
                 className="flex items-center text-gray-300 hover:bg-gray-800 hover:text-blue-300 hover:border-l-2 hover:border-blue-500 hover:pl-2 px-3 py-3 rounded-md text-base font-medium transition-all duration-200"
               >
                 <FiLogIn className="mr-3 text-blue-400" />
                 Iniciar sesión
               </Link>
-              <Link 
+              <Link
                 href="/auth/signup"
                 className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-3 rounded-md text-base font-medium transition-all duration-200 mt-2"
               >
@@ -206,5 +225,5 @@ const Navbar = () => {
       </div>
     </nav>
   );
-} 
+}
 export default Navbar;

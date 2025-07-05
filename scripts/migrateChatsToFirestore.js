@@ -36,7 +36,7 @@ class ChatMigrator {
     }
   }
   convertToFirestoreTimestamp(date) {
-    if (!date) return undefined;
+    if (!date) return null;
     return admin.firestore.Timestamp.fromDate(date);
   }
   convertToFirestoreChat(mongoChat) {
@@ -56,8 +56,47 @@ class ChatMigrator {
       type: mongoMessage.type || 'normal',
       userId: mongoMessage.userId,
       userName: mongoMessage.userName,
-      metadata: mongoMessage.metadata,
+      metadata: mongoMessage.metadata || {},
     };
+  }
+  async migrateUsers() {
+    console.log('👥 Iniciando migración de usuarios...');
+    const usersCollection = this.db.collection('users');
+    const mongoUsers = await usersCollection.find({}).toArray();
+    console.log(`📊 Encontrados ${mongoUsers.length} usuarios para migrar`);
+    let migratedUsers = 0;
+    let skippedUsers = 0;
+
+    for (const mongoUser of mongoUsers) {
+      const userId = mongoUser._id.toString();
+      try {
+        const existingUser = await this.firestore.collection('users').doc(userId).get();
+        if (existingUser.exists) {
+          console.log(`⏭️  Usuario ${userId} ya existe en Firestore, omitiendo...`);
+          skippedUsers++;
+          continue;
+        }
+
+        const firestoreUser = {
+          email: mongoUser.email,
+          name: mongoUser.name || 'Usuario Desconocido',
+          neighborhood: mongoUser.neighborhood || null,
+          role: mongoUser.role || 'user',
+          chatId: mongoUser.chatId || null,
+          createdAt: this.convertToFirestoreTimestamp(mongoUser.createdAt),
+          updatedAt: this.convertToFirestoreTimestamp(mongoUser.updatedAt),
+        };
+
+        await this.firestore.collection('users').doc(userId).set(firestoreUser);
+        migratedUsers++;
+        console.log(`✅ Usuario ${userId} (${mongoUser.email}) migrado`);
+      } catch (error) {
+        console.error(`❌ Error migrando usuario ${userId} (${mongoUser.email}):`, error);
+      }
+    }
+    console.log('\n📊 RESUMEN DE MIGRACIÓN DE USUARIOS:');
+    console.log(`📝 Usuarios migrados: ${migratedUsers}`);
+    console.log(`⏭️  Usuarios omitidos: ${skippedUsers}`);
   }
   async migrateChats() {
     console.log('🚀 Iniciando migración de chats...');
@@ -128,6 +167,7 @@ class ChatMigrator {
   async run() {
     try {
       await this.connect();
+      await this.migrateUsers();
       await this.migrateChats();
     } catch (error) {
       console.error('❌ Error durante la migración:', error);

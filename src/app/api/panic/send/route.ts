@@ -4,39 +4,6 @@ import clientPromise from '@/lib/mongodb';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 
-// Función para obtener la dirección usando geocodificación inversa
-async function reverseGeocode(lat: number, lng: number): Promise<string> {
-  // Validar que lat y lng sean números válidos
-  if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
-    return 'Ubicación no disponible';
-  }
-
-  try {
-    // Usar el endpoint interno de geocodificación
-    const response = await fetch(
-      `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/geocode/reverse?lat=${lat}&lon=${lng}`
-    );
-
-    if (!response.ok) {
-      console.error('Error en geocodificación inversa:', response.statusText);
-      return `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    }
-
-    const data = await response.json();
-
-    if (!data.success) {
-      console.error('Error en geocodificación inversa:', data.error);
-      return `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    }
-
-    // Usar la dirección formateada o el display_name
-    return data.formatted_address || data.display_name || `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  } catch (error) {
-    console.error('Error al obtener dirección:', error);
-    return `Coordenadas: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  }
-}
-
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -45,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
-    const { location } = await req.json(); // location puede ser null o { lat, lng, accuracy, timestamp, fallback }
+    const { location, address } = await req.json(); // Recibir también la dirección
 
     const client = await clientPromise;
     const db = client.db();
@@ -65,9 +32,10 @@ export async function POST(req: Request) {
 
     const metadata = {
       gpsLocation: location ? `${location.lat},${location.lng}` : 'No disponible',
-      gpsAddress: location ? 'Ubicación GPS exacta obtenida' : 'No se pudo obtener ubicación GPS exacta',
+      gpsAddress: address || (location ? 'Ubicación GPS exacta obtenida' : 'No se pudo obtener ubicación GPS exacta'), // Usar la dirección recibida
       hasGPS: !!location,
       originalLocation: location, // Almacenar el objeto de ubicación completo
+      address: address, // Asegurarse de que la dirección se guarde en los metadatos
       blockNumber: blockNumber || null,
       lotNumber: lotNumber || null,
     };
@@ -85,7 +53,7 @@ export async function POST(req: Request) {
       user: userName || session.user.name,
       hasGPS: !!location,
       gpsLocation: metadata.gpsLocation,
-      gpsAddress: metadata.gpsAddress,
+      gpsAddress: metadata.gpsAddress, // Mostrar la dirección si está disponible
       chatId: chatId.toString(),
       messageId: messageId,
       time: new Date().toISOString()

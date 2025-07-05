@@ -13,6 +13,11 @@ declare module 'next-auth' {
     role: Role;
     enabled?: boolean;
     onboarded?: boolean;
+    neighborhood?: string;
+    notificationsEnabled?: boolean;
+    privacyPublic?: boolean;
+    autoLocationEnabled?: boolean;
+    profileImage?: string;
   }
 
   interface Session {
@@ -24,6 +29,12 @@ declare module 'next-auth' {
       role: Role;
       enabled?: boolean;
       onboarded?: boolean;
+      createdAt?: Date;
+      neighborhood?: string;
+      notificationsEnabled?: boolean;
+      privacyPublic?: boolean;
+      autoLocationEnabled?: boolean;
+      profileImage?: string;
     }
   }
 }
@@ -34,6 +45,12 @@ declare module 'next-auth/jwt' {
     role: Role;
     enabled?: boolean;
     onboarded?: boolean;
+    createdAt?: Date;
+    neighborhood?: string;
+    notificationsEnabled?: boolean;
+    privacyPublic?: boolean;
+    autoLocationEnabled?: boolean;
+    profileImage?: string;
   }
 }
 
@@ -93,6 +110,12 @@ export const authOptions: NextAuthOptions = {
             role: user.role || getDefaultRole(),
             enabled: user.enabled,
             onboarded: user.onboarded || user.isOnboarded || false,
+            createdAt: user.createdAt || new Date(),
+            neighborhood: user.neighborhood || null,
+            notificationsEnabled: user.notificationsEnabled ?? true,
+            privacyPublic: user.privacyPublic ?? false,
+            autoLocationEnabled: user.autoLocationEnabled ?? true,
+            profileImage: user.profileImage ?? undefined,
           };
         } catch (error) {
           console.error("Error durante la autenticación:", error);
@@ -120,6 +143,11 @@ export const authOptions: NextAuthOptions = {
           user.onboarded = dbUser.onboarded || dbUser.isOnboarded || false;
           user.enabled = dbUser.enabled;
           user.role = dbUser.role || getDefaultRole();
+          user.neighborhood = dbUser.neighborhood || null;
+          user.notificationsEnabled = dbUser.notificationsEnabled ?? true;
+          user.privacyPublic = dbUser.privacyPublic ?? false;
+          user.autoLocationEnabled = dbUser.autoLocationEnabled ?? true;
+          user.profileImage = dbUser.profileImage ?? undefined;
         }
       }
 
@@ -131,12 +159,29 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.enabled = user.enabled;
         token.onboarded = user.onboarded;
+        token.neighborhood = user.neighborhood;
+        token.notificationsEnabled = user.notificationsEnabled;
+        token.privacyPublic = user.privacyPublic;
+        token.autoLocationEnabled = user.autoLocationEnabled;
+        token.profileImage = user.profileImage;
       }
 
       // Actualizar token cuando se actualiza la sesión
       if (trigger === "update" && session) {
         if (session.onboarded !== undefined) {
           token.onboarded = session.onboarded;
+        }
+        if (session.notificationsEnabled !== undefined) {
+          token.notificationsEnabled = session.notificationsEnabled;
+        }
+        if (session.privacyPublic !== undefined) {
+          token.privacyPublic = session.privacyPublic;
+        }
+        if (session.autoLocationEnabled !== undefined) {
+          token.autoLocationEnabled = session.autoLocationEnabled;
+        }
+        if (session.profileImage !== undefined) {
+          token.profileImage = session.profileImage;
         }
 
         // Refrescar datos del usuario desde la base de datos
@@ -152,6 +197,12 @@ export const authOptions: NextAuthOptions = {
               token.onboarded = dbUser.onboarded || dbUser.isOnboarded || false;
               token.enabled = dbUser.enabled;
               token.role = dbUser.role || token.role;
+              token.createdAt = dbUser.createdAt || token.createdAt;
+              token.neighborhood = dbUser.neighborhood || token.neighborhood;
+              token.notificationsEnabled = dbUser.notificationsEnabled ?? token.notificationsEnabled;
+              token.privacyPublic = dbUser.privacyPublic ?? token.privacyPublic;
+              token.autoLocationEnabled = dbUser.autoLocationEnabled ?? token.autoLocationEnabled;
+              token.profileImage = dbUser.profileImage ?? token.profileImage;
             }
           } catch (error) {
             console.error('Error refreshing user data:', error);
@@ -167,6 +218,12 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         session.user.enabled = token.enabled;
         session.user.onboarded = token.onboarded;
+        session.user.createdAt = token.createdAt;
+        session.user.neighborhood = token.neighborhood;
+        session.user.notificationsEnabled = token.notificationsEnabled;
+        session.user.privacyPublic = token.privacyPublic;
+        session.user.autoLocationEnabled = token.autoLocationEnabled;
+        session.user.profileImage = token.profileImage;
       }
       return session;
     },

@@ -1,6 +1,5 @@
-import { ObjectId } from 'mongodb';
+import * as admin from 'firebase-admin';
 import { firestore } from './firebase';
-import clientPromise from './mongodb';
 import { ChatWithParticipants, User } from './types';
 
 export interface FirestoreMessage {
@@ -24,34 +23,68 @@ export interface FirestoreChat {
 
 /**
  * Obtiene el chat de un usuario desde Firestore
- * Primero busca el usuario en MongoDB para obtener su chatId
  */
 export async function getUserChatFromFirestore(userEmail: string): Promise<ChatWithParticipants | null> {
   try {
-    // Buscar usuario en MongoDB
-    const client = await clientPromise;
-    const db = client.db();
-    const user = await db.collection('users').findOne({ email: userEmail });
+    // Buscar usuario en Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', userEmail).limit(1).get();
 
-    if (!user || !user.chatId) {
+    if (userSnapshot.empty) {
+      console.log(`Usuario con email ${userEmail} no encontrado.`);
       return null;
     }
 
-    // Buscar chat en Firestore
-    const chatDoc = await firestore.collection('chats').doc(user.chatId).get();
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id;
 
-    if (!chatDoc.exists) {
-      console.log(`Chat ${user.chatId} no encontrado en Firestore`);
-      return null;
+    let chatDoc;
+
+    // 1. Intentar obtener el chat con el chatId del usuario
+    if (userData.chatId) {
+      const chatDocRef = firestore.collection('chats').doc(userData.chatId);
+      chatDoc = await chatDocRef.get();
+    }
+
+    // 2. Si el chat no se encontró con el chatId, intentar buscar por barrio
+    if (!chatDoc || !chatDoc.exists) {
+      if (userData.chatId) {
+        console.warn(`Chat con ID ${userData.chatId} no encontrado. Buscando por barrio: ${userData.neighborhood}`);
+      } else {
+        console.log(`Usuario no tiene chatId. Buscando por barrio: ${userData.neighborhood}`);
+      }
+
+      if (!userData.neighborhood) {
+        console.log(`El usuario ${userEmail} no tiene barrio asignado, no se puede buscar chat.`);
+        return null;
+      }
+
+      const neighborhoodChatSnapshot = await firestore
+        .collection('chats')
+        .where('neighborhood', '==', userData.neighborhood)
+        .limit(1)
+        .get();
+
+      if (!neighborhoodChatSnapshot.empty) {
+        chatDoc = neighborhoodChatSnapshot.docs[0];
+        const correctChatId = chatDoc.id;
+        console.log(`Chat encontrado por barrio: ${correctChatId}. Actualizando ID de chat del usuario ${userId}.`);
+
+        // Actualizar el chatId en el documento del usuario para futuras búsquedas
+        await firestore.collection('users').doc(userId).update({ chatId: correctChatId });
+      } else {
+        console.log(`No se encontró ningún chat para el barrio: ${userData.neighborhood}`);
+        return null;
+      }
     }
 
     const chatData = chatDoc.data() as FirestoreChat;
 
-    // Obtener participantes desde MongoDB
-    const participants = await getChatParticipantsFromMongo(user.chatId);
+    // Obtener participantes desde Firestore
+    const participants = await getChatParticipantsFromFirestore(chatData.participants);
 
     return {
-      _id: user.chatId,
+      _id: chatDoc.id,
       neighborhood: chatData.neighborhood,
       participants,
       createdAt: chatData.createdAt?.toDate(),
@@ -64,30 +97,38 @@ export async function getUserChatFromFirestore(userEmail: string): Promise<ChatW
 }
 
 /**
- * Obtiene participantes de un chat desde MongoDB
+ * Obtiene participantes de un chat desde Firestore
  */
-export async function getChatParticipantsFromMongo(chatId: string): Promise<User[]> {
-  const client = await clientPromise;
-  const db = client.db();
+export async function getChatParticipantsFromFirestore(participantIds: string[]): Promise<User[]> {
+  try {
+    if (participantIds.length === 0) {
+      return [];
+    }
 
-  // Buscar el chat en MongoDB para obtener participantes
-  const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-
-  if (!chat) {
-    throw new Error('Chat no encontrado en MongoDB');
+    const usersSnapshot = await firestore.collection('users').where(admin.firestore.FieldPath.documentId(), 'in', participantIds).get();
+    const participants: User[] = [];
+    usersSnapshot.forEach((doc: any) => {
+      const data = doc.data();
+      participants.push({
+        _id: doc.id,
+        email: data.email,
+        name: data.name,
+        surname: data.surname || '',
+        blockNumber: data.blockNumber || null,
+        lotNumber: data.lotNumber || null,
+        neighborhood: data.neighborhood,
+        role: data.role,
+        chatId: data.chatId,
+        createdAt: data.createdAt?.toDate(),
+        updatedAt: data.updatedAt?.toDate(),
+        onboarded: data.onboarded || false,
+      } as User);
+    });
+    return participants;
+  } catch (error) {
+    console.error('Error obteniendo participantes desde Firestore:', error);
+    return [];
   }
-
-  // Obtener información de todos los participantes
-  const participants = await db.collection('users')
-    .find({
-      _id: { $in: chat.participants.map((id: string) => new ObjectId(id)) }
-    })
-    .toArray();
-
-  return participants.map((user: any) => ({
-    ...user,
-    _id: user._id.toString()
-  })) as User[];
 }
 
 /**
@@ -208,56 +249,33 @@ export async function chatExistsInFirestore(chatId: string): Promise<boolean> {
 }
 
 /**
- * Sincroniza un chat de MongoDB a Firestore
+ * Agrega un participante a un chat existente en Firestore
  */
-export async function syncChatToFirestore(chatId: string): Promise<void> {
+export async function addParticipantToChatInFirestore(chatId: string, userId: string): Promise<void> {
   try {
-    const client = await clientPromise;
-    const db = client.db();
-
-    // Obtener chat desde MongoDB
-    const mongoChat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-
-    if (!mongoChat) {
-      throw new Error(`Chat ${chatId} no encontrado en MongoDB`);
-    }
-
-    // Verificar si ya existe en Firestore
-    const exists = await chatExistsInFirestore(chatId);
-    if (exists) {
-      console.log(`Chat ${chatId} ya existe en Firestore`);
-      return;
-    }
-
-    // Crear chat en Firestore
-    await createChatInFirestore(
-      chatId,
-      mongoChat.neighborhood,
-      mongoChat.participants || []
-    );
-
-    // Migrar mensajes
-    const messages = await db.collection('messages')
-      .find({ chatId: new ObjectId(chatId) })
-      .sort({ timestamp: 1 })
-      .toArray();
-
-    console.log(`📝 Migrando ${messages.length} mensajes para chat ${chatId}`);
-
-    for (const message of messages) {
-      await sendMessageToFirestore(
-        chatId,
-        message.userId,
-        message.userName,
-        message.message,
-        message.type || 'normal',
-        message.metadata
-      );
-    }
-
-    console.log(`✅ Chat ${chatId} sincronizado exitosamente`);
+    await firestore.collection('chats').doc(chatId).update({
+      participants: admin.firestore.FieldValue.arrayUnion(userId),
+      updatedAt: new Date()
+    });
+    console.log(`✅ Usuario ${userId} agregado al chat ${chatId}`);
   } catch (error) {
-    console.error(`Error sincronizando chat ${chatId}:`, error);
+    console.error(`Error agregando participante ${userId} al chat ${chatId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Actualiza el chatId de un usuario en Firestore
+ */
+export async function updateUserChatIdInFirestore(userId: string, chatId: string): Promise<void> {
+  try {
+    await firestore.collection('users').doc(userId).update({
+      chatId: chatId,
+      updatedAt: new Date()
+    });
+    console.log(`✅ chatId del usuario ${userId} actualizado a ${chatId}`);
+  } catch (error) {
+    console.error(`Error actualizando chatId del usuario ${userId}:`, error);
     throw error;
   }
 }

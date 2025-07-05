@@ -1,9 +1,9 @@
 'use client';
 
-import { PanInfo, motion } from 'framer-motion';
+import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiMapPin, FiSend, FiUsers } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiSend, FiUsers } from 'react-icons/fi';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -15,6 +15,7 @@ interface ChatParticipant {
   name: string;
   surname: string;
   blockNumber: number;
+  lotNumber: number;
 }
 
 interface ChatInfo {
@@ -31,7 +32,10 @@ interface Message {
   timestamp: Date;
   type: 'normal' | 'panic';
   isOwn: boolean;
-  metadata?: Record<string, any>;
+  metadata?: {
+    location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
+    address?: string;
+  };
 }
 
 const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenChatViewProps) => {
@@ -43,6 +47,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -138,6 +143,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     if (!session?.user || !message.trim()) return false;
 
     try {
+      setIsSending(true);
       const response = await fetch('/api/chat/send-message', {
         method: 'POST',
         headers: {
@@ -161,6 +167,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       console.error('Error enviando mensaje:', error);
       setError('Error enviando mensaje');
       return false;
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -168,6 +176,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     if (!session?.user || !message.trim()) return false;
 
     try {
+      setIsSending(true);
       const response = await fetch('/api/chat/send-message', {
         method: 'POST',
         headers: {
@@ -191,11 +200,13 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       console.error('Error enviando mensaje de pánico:', error);
       setError('Error enviando mensaje de pánico');
       return false;
+    } finally {
+      setIsSending(false);
     }
   };
 
   const handleSendMessage = async () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() && !isSending) {
       try {
         await sendMessage(newMessage);
         setNewMessage('');
@@ -250,14 +261,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
   // Fix for isOwn issue - check current user email/id
   const isMessageOwn = (message: any) => {
-    if (!session?.user?.email) return false;
-
-    // Check both userId and email to ensure proper ownership detection
-    const currentUserEmail = session.user.email;
-    const isOwnByEmail = message.userName === session.user.name ||
-                        message.userEmail === currentUserEmail;
-
-    return message.isOwn || isOwnByEmail;
+    return message.userId === session?.user?.id;
   };
 
   if (loading) {
@@ -291,222 +295,179 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
   return (
     <motion.div
-      initial={{ x: '100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: '100%' }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      drag="x"
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={{ left: 0, right: 0.2 }}
+      initial={{ y: '100%' }}
+      animate={{ y: 0 }}
+      exit={{ y: '100%' }}
+      transition={{
+        type: 'spring',
+        damping: 25,
+        stiffness: 200,
+        duration: 0.5
+      }}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={0.1}
       onDragEnd={handleDragEnd}
-      className={`fixed inset-0 bg-gray-900 z-[210] flex flex-col ${className}`}
+      className={`fixed inset-0 bg-gray-900 z-[400] flex flex-col overflow-hidden ${className}`}
+      style={{
+        background: 'rgba(17, 24, 39, 0.98)',
+        backdropFilter: 'blur(20px)',
+        boxShadow: '0 0 50px rgba(0, 0, 0, 0.5)'
+      }}
     >
-      {/* Hidden drag indicator - minimal but functional */}
-      <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-0.5 h-16 bg-gray-600/30 rounded-r-full"></div>
-
-      {/* Header simplificado */}
-      <div className="bg-gray-800 border-b border-gray-700/50">
-        <div className="flex items-center px-4 py-3">
-          <button
-            onClick={onBack}
-            className="p-2 hover:bg-gray-700 rounded-full transition-colors mr-3"
-          >
-            <FiArrowLeft className="w-5 h-5 text-gray-400" />
-          </button>
-
-          <div className="flex items-center space-x-3 flex-1">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <FiMapPin className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-white">
-                {chat?.neighborhood || 'Chat Barrial'}
-              </h2>
-              <p className="text-sm text-gray-400">
-                {chat?.participants.length || 0} participantes
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowParticipants(!showParticipants)}
-            className="p-2 hover:bg-gray-700 rounded-full transition-colors"
-          >
-            <FiUsers className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
-      </div>
-
-      {/* Panel de participantes simplificado */}
-      {showParticipants && chat && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="participants-panel"
+      {/* #region Header */}
+      <div className="bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50 px-4 py-4 flex items-center justify-between z-10">
+        <button
+          onClick={onBack}
+          className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all duration-200"
         >
-          <div className="p-3">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-gray-300">Participantes</h3>
-              <span className="text-xs text-gray-500 bg-gray-700/50 px-2 py-1 rounded">
-                {chat.participants.length}
-              </span>
-            </div>
+          <FiArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex flex-col items-center flex-grow">
+          <h2 className="text-lg font-semibold text-white">{chat?.neighborhood || 'Cargando...'}</h2>
+          <p className="text-xs text-gray-400">{chat?.participants.length || 0} participantes</p>
+        </div>
+        <button
+          onClick={() => setShowParticipants(true)}
+          className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all duration-200"
+        >
+          <FiUsers className="w-5 h-5" />
+        </button>
+      </div>
+      {/* #endregion */}
 
-            <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
-              {chat.participants.map((participant: ChatParticipant) => (
-                <div key={participant._id} className="participant-item">
-                  <div className="participant-avatar">
-                    <span className="text-xs font-medium text-white">
-                      {participant.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">
-                      {participant.name} {participant.surname}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Manzana {participant.blockNumber}
-                    </p>
-                  </div>
-                  {session?.user?.email && participant.name === session.user.name && (
-                    <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded">
-                      Tú
-                    </span>
+      {/* #region Chat Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+        {messages.map((message, index) => {
+          const showDate = index === 0 || message.timestamp.toDateString() !== messages[index - 1].timestamp.toDateString();
+          const isOwn = isMessageOwn(message);
+
+          return (
+            <div key={message.id} className="flex flex-col items-start">
+              {showDate && (
+                <div className="text-center w-full my-4">
+                  <span className="text-xs text-gray-500 bg-gray-800/50 px-3 py-1 rounded-full">
+                    {formatDate(message.timestamp)}
+                  </span>
+                </div>
+              )}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.02 }}
+                className={`flex w-full ${isOwn ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-xl px-4 py-2 shadow-md ${isOwn
+                    ? 'bg-blue-600 text-white rounded-br-none'
+                    : message.type === 'panic'
+                      ? 'bg-red-700 text-white rounded-bl-none border border-red-600'
+                      : 'bg-gray-700 text-gray-100 rounded-bl-none'
+                    }`}
+                >
+                  <span className="block text-xs text-gray-300 mb-1">
+                    {isOwn ? 'Tú' : message.userName}
+                  </span>
+                  {message.type === 'panic' ? (
+                    <>
+                      <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
+                      <br />
+                      <span className="text-sm">
+                        {message.metadata?.address || 'Ubicación GPS exacta no disponible'}
+                      </span>
+                      <br />
+                      <span className="text-xs text-gray-300 mt-1 block">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-base leading-tight">
+                        {message.message}
+                      </span>
+                      <span className="text-xs text-gray-300 mt-1 block text-right">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    </>
                   )}
+                </div>
+              </motion.div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+      {/* #endregion */}
+
+      {/* #region Message Input */}
+      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-3 flex items-end space-x-2">
+        <textarea
+          ref={textareaRef}
+          value={newMessage}
+          onChange={(e) => {
+            setNewMessage(e.target.value);
+            // Auto-resize textarea
+            if (textareaRef.current) {
+              textareaRef.current.style.height = 'auto';
+              textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+            }
+          }}
+          onKeyPress={handleKeyPress}
+          placeholder="Escribe un mensaje..."
+          className="flex-1 p-3 bg-gray-800 rounded-lg text-white resize-none max-h-32 scrollbar-hide outline-none"
+        />
+        <button
+          onClick={handleSendMessage}
+          disabled={!newMessage.trim() || isSending}
+          className="p-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
+        >
+          <FiSend className="w-5 h-5" />
+        </button>
+      </div>
+      {/* #endregion */}
+
+      {/* #region Participants Modal */}
+      <AnimatePresence>
+        {showParticipants && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{
+              type: 'spring',
+              damping: 25,
+              stiffness: 200,
+              duration: 0.5
+            }}
+            className="fixed inset-0 bg-gray-900 z-[500] flex flex-col"
+          >
+            <div className="bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50 px-4 py-4 flex items-center justify-between">
+              <button
+                onClick={() => setShowParticipants(false)}
+                className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all duration-200"
+              >
+                <FiArrowLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-lg font-semibold text-white">Participantes</h2>
+              <div className="w-10">{/* Spacer */}</div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {chat?.participants.map((participant) => (
+                <div key={participant._id} className="flex items-center space-x-3 bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
+                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                    {participant.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">{participant.name} {participant.surname}</p>
+                    <p className="text-sm text-gray-400">Manzana {participant.blockNumber}, Lote {participant.lotNumber}</p>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-        {messages.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FiUsers className="w-8 h-8 text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-300 mb-2">
-                ¡Bienvenido al chat de {chat?.neighborhood || 'tu barrio'}!
-              </h3>
-              <p className="text-gray-500 text-sm">
-                Sé el primero en enviar un mensaje a tus vecinos
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {messages.map((message, index) => {
-              const showDateDivider = index === 0 ||
-                formatDate(messages[index - 1].timestamp) !== formatDate(message.timestamp);
-
-              const isPanicMessage = message.type === 'panic';
-              const isOwn = isMessageOwn(message);
-
-              // Crear una key única más robusta
-              const messageKey = message.id || `msg-${message.timestamp.getTime()}-${index}`;
-              const dateKey = `date-${formatDate(message.timestamp)}`;
-
-              const elements = [];
-
-              // Agregar divisor de fecha si es necesario
-              if (showDateDivider) {
-                elements.push(
-                  <div key={dateKey} className="flex justify-center my-4">
-                    <span className="px-3 py-1 bg-gray-800 text-gray-400 text-xs rounded-full">
-                      {formatDate(message.timestamp)}
-                    </span>
-                  </div>
-                );
-              }
-
-              // Agregar mensaje
-              elements.push(
-                <motion.div
-                  key={messageKey}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3 message-enter`}
-                >
-                  <div className={`max-w-[80%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                    {!isOwn && (
-                      <p className="text-xs text-blue-400 mb-1 px-1 font-medium">
-                        {message.userName.split(' ')[0]}
-                      </p>
-                    )}
-                    <div
-                      className={`px-4 py-2 rounded-2xl ${
-                        isPanicMessage
-                          ? 'bg-red-500/20 border border-red-500/30 text-red-100'
-                          : isOwn
-                          ? 'bg-blue-500 text-white ml-2'
-                          : 'bg-gray-800 text-gray-100 mr-2'
-                      }`}
-                    >
-                      {message.type === 'panic' ? (
-                        <div className="flex items-center space-x-2 text-red-100 mb-1">
-                          <FiAlertTriangle className="w-4 h-4" />
-                          <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
-                        </div>
-                      ) : null}
-                      <p className="text-sm">{message.message}</p>
-                      {message.type === 'panic' && message.metadata?.gpsAddress && (
-                        <p className="text-xs mt-1 text-red-200">
-                          {message.metadata.gpsAddress}
-                          {message.metadata.hasGPS && message.metadata.gpsLocation ? (
-                            ` (${message.metadata.gpsLocation})`
-                          ) : null}
-                        </p>
-                      )}
-                      <p className={`text-xs mt-1 ${
-                        message.isOwn ? 'text-blue-100' : 'text-gray-400'
-                      }`}>
-                        {formatTime(message.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-
-              return elements;
-            }).flat()}
-            <div ref={messagesEndRef} />
-          </>
+          </motion.div>
         )}
-      </div>
-
-      {/* Message input */}
-      <div className="bg-gray-800 p-4 border-t border-gray-700/50">
-        <div className="flex items-end space-x-3">
-          <div className="flex-1 bg-gray-700 rounded-2xl px-4 py-2 flex items-center space-x-3">
-            <textarea
-              ref={textareaRef}
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Escribe un mensaje..."
-              className="message-input"
-              rows={1}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = target.scrollHeight + 'px';
-              }}
-            />
-          </div>
-          <button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
-            className={`send-button ${newMessage.trim() ? 'active' : 'inactive'}`}
-          >
-            <FiSend className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      </AnimatePresence>
+      {/* #endregion */}
     </motion.div>
   );
 };

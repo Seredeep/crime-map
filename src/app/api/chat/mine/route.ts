@@ -1,5 +1,5 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
-import { getUserChat } from '@/lib/chatService';
+import { getUserChatFromFirestore } from '@/lib/firestoreChatService';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 
@@ -15,8 +15,8 @@ export async function GET() {
       );
     }
 
-    // Obtener el chat del usuario
-    const userChat = await getUserChat(session.user.email);
+    // Obtener el chat del usuario desde Firestore
+    const userChat = await getUserChatFromFirestore(session.user.email);
 
     if (!userChat) {
       return NextResponse.json({
@@ -26,27 +26,33 @@ export async function GET() {
       });
     }
 
-    // Obtener información del usuario actual para debugging
-    const client = await (await import('@/lib/mongodb')).default;
-    const db = client.db();
-    const currentUser = await db.collection('users').findOne({ email: session.user.email });
+    // Encontrar al usuario actual dentro de los participantes del chat
+    const currentUserInChat = userChat.participants.find(
+      (p) => p.email === session.user.email
+    );
+
+    // Si no se encuentra el usuario en el chat, puede ser un problema de sincronización o datos
+    if (!currentUserInChat) {
+      console.error('Usuario actual no encontrado en la lista de participantes del chat.');
+      return NextResponse.json(
+        { success: false, message: 'Error al obtener datos del usuario en el chat' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Chat obtenido exitosamente',
       data: {
         chatId: userChat._id,
-        userId: currentUser?._id?.toString(),
-        userName: currentUser?.name || currentUser?.email,
+        userId: currentUserInChat._id,
+        userName: currentUserInChat.name || currentUserInChat.email,
         neighborhood: userChat.neighborhood,
         participantsCount: userChat.participants.length,
         participants: userChat.participants.map(participant => ({
           id: participant._id,
           name: participant.name,
-          surname: participant.surname,
           email: participant.email,
-          blockNumber: participant.blockNumber,
-          lotNumber: participant.lotNumber
         })),
         createdAt: userChat.createdAt,
         updatedAt: userChat.updatedAt

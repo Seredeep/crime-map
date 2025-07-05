@@ -1,11 +1,5 @@
+import { firestore } from '@/lib/firebase';
 import { NextRequest, NextResponse } from 'next/server';
-
-// Almacén temporal en memoria para usuarios online (en producción usar Redis)
-const onlineUsers = new Map<string, Array<{
-  userId: string;
-  userName: string;
-  lastSeen: number;
-}>>();
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,34 +12,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const currentUsers = onlineUsers.get(chatId) || [];
+    const userOnlineStatusRef = firestore.collection('chats').doc(chatId).collection('onlineUsers').doc(userId);
 
     if (isOnline) {
-      // Agregar o actualizar usuario online
-      const existingIndex = currentUsers.findIndex(u => u.userId === userId);
-      const userOnline = {
+      // Agregar o actualizar usuario online en Firestore
+      await userOnlineStatusRef.set({
         userId,
         userName: userName || 'Usuario',
-        lastSeen: Date.now()
-      };
-
-      if (existingIndex >= 0) {
-        currentUsers[existingIndex] = userOnline;
-      } else {
-        currentUsers.push(userOnline);
-      }
+        lastSeen: new Date(),
+      }, { merge: true });
     } else {
-      // Marcar como offline (no remover inmediatamente)
-      const existingIndex = currentUsers.findIndex(u => u.userId === userId);
-      if (existingIndex >= 0) {
-        currentUsers[existingIndex].lastSeen = Date.now() - 300000; // 5 minutos atrás
-      }
+      // Marcar como offline en Firestore (actualizando lastSeen a un valor antiguo)
+      await userOnlineStatusRef.set({
+        lastSeen: new Date(Date.now() - 300000), // 5 minutos atrás
+      }, { merge: true });
     }
-
-    // Limpiar usuarios offline por más de 5 minutos
-    const now = Date.now();
-    const activeUsers = currentUsers.filter(u => now - u.lastSeen < 300000);
-    onlineUsers.set(chatId, activeUsers);
 
     return NextResponse.json({
       success: true,
@@ -73,12 +54,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const currentUsers = onlineUsers.get(chatId) || [];
-
-    // Limpiar usuarios offline por más de 5 minutos
+    const onlineUsersSnapshot = await firestore.collection('chats').doc(chatId).collection('onlineUsers').get();
+    const activeUsers: Array<{
+      userId: string;
+      userName: string;
+      lastSeen: number;
+    }> = [];
     const now = Date.now();
-    const activeUsers = currentUsers.filter(u => now - u.lastSeen < 300000);
-    onlineUsers.set(chatId, activeUsers);
+
+    onlineUsersSnapshot.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data();
+      // Filtrar usuarios inactivos por más de 5 minutos (300000 ms)
+      if (data.lastSeen && (now - data.lastSeen.toDate().getTime() < 300000)) {
+        activeUsers.push({
+          userId: data.userId,
+          userName: data.userName,
+          lastSeen: data.lastSeen.toDate().getTime()
+        });
+      }
+    });
 
     // Clasificar usuarios por estado
     const online = activeUsers.filter(u => now - u.lastSeen < 60000); // Online en último minuto

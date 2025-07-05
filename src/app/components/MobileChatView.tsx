@@ -13,7 +13,10 @@ interface Message {
   timestamp: Date;
   type: 'normal' | 'panic';
   isOwn: boolean;
-  metadata?: Record<string, any>;
+  metadata?: {
+    location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
+    address?: string;
+  };
 }
 
 interface MobileChatViewProps {
@@ -48,7 +51,7 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
             setMessages(messagesResult.data.messages.map((msg: any) => ({
               ...msg,
               timestamp: new Date(msg.timestamp),
-              isOwn: msg.userId === result.data._id || msg.userName === result.data.userName
+              isOwn: msg.userId === result.data._id
             })));
           } else {
             setMessages([]);
@@ -207,51 +210,65 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
             </div>
           </div>
         ) : (
-          messages.map((message, index) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`max-w-[80%] ${message.isOwn ? 'order-2' : 'order-1'}`}>
+          messages.map((message, index) => {
+            const participant = chat.participants.find(p => p._id === message.userId);
+            const participantProfileImage = participant?.profileImage;
+            const participantNameInitial = participant?.name?.charAt(0) || 'U';
+
+            return (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'} items-end`}
+              >
                 {!message.isOwn && (
-                  <p className="text-xs text-gray-400 mb-1 ml-3">
-                    {message.userName}
-                  </p>
+                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-600 flex items-center justify-center flex-shrink-0">
+                    {participantProfileImage ? (
+                      <img src={participantProfileImage} alt={message.userName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-semibold text-white">
+                        {participantNameInitial}
+                      </span>
+                    )}
+                  </div>
                 )}
-                <div
-                  className={`p-3 rounded-2xl ${
-                    message.isOwn
-                      ? 'bg-blue-500 text-white rounded-br-md'
-                      : 'bg-gray-700 text-gray-100 rounded-bl-md'
-                  }`}
-                >
-                  {message.type === 'panic' ? (
-                    <div className="flex items-center space-x-2 text-red-100 mb-1">
-                      <FiAlertTriangle className="w-4 h-4" />
-                      <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
-                    </div>
-                  ) : null}
-                  <p className="text-sm">{message.message}</p>
-                  {message.type === 'panic' && message.metadata?.gpsAddress && (
-                    <p className="text-xs mt-1 text-red-200">
-                      {message.metadata.gpsAddress}
-                      {message.metadata.hasGPS && message.metadata.gpsLocation ? (
-                        ` (${message.metadata.gpsLocation})`
-                      ) : null}
+                <div className={`max-w-[80%] ${message.isOwn ? 'order-2' : 'order-1'}`}>
+                  {!message.isOwn && (
+                    <p className="text-xs text-gray-400 mb-1">
+                      {message.userName}
                     </p>
                   )}
-                  <p className={`text-xs mt-1 ${
-                    message.isOwn ? 'text-blue-100' : 'text-gray-400'
-                  }`}>
-                    {formatTime(message.timestamp)}
-                  </p>
+                  <div
+                    className={`p-3 rounded-2xl ${
+                      message.isOwn
+                        ? 'bg-blue-500 text-white rounded-br-md'
+                        : 'bg-gray-700 text-gray-100 rounded-bl-md'
+                    }`}
+                  >
+                    {message.type === 'panic' ? (
+                      <div className="flex items-center space-x-2 text-red-100 mb-1">
+                        <FiAlertTriangle className="w-4 h-4" />
+                        <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
+                      </div>
+                    ) : null}
+                    <p className="text-sm">{message.message}</p>
+                    {message.type === 'panic' && (
+                      <p className="text-sm mt-1 text-red-200">
+                        {message.metadata?.address || 'Ubicación GPS exacta no disponible'}
+                      </p>
+                    )}
+                    <p className={`text-xs mt-1 ${
+                      message.isOwn ? 'text-blue-100' : 'text-gray-400'
+                    }`}>
+                      {formatTime(message.timestamp)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))
+              </motion.div>
+            );
+          })
         )}
       </div>
 

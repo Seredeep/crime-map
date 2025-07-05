@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { getDefaultRole } from "@/lib/config/roles";
+import { firestore } from "@/lib/firebase";
 import clientPromise from "@/lib/mongodb";
 import { hashPassword } from "@/lib/utils";
-import { getDefaultRole } from "@/lib/config/roles";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
@@ -33,13 +34,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Conectamos a la base de datos
+    // Conectamos a MongoDB y Firestore
     const client = await clientPromise;
     const db = client.db();
 
-    // Verificamos si el usuario ya existe
-    const existingUser = await db.collection("users").findOne({ email });
-    if (existingUser) {
+    // Verificamos si el usuario ya existe en MongoDB
+    const existingMongoUser = await db.collection("users").findOne({ email });
+    if (existingMongoUser) {
       return NextResponse.json(
         { success: false, message: "El email ya está registrado" },
         { status: 409 }
@@ -49,20 +50,35 @@ export async function POST(request: Request) {
     // Hasheamos la contraseña
     const hashedPassword = await hashPassword(password);
 
-    // Create the user with the default role
-    const result = await db.collection("users").insertOne({
+    // Creamos el usuario en MongoDB
+    const mongoUserResult = await db.collection("users").insertOne({
       name,
       email,
       password: hashedPassword,
       role: getDefaultRole(),
       enabled: false, // Usuario deshabilitado por defecto
       createdAt: new Date(),
+      // Los campos `onboarded` y `chatId` se manejarán en el onboarding
+    });
+
+    const userId = mongoUserResult.insertedId.toString();
+
+    // Creamos el usuario correspondiente en Firestore
+    await firestore.collection("users").doc(userId).set({
+      name,
+      email,
+      password: hashedPassword, // Considerar si Firebase Auth maneja las contraseñas
+      role: getDefaultRole(),
+      enabled: false, // Usuario deshabilitado por defecto
+      createdAt: new Date(),
+      onboarded: false, // Nuevo campo para indicar si el usuario ha completado el onboarding
+      chatId: null, // Nuevo campo para almacenar el chatId del barrio
     });
 
     return NextResponse.json({
       success: true,
       message: "Usuario registrado correctamente. Tu cuenta está pendiente de aprobación por un administrador.",
-      userId: result.insertedId.toString(),
+      userId: userId,
     });
   } catch (error) {
     console.error("Error en el registro:", error);
@@ -71,4 +87,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

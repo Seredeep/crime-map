@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiList, FiUser, FiSun, FiMoon } from 'react-icons/fi';
+import { useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { FiList } from 'react-icons/fi';
 
 interface MobileDynamicNavbarProps {
   activeTab: string;
@@ -17,6 +18,7 @@ const MobileDynamicNavbar = ({
   onSettingsClick
 }: MobileDynamicNavbarProps) => {
   const { theme, setTheme } = useTheme();
+  const { status } = useSession();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,11 +31,7 @@ const MobileDynamicNavbar = ({
       case 'incidents':
         return {
           title: 'Claridad',
-          leftAction: {
-            icon: <FiList className="w-6 h-6" />,
-            onClick: onFiltersClick,
-            label: 'Filtros'
-          },
+          leftAction: null,
           showThemeToggle: true
         };
       case 'stats':
@@ -78,42 +76,37 @@ const MobileDynamicNavbar = ({
       initial={{ y: -64 }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="fixed top-0 left-0 right-0 z-[130] md:hidden bg-[#040910] backdrop-blur-lg  shadow-lg"
+      className="fixed top-0 left-0 right-0 z-[130] md:hidden bg-[#040910] backdrop-blur-lg shadow-lg"
     >
       <div className="flex items-center justify-between h-16 px-4">
-
-        {/* Centro - Título */}
-        <motion.h1
-          key={config.title}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="font-manrope text-2xl font-semibold text-[#B5CCF4] "
-          style={{
-            textShadow: '0 0 12px rgba(140,200,255,0.8))'
-          }}
-        >
-
-          {config.title}
-        </motion.h1>
-
-        {/* Lado derecho - Controles */}
-        <div className="flex items-center space-x-2">
-          {/* Botón de configuración/usuario */}
-          <motion.button
-            onClick={onSettingsClick}
-            whileTap={{ scale: 0.95 }}
-            className="p-2 rounded-full bg-gray-700/50 text-gray-400 hover:bg-gray-600/50 hover:text-white transition-all duration-200"
-            aria-label="Configuración"
+        {/* Lado izquierdo - Logo de Claridad */}
+        <div className="flex items-center space-x-3">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center"
           >
-            <FiUser className="w-5 h-5" />
-          </motion.button>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="ml-2 font-manrope text-xl font-semibold text-[#B5CCF4]">
+              Claridad
+            </span>
+          </motion.div>
+
+        </div>
+
+        {/* Lado derecho - Vacío por ahora */}
+        <div className="flex items-center space-x-2">
+          {/* Espacio reservado para futuros botones */}
         </div>
       </div>
 
       {/* Indicador de progreso/estado */}
       <motion.div
-        className="absolute bottom-0 left-0 h-0.5 "
+        className="absolute bottom-0 left-0 h-0.5"
         initial={{ width: '0%' }}
         animate={{ width: '100%' }}
         transition={{ duration: 0.5, delay: 0.2 }}

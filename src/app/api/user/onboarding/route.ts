@@ -1,4 +1,10 @@
-import { assignUserToNeighborhood, calculateNeighborhood } from '@/lib/chatService';
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth.config";
+import { firestore } from "@/lib/firebase";
+import {
+    addParticipantToChatInFirestore,
+    chatExistsInFirestore,
+    createChatInFirestore
+} from '@/lib/firestoreChatService';
 import clientPromise from '@/lib/mongodb';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticación
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
         { success: false, error: 'No autorizado' },
@@ -14,86 +20,105 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener datos del cuerpo de la petición
+    // Obtener datos del cuerpo de la petición: ahora esperamos 'neighborhood'
     const body = await request.json();
-    const { blockNumber: blockNumberRaw, lotNumber: lotNumberRaw } = body;
+    const { name, surname, blockNumber, lotNumber, neighborhood: selectedNeighborhood } = body;
 
-    // Convertir a números y validar
-    const blockNumber = parseInt(blockNumberRaw, 10);
-    const lotNumber = parseInt(lotNumberRaw, 10);
-
-    if (isNaN(blockNumber) || isNaN(lotNumber) || blockNumber <= 0 || lotNumber <= 0) {
+    // Validar que se haya proporcionado un barrio
+    if (!selectedNeighborhood || typeof selectedNeighborhood !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'Número de manzana y lote deben ser números válidos mayores a 0' },
+        { success: false, error: 'Debe proporcionar un barrio válido' },
         { status: 400 }
       );
     }
 
+    // Conectar a MongoDB
     const client = await clientPromise;
     const db = client.db();
 
-    // Buscar usuario por email
-    const user = await db.collection('users').findOne({ email: session.user.email });
+    // Buscar usuario por email en MongoDB (para obtener el _id original)
+    const mongoUser = await db.collection('users').findOne({ email: session.user.email });
 
-    if (!user) {
+    if (!mongoUser) {
       return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado' },
+        { success: false, error: 'Usuario no encontrado en MongoDB' },
         { status: 404 }
       );
     }
+    const userIdString = mongoUser._id.toString();
 
-    // Calcular neighborhood
-    const neighborhood = calculateNeighborhood(blockNumber, lotNumber);
+    // Generar chatId en base al barrio seleccionado
+    const normalizedNeighborhood = selectedNeighborhood.toLowerCase().replace(/ /g, '_');
+    const chatId = `chat_${normalizedNeighborhood}`;
 
-    // Actualizar información del usuario
+    // Actualizar información del usuario en MongoDB
     await db.collection('users').updateOne(
-      { email: session.user.email },
+      { _id: mongoUser._id },
       {
         $set: {
-          blockNumber,
-          lotNumber,
-          neighborhood,
+          name,
+          surname,
+          blockNumber: blockNumber || null,
+          lotNumber: lotNumber || null,
+          neighborhood: selectedNeighborhood,
           onboarded: true,
           isOnboarded: true,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          chatId: chatId,
         }
       }
     );
 
-    // Asignar usuario al chat del neighborhood usando el servicio original
-    try {
-      const chatAssignment = await assignUserToNeighborhood(
-        user._id.toString(),
-        blockNumber,
-        lotNumber
-      );
+    // Actualizar información del usuario en Firestore
+    const userDocRef = firestore.collection('users').doc(userIdString);
+    await userDocRef.update({
+      name,
+      surname,
+      blockNumber: blockNumber || null,
+      lotNumber: lotNumber || null,
+      neighborhood: selectedNeighborhood,
+      onboarded: true,
+      isOnboarded: true,
+      updatedAt: new Date(),
+      chatId: chatId,
+    });
 
-      console.log(`✅ Usuario asignado al chat: ${chatAssignment.neighborhood}`);
+    // Asignar usuario al chat del neighborhood en Firestore
+    try {
+      const chatExists = await chatExistsInFirestore(chatId);
+
+      if (!chatExists) {
+        // Crear nuevo chat en Firestore si no existe
+        await createChatInFirestore(chatId, selectedNeighborhood, [userIdString]);
+        console.log(`✅ Nuevo chat ${chatId} creado en Firestore para ${selectedNeighborhood}`);
+      } else {
+        // Agregar usuario al chat existente en Firestore
+        await addParticipantToChatInFirestore(chatId, userIdString);
+        console.log(`✅ Usuario ${userIdString} agregado al chat existente ${chatId}`);
+      }
+
+      console.log(`✅ Usuario asignado al chat: ${selectedNeighborhood} con Chat ID: ${chatId}`);
 
       return NextResponse.json({
         success: true,
         data: {
-          blockNumber,
-          lotNumber,
-          neighborhood: chatAssignment.neighborhood,
-          chatId: chatAssignment.chatId,
-          message: 'Onboarding completado exitosamente'
+          neighborhood: selectedNeighborhood,
+          chatId,
+          message: 'Onboarding completado exitosamente y chat asignado'
         }
       });
 
     } catch (chatError) {
-      console.error('Error al asignar usuario al chat:', chatError);
+      console.error('Error al asignar usuario al chat de Firestore:', chatError);
 
-      // Aunque falle la asignación al chat, el onboarding se considera exitoso
       return NextResponse.json({
-        success: true,
+        success: false,
+        error: 'Error al asignar usuario al chat de barrio',
         data: {
-          blockNumber,
-          lotNumber,
-          neighborhood,
-          message: 'Onboarding completado (chat no disponible temporalmente)'
+          neighborhood: selectedNeighborhood,
+          message: 'Onboarding completado pero hubo un error al asignar al chat de barrio.'
         }
-      });
+      }, { status: 500 });
     }
 
   } catch (error) {

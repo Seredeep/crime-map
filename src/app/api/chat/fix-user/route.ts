@@ -1,6 +1,6 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { assignUserToNeighborhood } from '@/lib/chatService';
-import clientPromise from '@/lib/mongodb';
+import { firestore } from '@/lib/firebase';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 
@@ -16,60 +16,59 @@ export async function POST(request: Request) {
       );
     }
 
-    // Conectar a la base de datos
-    const client = await clientPromise;
-    const db = client.db();
+    // Buscar usuario por email en Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
 
-    // Buscar usuario por email
-    const user = await db.collection('users').findOne({ email: session.user.email });
-
-    if (!user) {
+    if (userSnapshot.empty) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
+        { success: false, message: 'Usuario no encontrado en Firestore' },
         { status: 404 }
       );
     }
 
-    // Verificar que el usuario tenga onboarding completo
-    if (!user.onboarded || !user.blockNumber || !user.lotNumber) {
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id;
+
+    // Verificar que el usuario tenga onboarding completo y neighborhood
+    if (!userData.onboarded || !userData.neighborhood) {
       return NextResponse.json(
-        { success: false, message: 'El usuario debe completar el onboarding primero' },
+        { success: false, message: 'El usuario debe completar el onboarding primero y tener un barrio asignado' },
         { status: 400 }
       );
     }
 
     // Verificar si ya tiene chat asignado
-    if (user.neighborhood && user.chatId) {
+    if (userData.neighborhood && userData.chatId) {
       return NextResponse.json({
         success: true,
         message: 'El usuario ya tiene un chat asignado',
         data: {
-          currentNeighborhood: user.neighborhood,
-          currentChatId: user.chatId,
-          blockNumber: user.blockNumber,
-          lotNumber: user.lotNumber
+          currentNeighborhood: userData.neighborhood,
+          currentChatId: userData.chatId,
+          // blockNumber: userData.blockNumber, // Estos campos ya no se usan para la asignación de chat
+          // lotNumber: userData.lotNumber
         }
       });
     }
 
     // Asignar neighborhood y agregar al chat correspondiente
     const { neighborhood, chatId } = await assignUserToNeighborhood(
-      user._id.toString(),
-      parseInt(user.blockNumber),
-      parseInt(user.lotNumber)
+      userId,
+      userData.neighborhood
     );
 
     return NextResponse.json({
       success: true,
       message: 'Usuario asignado exitosamente al chat de su barrio',
       data: {
-        userEmail: user.email,
-        userName: `${user.name} ${user.surname}`,
-        userId: user._id.toString(),
+        userEmail: userData.email,
+        userName: `${userData.name}`,
+        userId: userId,
         neighborhood,
         chatId,
-        blockNumber: user.blockNumber,
-        lotNumber: user.lotNumber
+        blockNumber: userData.blockNumber || null,
+        lotNumber: userData.lotNumber || null
       }
     });
 
@@ -94,36 +93,35 @@ export async function GET() {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db();
+    // Buscar usuario por email en Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
 
-    const user = await db.collection('users').findOne({ email: session.user.email });
-
-    if (!user) {
+    if (userSnapshot.empty) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
+        { success: false, message: 'Usuario no encontrado en Firestore' },
         { status: 404 }
       );
     }
 
+    const userData = userSnapshot.docs[0].data();
+
     const status = {
-      hasOnboarding: user.onboarded || false,
-      hasBlockNumber: !!user.blockNumber,
-      hasLotNumber: !!user.lotNumber,
-      hasNeighborhood: !!user.neighborhood,
-      hasChatId: !!user.chatId,
+      hasOnboarding: userData.onboarded || false,
+      // hasBlockNumber: !!userData.blockNumber, // Estos campos ya no se usan para la asignación de chat
+      // hasLotNumber: !!userData.lotNumber,
+      hasNeighborhood: !!userData.neighborhood,
+      hasChatId: !!userData.chatId,
       currentData: {
-        blockNumber: user.blockNumber,
-        lotNumber: user.lotNumber,
-        neighborhood: user.neighborhood,
-        chatId: user.chatId
+        // blockNumber: userData.blockNumber,
+        // lotNumber: userData.lotNumber,
+        neighborhood: userData.neighborhood,
+        chatId: userData.chatId
       }
     };
 
     const needsAssignment = status.hasOnboarding &&
-                           status.hasBlockNumber &&
-                           status.hasLotNumber &&
-                           (!status.hasNeighborhood || !status.hasChatId);
+                           status.hasNeighborhood &&
+                           (!status.hasChatId);
 
     return NextResponse.json({
       success: true,

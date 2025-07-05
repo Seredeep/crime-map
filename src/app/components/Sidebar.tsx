@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useState, useEffect, useRef } from 'react';
-import { FiHome, FiUsers, FiAlertCircle, FiList, FiChevronLeft, FiBarChart, FiSettings, FiUser, FiLogOut, FiMap, FiBarChart2, FiAlertTriangle } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FiAlertTriangle, FiBarChart2, FiChevronLeft, FiList, FiLogOut, FiMap, FiMessageCircle, FiSettings, FiUser, FiUsers } from 'react-icons/fi';
 
 interface SidebarProps {
   activeTab: string;
@@ -23,6 +23,13 @@ interface Incident {
   status: string;
   date: string;
   location: string;
+}
+
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  action?: () => void;
 }
 
 // Datos de ejemplo para incidentes recientes
@@ -53,23 +60,6 @@ const sampleIncidents: Incident[] = [
   },
 ];
 
-// Hook para detectar si es mobile
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
-    const listener = () => setMatches(media.matches);
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
-  }, [matches, query]);
-
-  return matches;
-}
-
 const Sidebar = ({
   activeTab,
   onTabChangeAction,
@@ -82,22 +72,49 @@ const Sidebar = ({
   // Start with sidebar collapsed by default
   const [collapsed, setCollapsed] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { data: session } = useSession();
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  
-  const menuItems = [
+
+  // Detectar si es mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const menuItems: MenuItem[] = [
     { id: 'incidents', label: 'Mapa', icon: <FiMap className="w-6 h-6 flex-shrink-0" /> },
     { id: 'stats', label: 'Estadísticas', icon: <FiBarChart2 className="w-6 h-6 flex-shrink-0" /> },
     { id: 'communities', label: 'Comunidades', icon: <FiUsers className="w-6 h-6 flex-shrink-0" /> },
     { id: 'report', label: 'Reportar', icon: <FiAlertTriangle className="w-6 h-6 flex-shrink-0" /> },
     { id: 'queue', label: 'Cola', icon: <FiList className="w-6 h-6 flex-shrink-0" /> },
   ];
-  
+
+  // Agregar botón de chat del barrio si el usuario está autenticado
+  const chatMenuItem: MenuItem = {
+    id: 'neighborhood-chat',
+    label: 'Chat del Barrio',
+    icon: <FiMessageCircle className="w-6 h-6 flex-shrink-0" />,
+    action: () => {
+      window.dispatchEvent(new CustomEvent('openNeighborhoodChat'));
+    }
+  };
+
   // Filtrar los elementos del menú según los tabs disponibles
-  const filteredMenuItems = menuItems.filter(item => 
+  const filteredMenuItems = menuItems.filter(item =>
     availableTabs.includes(item.id)
   );
+
+  // Agregar chat del barrio si el usuario está autenticado
+  if (status === 'authenticated') {
+    filteredMenuItems.splice(2, 0, chatMenuItem); // Insertar después de stats
+  }
 
   // Manejar el cambio de tab
   const handleTabChange = useCallback((tabId: string) => {
@@ -165,12 +182,12 @@ const Sidebar = ({
 
   const contentVariants = {
     expanded: { opacity: 1, display: 'block' },
-    collapsed: { 
-      opacity: 0, 
+    collapsed: {
+      opacity: 0,
       display: 'none',
-      transition: { 
-        display: { delay: 0.2 } 
-      } 
+      transition: {
+        display: { delay: 0.2 }
+      }
     }
   };
 
@@ -203,7 +220,7 @@ const Sidebar = ({
               Crime Map
             </span>
           </motion.div>
-          
+
           <button
             onClick={toggleSidebar}
             className="p-2 rounded-full hover:bg-blue-900/40 hover:text-blue-300 transition-all duration-200"
@@ -226,9 +243,15 @@ const Sidebar = ({
               return (
                 <li key={item.id}>
                   <button
-                    onClick={() => handleTabClick(item.id)}
-                    className={`flex items-center w-full p-2 rounded-lg transition-all duration-200 ${isActive 
-                      ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2' 
+                    onClick={() => {
+                      if (item.action) {
+                        item.action();
+                      } else {
+                        handleTabClick(item.id);
+                      }
+                    }}
+                    className={`flex items-center w-full p-2 rounded-lg transition-all duration-200 ${isActive
+                      ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2'
                       : 'hover:bg-gray-800 hover:text-blue-300 hover:border-l-2 hover:border-blue-500 hover:pl-2'}`}
                   >
                     <div className="flex-shrink-0 text-blue-400">{item.icon}</div>
@@ -282,12 +305,6 @@ const Sidebar = ({
                   <ul className="divide-y divide-gray-700">
                     <li>
                       <Link href="/profile" className="flex items-center px-4 py-3 hover:bg-blue-900/30 transition-all duration-200 text-gray-200 hover:text-blue-300">
-                        <FiUser className="w-4 h-4 mr-2 text-blue-400" />
-                        <span>Perfil</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/settings" className="flex items-center px-4 py-3 hover:bg-blue-900/30 transition-all duration-200 text-gray-200 hover:text-blue-300">
                         <FiSettings className="w-4 h-4 mr-2 text-blue-400" />
                         <span>Configuración</span>
                       </Link>

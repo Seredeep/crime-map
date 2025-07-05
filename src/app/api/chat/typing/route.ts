@@ -1,11 +1,5 @@
+import { firestore } from '@/lib/firebase';
 import { NextRequest, NextResponse } from 'next/server';
-
-// Almacén temporal en memoria para typing (en producción usar Redis)
-const typingUsers = new Map<string, Array<{
-  userId: string;
-  userName: string;
-  timestamp: number;
-}>>();
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,32 +12,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const currentUsers = typingUsers.get(chatId) || [];
+    const userTypingRef = firestore.collection('chats').doc(chatId).collection('typingUsers').doc(userId);
 
     if (isTyping) {
-      // Agregar o actualizar usuario que está escribiendo
-      const existingIndex = currentUsers.findIndex(u => u.userId === userId);
-      const userTyping = {
+      // Agregar o actualizar usuario que está escribiendo en Firestore
+      await userTypingRef.set({
         userId,
         userName: userName || 'Usuario',
-        timestamp: Date.now()
-      };
-
-      if (existingIndex >= 0) {
-        currentUsers[existingIndex] = userTyping;
-      } else {
-        currentUsers.push(userTyping);
-      }
+        timestamp: new Date(),
+      }, { merge: true });
     } else {
-      // Remover usuario que dejó de escribir
-      const filteredUsers = currentUsers.filter(u => u.userId !== userId);
-      typingUsers.set(chatId, filteredUsers);
+      // Remover usuario que dejó de escribir de Firestore
+      await userTypingRef.delete();
     }
-
-    // Limpiar usuarios con timestamp muy antiguo (más de 10 segundos)
-    const now = Date.now();
-    const activeUsers = currentUsers.filter(u => now - u.timestamp < 10000);
-    typingUsers.set(chatId, activeUsers);
 
     return NextResponse.json({
       success: true,
@@ -71,12 +52,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const currentUsers = typingUsers.get(chatId) || [];
-
-    // Limpiar usuarios con timestamp muy antiguo
+    const typingUsersSnapshot = await firestore.collection('chats').doc(chatId).collection('typingUsers').get();
+    const activeUsers: Array<{
+      userId: string;
+      userName: string;
+      timestamp: number;
+    }> = [];
     const now = Date.now();
-    const activeUsers = currentUsers.filter(u => now - u.timestamp < 10000);
-    typingUsers.set(chatId, activeUsers);
+
+    typingUsersSnapshot.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data();
+      // Filtrar usuarios con timestamp muy antiguo (más de 10 segundos)
+      if (data.timestamp && (now - data.timestamp.toDate().getTime() < 10000)) {
+        activeUsers.push({
+          userId: data.userId,
+          userName: data.userName,
+          timestamp: data.timestamp.toDate().getTime()
+        });
+      }
+    });
 
     return NextResponse.json({
       success: true,

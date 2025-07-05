@@ -1,6 +1,6 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { assignUserToNeighborhood } from '@/lib/chatService';
-import clientPromise from '@/lib/mongodb';
+import { firestore } from '@/lib/firebase';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { userEmail, forceReassign = false } = await request.json();
+    const { userEmail, forceReassign = false, newNeighborhood } = await request.json();
 
     if (!userEmail) {
       return NextResponse.json(
@@ -25,45 +25,46 @@ export async function POST(request: Request) {
       );
     }
 
-    // Conectar a la base de datos
-    const client = await clientPromise;
-    const db = client.db();
+    // Buscar usuario por email en Firestore
+    const userSnapshot = await firestore.collection('users').where('email', '==', userEmail).limit(1).get();
 
-    // Buscar usuario por email
-    const user = await db.collection('users').findOne({ email: userEmail });
-
-    if (!user) {
+    if (userSnapshot.empty) {
       return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
+        { success: false, message: 'Usuario no encontrado en Firestore' },
         { status: 404 }
       );
     }
 
-    // Verificar si el usuario ya tiene un chat asignado
-    if (user.chatId && !forceReassign) {
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id;
+
+    // Verificar si el usuario ya tiene un chat asignado y no se fuerza la reasignación
+    if (userData.chatId && !forceReassign) {
       return NextResponse.json({
         success: false,
         message: 'El usuario ya tiene un chat asignado. Usa forceReassign=true para reasignar',
         data: {
-          currentChatId: user.chatId,
-          currentNeighborhood: user.neighborhood
+          currentChatId: userData.chatId,
+          currentNeighborhood: userData.neighborhood
         }
       });
     }
 
-    // Verificar que el usuario tenga blockNumber y lotNumber
-    if (!user.blockNumber || !user.lotNumber) {
+    // Determinar el barrio a usar para la reasignación
+    const targetNeighborhood = newNeighborhood || userData.neighborhood;
+
+    if (!targetNeighborhood) {
       return NextResponse.json(
-        { success: false, message: 'El usuario debe completar el onboarding primero (blockNumber y lotNumber requeridos)' },
+        { success: false, message: 'El usuario debe tener un barrio asignado o proporcionar un newNeighborhood para reasignar' },
         { status: 400 }
       );
     }
 
-    // Asignar neighborhood y agregar al chat correspondiente
+    // Asignar neighborhood y agregar al chat correspondiente en Firestore
     const { neighborhood, chatId } = await assignUserToNeighborhood(
-      user._id.toString(),
-      user.blockNumber,
-      user.lotNumber
+      userId,
+      targetNeighborhood
     );
 
     return NextResponse.json({
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
       message: forceReassign ? 'Usuario reasignado exitosamente' : 'Usuario asignado exitosamente',
       data: {
         userEmail,
-        userId: user._id.toString(),
+        userId,
         neighborhood,
         chatId
       }
@@ -97,40 +98,32 @@ export async function GET() {
       );
     }
 
-    // Conectar a la base de datos
-    const client = await clientPromise;
-    const db = client.db();
+    // Obtener usuarios sin chat asignado pero con onboarding completo desde Firestore
+    const usersSnapshot = await firestore.collection('users')
+      .where('onboarded', '==', true)
+      .where('neighborhood', '!=', null) // Asegurarse de que tienen un barrio asignado
+      .where('chatId', '==', null) // Usuarios sin chatId
+      .get();
 
-    // Obtener usuarios sin chat asignado pero con onboarding completo
-    const usersWithoutChat = await db.collection('users')
-      .find({
-        onboarded: true,
-        blockNumber: { $exists: true },
-        lotNumber: { $exists: true },
-        $or: [
-          { chatId: { $exists: false } },
-          { chatId: null },
-          { neighborhood: { $exists: false } },
-          { neighborhood: null }
-        ]
-      })
-      .toArray();
+    const usersWithoutChat: any[] = [];
+    usersSnapshot.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data();
+      usersWithoutChat.push({
+        id: doc.id,
+        email: data.email,
+        name: data.name,
+        currentNeighborhood: data.neighborhood,
+        currentChatId: data.chatId,
+        // Otros campos que sean relevantes para mostrar
+      });
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Usuarios sin chat obtenidos exitosamente',
       data: {
         count: usersWithoutChat.length,
-        users: usersWithoutChat.map(user => ({
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          surname: user.surname,
-          blockNumber: user.blockNumber,
-          lotNumber: user.lotNumber,
-          currentNeighborhood: user.neighborhood,
-          currentChatId: user.chatId
-        }))
+        users: usersWithoutChat
       }
     });
   } catch (error) {

@@ -73,6 +73,7 @@ export interface User {
   neighborhood?: string;
   chatId?: string;
   onboarded: boolean;
+  profileImage?: string;
   createdAt: Date;
   updatedAt?: Date;
 }

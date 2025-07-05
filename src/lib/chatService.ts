@@ -1,5 +1,5 @@
-import { ObjectId } from 'mongodb';
-import clientPromise from './mongodb';
+import { firestore } from './firebase';
+import { addParticipantToChatInFirestore, chatExistsInFirestore, createChatInFirestore, getChatParticipantsFromFirestore, getUserChatFromFirestore, updateUserChatIdInFirestore } from './firestoreChatService';
 import { ChatWithParticipants, User } from './types';
 
 /**
@@ -14,147 +14,88 @@ export function calculateNeighborhood(blockNumber: number, lotNumber: number): s
 /**
  * Asigna un neighborhood a un usuario y lo agrega al chat correspondiente
  */
-export async function assignUserToNeighborhood(userId: string, blockNumber: number, lotNumber: number): Promise<{ neighborhood: string; chatId: string }> {
-  const client = await clientPromise;
-  const db = client.db();
+export async function assignUserToNeighborhood(userId: string, neighborhoodName: string): Promise<{ neighborhood: string; chatId: string }> {
+  try {
+    // El chatId será el nombre del barrio normalizado
+    const chatId = `chat_${neighborhoodName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '')}`;
 
-  // Calcular neighborhood
-  const neighborhood = calculateNeighborhood(blockNumber, lotNumber);
+    // Verificar si el chat existe en Firestore
+    const chatExists = await chatExistsInFirestore(chatId);
+    if (!chatExists) {
+      // Si no existe, crearlo
+      await createChatInFirestore(chatId, neighborhoodName, [userId]);
+    } else {
+      // Si existe, agregar al participante si no está ya
+      await addParticipantToChatInFirestore(chatId, userId);
+    }
 
-  // Buscar si ya existe un chat para este neighborhood
-  let chat = await db.collection('chats').findOne({ neighborhood });
+    // Actualizar usuario con neighborhood y chatId en Firestore
+    await updateUserChatIdInFirestore(userId, chatId);
 
-  if (!chat) {
-    // Crear nuevo chat para el neighborhood
-    const newChat = {
-      neighborhood,
-      participants: [userId],
-      createdAt: new Date(),
+    return {
+      neighborhood: neighborhoodName,
+      chatId,
     };
-
-    const result = await db.collection('chats').insertOne(newChat);
-    chat = { _id: result.insertedId, ...newChat };
-  } else {
-    // Verificar si el usuario ya está en el chat
-    if (!chat.participants.includes(userId)) {
-      // Agregar usuario al chat existente
-      await db.collection('chats').updateOne(
-        { _id: chat._id },
-        {
-          $push: { participants: userId } as any,
-          $set: { updatedAt: new Date() }
-        }
-      );
-    }
+  } catch (error) {
+    console.error('Error asignando usuario a barrio en Firestore:', error);
+    throw error;
   }
-
-  // Actualizar usuario con neighborhood y chatId
-  await db.collection('users').updateOne(
-    { _id: new ObjectId(userId) },
-    {
-      $set: {
-        neighborhood,
-        chatId: chat._id.toString(),
-        updatedAt: new Date()
-      }
-    }
-  );
-
-  return {
-    neighborhood,
-    chatId: chat._id.toString()
-  };
 }
 
 /**
- * Obtiene todos los participantes de un chat por chatId
+ * Obtiene todos los participantes de un chat por chatId desde Firestore
  */
 export async function getChatParticipants(chatId: string): Promise<User[]> {
-  const client = await clientPromise;
-  const db = client.db();
-
-  // Buscar el chat
-  const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
-
-  if (!chat) {
-    throw new Error('Chat no encontrado');
-  }
-
-  // Obtener información de todos los participantes
-  const participants = await db.collection('users')
-    .find({
-      _id: { $in: chat.participants.map((id: string) => new ObjectId(id)) }
-    })
-    .toArray();
-
-  return participants.map(user => ({
-    ...user,
-    _id: user._id.toString()
-  })) as User[];
+  return getChatParticipantsFromFirestore([chatId]);
 }
 
 /**
- * Obtiene el chat de un usuario por su email
+ * Obtiene el chat de un usuario por su email desde Firestore
  */
 export async function getUserChat(userEmail: string): Promise<ChatWithParticipants | null> {
-  const client = await clientPromise;
-  const db = client.db();
-
-  // Buscar usuario por email
-  const user = await db.collection('users').findOne({ email: userEmail });
-
-  if (!user || !user.chatId) {
-    return null;
-  }
-
-  // Buscar el chat
-  const chat = await db.collection('chats').findOne({ _id: new ObjectId(user.chatId) });
-
-  if (!chat) {
-    return null;
-  }
-
-  // Obtener participantes
-  const participants = await getChatParticipants(user.chatId);
-
-  return {
-    _id: chat._id.toString(),
-    neighborhood: chat.neighborhood,
-    participants,
-    createdAt: chat.createdAt,
-    updatedAt: chat.updatedAt
-  };
+  return getUserChatFromFirestore(userEmail);
 }
 
 /**
- * Obtiene el chat de un usuario por su ID
+ * Obtiene el chat de un usuario por su ID desde Firestore
  */
 export async function getUserChatById(userId: string): Promise<ChatWithParticipants | null> {
-  const client = await clientPromise;
-  const db = client.db();
+  try {
+    // Buscar usuario en Firestore por ID
+    const userDoc = await firestore.collection('users').doc(userId).get();
 
-  // Buscar usuario por ID
-  const user = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+    if (!userDoc.exists) {
+      return null;
+    }
 
-  if (!user || !user.chatId) {
+    const userData = userDoc.data();
+
+    if (!userData || !userData.chatId) {
+      return null;
+    }
+
+    // Buscar chat en Firestore
+    const chatDoc = await firestore.collection('chats').doc(userData.chatId).get();
+
+    if (!chatDoc.exists) {
+      console.log(`Chat ${userData.chatId} no encontrado en Firestore`);
+      return null;
+    }
+
+    const chatData = chatDoc.data();
+
+    // Obtener participantes
+    const participants = await getChatParticipantsFromFirestore(chatData.participants);
+
+    return {
+      _id: userData.chatId,
+      neighborhood: chatData.neighborhood,
+      participants,
+      createdAt: chatData.createdAt?.toDate(),
+      updatedAt: chatData.updatedAt?.toDate(),
+    } as ChatWithParticipants;
+  } catch (error) {
+    console.error('Error obteniendo chat por ID de usuario desde Firestore:', error);
     return null;
   }
-
-  // Buscar el chat
-  const chat = await db.collection('chats').findOne({ _id: new ObjectId(user.chatId) });
-
-  if (!chat) {
-    return null;
-  }
-
-  // Obtener participantes
-  const participants = await getChatParticipants(user.chatId);
-
-  return {
-    _id: chat._id.toString(),
-    neighborhood: chat.neighborhood,
-    participants,
-    createdAt: chat.createdAt,
-    updatedAt: chat.updatedAt
-  };
 }

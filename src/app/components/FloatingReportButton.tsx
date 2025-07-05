@@ -7,9 +7,10 @@ import { FiPlus } from 'react-icons/fi';
 interface FloatingReportButtonProps {
   onClick: () => void;
   isVisible?: boolean;
+  className?: string;
 }
 
-const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButtonProps) => {
+const FloatingReportButton = ({ onClick, isVisible = true, className }: FloatingReportButtonProps) => {
   const [showTooltip, setShowTooltip] = useState(true);
 
   // Ocultar tooltip después de 3 segundos
@@ -34,7 +35,7 @@ const FloatingReportButton = ({ onClick, isVisible = true }: FloatingReportButto
         damping: 20,
         delay: 0.2
       }}
-      className="fixed bottom-52 right-4 z-[120] md:hidden"
+      className={`fixed bottom-52 right-4 z-[120] md:hidden ${className}`}
     >
       <motion.div
         whileTap={{ scale: 0.95 }}

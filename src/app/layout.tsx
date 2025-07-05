@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ImageModalProvider } from "../lib/ImageModalContext";
+import AppWrapper from "./components/AppWrapper";
 import GlobalPanicButton from "./components/GlobalPanicButton";
 import ImageModal from "./components/ImageModal";
 import Navbar from "./components/Navbar";
@@ -142,17 +143,20 @@ export default function RootLayout({
         <SessionProvider>
           <SessionRefresh />
 
-          {/* Navigation */}
-          <Navbar />
-
           {/* #region Image Modal Context */}
           <ImageModalProvider>
-            {/* Main Content */}
-            {children}
-
-            {/* Global Components */}
-            <ImageModal />
-            <GlobalPanicButton />
+            {/* App Wrapper with Loading Screen */}
+            <AppWrapper
+              navbar={<Navbar />}
+              globalComponents={
+                <>
+                  <ImageModal />
+                  <GlobalPanicButton />
+                </>
+              }
+            >
+              {children}
+            </AppWrapper>
           </ImageModalProvider>
           {/* #endregion */}
         </SessionProvider>

@@ -1,7 +1,4 @@
-import { AdaptedMessage } from './chatServiceAdapter';
-
-// Alias para compatibilidad
-type ChatMessage = AdaptedMessage;
+import { Message } from './types';
 
 /**
  * Sistema de caché simple y eficiente para el chat
@@ -14,7 +11,7 @@ interface CacheEntry<T> {
 }
 
 interface MessageCache {
-  messages: any[];
+  messages: Message[];
   lastMessageTimestamp: number;
 }
 

@@ -7,10 +7,9 @@ import {
     FiActivity,
     FiCheckCircle,
     FiCompass,
-    FiUser,
+    FiSettings,
     FiUsers
 } from 'react-icons/fi';
-
 interface MobileBottomTabsProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
@@ -54,9 +53,9 @@ const MobileBottomTabs = ({
     },
     {
       id: 'profile',
-      label: session?.user?.role === 'admin' || session?.user?.role === 'editor' ? 'Admin' : 'Perfil',
+      label: session?.user?.role === 'admin' || session?.user?.role === 'editor' ? 'Admin' : 'Configuración',
       icon: session?.user?.role === 'admin' || session?.user?.role === 'editor' ?
-        <FiCheckCircle className="w-5 h-5" /> : <FiUser className="w-5 h-5" />,
+        <FiCheckCircle className="w-5 h-5" /> : <FiSettings className="w-5 h-5" />,
       requiresAuth: true
     }
   ];
