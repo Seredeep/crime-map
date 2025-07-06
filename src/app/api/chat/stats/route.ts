@@ -51,6 +51,14 @@ export async function GET(request: NextRequest) {
     const chatData = chatDoc.data();
     const chatId = chatDoc.id;
 
+    if (!chatData) {
+      // This should ideally not be reached if chatDoc.exists is true, but it acts as a type guard.
+      return NextResponse.json(
+        { success: false, message: 'Datos del chat no encontrados a pesar de que el chat existe.' },
+        { status: 404 }
+      );
+    }
+
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);

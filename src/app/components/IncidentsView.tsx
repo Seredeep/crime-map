@@ -126,13 +126,14 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
       document.addEventListener('mouseup', handleMouseUp);
     };
 
-    if (resizeRef.current) {
-      resizeRef.current.addEventListener('mousedown', handleMouseDown);
+    const resizerElement = resizeRef.current;
+    if (resizerElement) {
+      resizerElement.addEventListener('mousedown', handleMouseDown);
     }
 
     return () => {
-      if (resizeRef.current) {
-        resizeRef.current?.removeEventListener('mousedown', handleMouseDown);
+      if (resizerElement) {
+        resizerElement.removeEventListener('mousedown', handleMouseDown);
       }
     };
   }, [panelWidth]);

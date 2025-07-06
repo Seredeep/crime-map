@@ -1,9 +1,8 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { ROLES, Role, hasRequiredRole } from '@/lib/config/roles';
 import clientPromise from '@/lib/mongodb';
-import { Incident } from '@/lib/types';
 import { createClient } from '@supabase/supabase-js';
-import { Filter, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -53,7 +52,7 @@ async function ensureBucketExists() {
 // Call this function when the server starts
 ensureBucketExists();
 
-interface MongoQuery extends Filter<Incident> {
+interface MongoQuery {
   location?: {
     $geoWithin?: {
       $geometry: {
@@ -81,24 +80,16 @@ interface MongoQuery extends Filter<Incident> {
   tags?: {
     $in: string[];
   };
+  [key: string]: any;
 }
 
 // Helper function to ensure indexes exist
-async function ensureIndexes() {
+async function ensureIndexes(collection: any) {
   try {
-    const client = await clientPromise;
-    const db = client.db();
-
-    const indexes = await db.collection('incident_draft').indexes();
-    const hasGeoIndex = indexes.some(index =>
-      index.key && index.key.location === '2dsphere'
-    );
+    const hasGeoIndex = await collection.indexExists('location_2dsphere');
 
     if (!hasGeoIndex) {
-      await db.collection('incident_draft').createIndex(
-        { location: '2dsphere' },
-        { background: true }
-      );
+      await collection.createIndex({ location: '2dsphere' }, { background: true });
     }
   } catch (error) {
     console.error('Error ensuring indexes:', error);
@@ -107,12 +98,12 @@ async function ensureIndexes() {
 
 export async function GET(request: NextRequest) {
   try {
-    await ensureIndexes();
-
-    const { searchParams } = new URL(request.url);
-
     const client = await clientPromise;
     const db = client.db();
+    const incidentsCollection = db.collection('incident_draft');
+    await ensureIndexes(incidentsCollection);
+
+    const { searchParams } = new URL(request.url);
 
     const neighborhoodId = searchParams.get('neighborhoodId');
     const date = searchParams.get('date');
@@ -213,7 +204,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Execute the query
-    const incidents = await db.collection<Incident>('incident_draft').find(query).toArray();
+    const incidents = await incidentsCollection.find(query).toArray();
 
     return NextResponse.json(incidents);
   } catch (error) {
@@ -245,6 +236,8 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const client = await clientPromise;
     const db = client.db();
+    const incidentsCollection = db.collection('incident_draft');
+    await ensureIndexes(incidentsCollection);
 
     // Parse location
     let location;
@@ -342,7 +335,7 @@ export async function POST(request: Request) {
     };
 
     // Insert the incident into MongoDB
-    const result = await db.collection('incident_draft').insertOne(incidentData);
+    const result = await incidentsCollection.insertOne(incidentData);
 
     // Log the action
     await db.collection('logs').insertOne({
@@ -390,109 +383,63 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const { incidentId, ...updates } = await request.json();
+    const formData = await request.formData();
+    const incidentId = formData.get('incidentId') as string;
+    const updates = JSON.parse(formData.get('updates') as string);
 
-    if (!incidentId) {
-      return NextResponse.json(
-        { success: false, message: 'Falta el ID del incidente' },
-        { status: 400 }
-      );
+    if (!incidentId || !updates) {
+      return NextResponse.json({ success: false, message: 'ID de incidente y actualizaciones son requeridos' }, { status: 400 });
     }
 
     const client = await clientPromise;
     const db = client.db();
 
-    // Construir el objeto de actualización
-    const updateData: Partial<{
-      description: string;
-      address: string;
-      date: string;
-      time: string;
-      status: 'pending' | 'verified' | 'resolved';
-      location: {
-        type: string;
-        coordinates: [number, number];
-      };
-    }> = {};
-
-    // Campos que se pueden actualizar
-    const allowedFields = ['description', 'address', 'date', 'time', 'status', 'location'];
-
-    // Filtrar solo los campos permitidos y validar el formato de la hora
-    Object.keys(updates).forEach(key => {
-      if (allowedFields.includes(key)) {
-        if (key === 'time') {
-          // Validar formato de hora (HH:mm)
-          const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-          if (!timeRegex.test(updates[key])) {
-            return NextResponse.json(
-              { success: false, message: 'Formato de hora inválido. Use HH:mm (ejemplo: 14:30)' },
-              { status: 400 }
-            );
-          }
-        }
-        updateData[key as keyof typeof updateData] = updates[key as keyof typeof updates];
-      }
-    });
-
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'No hay campos válidos para actualizar' },
-        { status: 400 }
-      );
-    }
-
-    // Update the incident
     const result = await db.collection('incident_draft').updateOne(
-      { _id: ObjectId.createFromHexString(incidentId) },
-      { $set: updateData }
+      { _id: new ObjectId(incidentId) },
+      { $set: updates }
     );
 
     if (result.matchedCount === 0) {
-      return NextResponse.json(
-        { success: false, message: 'Incidente no encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: 'Incidente no encontrado' }, { status: 404 });
     }
 
-    // Get the updated incident
-    const updatedIncident = await db.collection('incident_draft').findOne(
-      { _id: ObjectId.createFromHexString(incidentId) }
-    );
+    const updatedIncident = await db.collection('incident_draft').findOne({ _id: new ObjectId(incidentId) });
 
-    // Determinar la acción específica basada en los campos actualizados
-    let action = 'update_incident_location';
-    if (Object.keys(updateData).length === 1) {
-      if ('description' in updateData) action = 'update_incident_description';
-      else if ('address' in updateData) action = 'update_incident_address';
-      else if ('status' in updateData) action = 'update_incident_status';
-      else if ('date' in updateData) action = 'update_incident_date';
-      else if ('time' in updateData) action = 'update_incident_time';
-    }
-
-    // Insert a log entry
-    await db.collection('logs').insertOne({
-      action,
-      incidentId,
-      userId: session.user.id,
-      userEmail: session.user.email,
-      timestamp: new Date(),
-      details: {
-        updates: updateData,
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Incidente actualizado exitosamente',
-      incident: updatedIncident
-    });
-
+    return NextResponse.json({ success: true, incident: updatedIncident });
   } catch (error) {
     console.error('Error updating incident:', error);
-    return NextResponse.json(
-      { success: false, message: 'Error al actualizar el incidente' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Error interno del servidor' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    const userRole = session?.user?.role as Role;
+    if (!session?.user?.id || !hasRequiredRole(userRole, [ROLES.ADMIN])) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ message: 'Incident ID is required' }, { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db();
+    const collection = db.collection('incident_draft');
+
+    const result = await collection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ message: 'Incident not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Incident deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting incident:', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

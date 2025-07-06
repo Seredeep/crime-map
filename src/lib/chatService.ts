@@ -85,14 +85,14 @@ export async function getUserChatById(userId: string): Promise<ChatWithParticipa
     const chatData = chatDoc.data();
 
     // Obtener participantes
-    const participants = await getChatParticipantsFromFirestore(chatData.participants);
+    const participants = await getChatParticipantsFromFirestore(chatData?.participants || []);
 
     return {
       _id: userData.chatId,
-      neighborhood: chatData.neighborhood,
+      neighborhood: chatData?.neighborhood || '',
       participants,
-      createdAt: chatData.createdAt?.toDate(),
-      updatedAt: chatData.updatedAt?.toDate(),
+      createdAt: chatData?.createdAt?.toDate(),
+      updatedAt: chatData?.updatedAt?.toDate(),
     } as ChatWithParticipants;
   } catch (error) {
     console.error('Error obteniendo chat por ID de usuario desde Firestore:', error);

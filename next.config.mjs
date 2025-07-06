@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -33,7 +39,7 @@ const nextConfig = {
     if (!dev && !isServer) {
       config.resolve.alias = {
         ...config.resolve.alias,
-        '@': require('path').resolve(__dirname, 'src'),
+        '@': dirname(__filename) + '/src',
       }
     }
 

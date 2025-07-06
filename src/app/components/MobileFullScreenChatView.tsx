@@ -2,7 +2,7 @@
 
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiSend, FiUsers } from 'react-icons/fi';
 
 interface MobileFullScreenChatViewProps {
@@ -51,38 +51,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Cargar información del chat y mensajes en paralelo
-  useEffect(() => {
-    if (session?.user) {
-      setLoading(true);
-      Promise.all([
-        loadChatInfo(),
-        loadMessages()
-      ]).finally(() => {
-        setLoading(false);
-      });
-    }
-  }, [session]);
-
-  // Polling optimizado - solo cuando hay actividad
-  useEffect(() => {
-    if (session?.user && !loading) {
-      const interval = setInterval(() => {
-        // Solo hacer polling si la ventana está activa
-        if (!document.hidden) {
-          loadMessages();
-        }
-      }, 8000); // Polling menos agresivo
-      return () => clearInterval(interval);
-    }
-  }, [session, loading]);
-
-  // Auto-scroll a mensajes nuevos
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const loadChatInfo = async () => {
+  const loadChatInfo = useCallback(async () => {
     if (!session?.user) return;
 
     try {
@@ -105,9 +74,9 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       console.error('Error al cargar información del chat:', error);
       setError('Error al cargar información del chat');
     }
-  };
+  }, [session]);
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!session?.user) return;
 
     try {
@@ -131,7 +100,38 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       setError('Error al cargar mensajes');
       setIsConnected(false);
     }
-  };
+  }, [session]);
+
+  // Cargar información del chat y mensajes en paralelo
+  useEffect(() => {
+    if (session?.user) {
+      setLoading(true);
+      Promise.all([
+        loadChatInfo(),
+        loadMessages()
+      ]).finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [session, loadChatInfo, loadMessages]);
+
+  // Polling optimizado - solo cuando hay actividad
+  useEffect(() => {
+    if (session?.user && !loading) {
+      const interval = setInterval(() => {
+        // Solo hacer polling si la ventana está activa
+        if (!document.hidden) {
+          loadMessages();
+        }
+      }, 8000); // Polling menos agresivo
+      return () => clearInterval(interval);
+    }
+  }, [session, loading, loadMessages]);
+
+  // Auto-scroll a mensajes nuevos
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {

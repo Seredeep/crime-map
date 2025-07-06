@@ -4,7 +4,7 @@ import { fetchIncidents } from '@/lib/incidentService';
 import { Incident } from '@/lib/types';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FiActivity, FiAlertTriangle, FiClock, FiEye, FiMapPin, FiShield, FiTrendingUp } from 'react-icons/fi';
 import PanicButton from './PanicButton';
 
@@ -31,60 +31,7 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar estadísticas reales de incidentes
-  useEffect(() => {
-    const loadIncidentStats = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Definir fechas según el período seleccionado
-        const today = new Date();
-        let daysAgo = 7;
-
-        switch (selectedPeriod) {
-          case 'day':
-            daysAgo = 1;
-            break;
-          case 'week':
-            daysAgo = 7;
-            break;
-          case 'month':
-            daysAgo = 30;
-            break;
-          case 'year':
-            daysAgo = 365;
-            break;
-        }
-
-        const fromDate = new Date();
-        fromDate.setDate(today.getDate() - daysAgo);
-
-        // Obtener incidentes del período actual
-        const currentIncidents = await fetchIncidents({
-          dateFrom: fromDate.toISOString().split('T')[0],
-          dateTo: today.toISOString().split('T')[0]
-        });
-
-        // Obtener todos los incidentes para comparar
-        const allIncidents = await fetchIncidents({});
-
-        setIncidents(currentIncidents);
-        generateStatCards(currentIncidents, allIncidents);
-
-      } catch (err) {
-        console.error('Error loading incident stats:', err);
-        setError('Error al cargar las estadísticas');
-        generateFallbackStats();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadIncidentStats();
-  }, [selectedPeriod]);
-
-  const generateStatCards = (current: Incident[], all: Incident[]) => {
+  const generateStatCards = useCallback((current: Incident[], all: Incident[]) => {
     // Análisis de estados
     const pendingCount = current.filter(i => i.status === 'pending' || !i.status).length;
     const verifiedCount = current.filter(i => i.status === 'verified').length;
@@ -188,9 +135,9 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
     ];
 
     setStats(newStats);
-  };
+  }, [selectedPeriod]);
 
-  const generateFallbackStats = () => {
+  const generateFallbackStats = useCallback(() => {
     const fallbackStats: StatCard[] = [
       {
         id: 'total-incidents',
@@ -235,7 +182,60 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
     ];
 
     setStats(fallbackStats);
-  };
+  }, []);
+
+  // Cargar estadísticas reales de incidentes
+  useEffect(() => {
+    const loadIncidentStats = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Definir fechas según el período seleccionado
+        const today = new Date();
+        let daysAgo = 7;
+
+        switch (selectedPeriod) {
+          case 'day':
+            daysAgo = 1;
+            break;
+          case 'week':
+            daysAgo = 7;
+            break;
+          case 'month':
+            daysAgo = 30;
+            break;
+          case 'year':
+            daysAgo = 365;
+            break;
+        }
+
+        const fromDate = new Date();
+        fromDate.setDate(today.getDate() - daysAgo);
+
+        // Obtener incidentes del período actual
+        const currentIncidents = await fetchIncidents({
+          dateFrom: fromDate.toISOString().split('T')[0],
+          dateTo: today.toISOString().split('T')[0]
+        });
+
+        // Obtener todos los incidentes para comparar
+        const allIncidents = await fetchIncidents({});
+
+        setIncidents(currentIncidents);
+        generateStatCards(currentIncidents, allIncidents);
+
+      } catch (err) {
+        console.error('Error loading incident stats:', err);
+        setError('Error al cargar las estadísticas');
+        generateFallbackStats();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadIncidentStats();
+  }, [selectedPeriod, generateStatCards, generateFallbackStats]);
 
   const periods = [
     { id: 'day', label: 'Hoy' },

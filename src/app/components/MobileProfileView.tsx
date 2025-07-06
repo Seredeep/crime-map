@@ -2,20 +2,21 @@
 
 import { motion } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  FiAlertTriangle,
-  FiCamera,
-  FiCheckCircle,
-  FiClock,
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-  FiUser,
-  FiUsers,
-  FiXCircle
+    FiAlertTriangle,
+    FiCamera,
+    FiCheckCircle,
+    FiClock,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiUser,
+    FiUsers,
+    FiXCircle
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -326,11 +327,23 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                     className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center relative group overflow-hidden cursor-pointer"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {profileImagePreview ? (
-                      <img src={profileImagePreview} alt="Perfil" className="w-full h-full object-cover rounded-full" />
-                    ) : (
-                      <FiUser className="w-8 h-8 text-white" />
-                    )}
+                    <div className="flex flex-col items-center">
+                      <div className="relative mb-4">
+                        <div className="w-24 h-24 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-gray-600 shadow-lg">
+                          {profileImagePreview ? (
+                            <Image
+                              src={profileImagePreview}
+                              alt="Vista previa"
+                              width={96}
+                              height={96}
+                              className="object-cover"
+                            />
+                          ) : (
+                            <FiUser className="w-12 h-12 text-gray-500" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                     <input
                       ref={fileInputRef}
                       type="file"

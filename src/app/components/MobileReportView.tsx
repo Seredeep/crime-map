@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { DateTime } from 'luxon';
+import Image from 'next/image';
 import { useRef, useState } from 'react';
-import { FiArrowLeft, FiCamera, FiCheck, FiMapPin } from 'react-icons/fi';
+import { FiArrowLeft, FiCamera, FiCheck, FiMapPin, FiX } from 'react-icons/fi';
 
 interface MobileReportViewProps {
   onBack: () => void;
@@ -221,7 +222,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                   />
                 </div>
                 <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
+                <label className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
                   <FiMapPin className="inline w-4 h-4 mr-1" /> Ubicación
                   </label>
                   <input
@@ -280,25 +281,92 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
             exit={{ opacity: 0, y: -20 }}
             className="bg-gray-800/80 rounded-2xl shadow-lg p-6 mb-6 border border-gray-700"
           >
+            <h3 className="text-lg font-bold text-white mb-4 text-center">Adjuntar Evidencia</h3>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full h-32 border-2 border-dashed border-gray-600 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:bg-gray-700/50 hover:border-blue-500 transition-all cursor-pointer"
+            >
+              <FiCamera className="w-8 h-8 mb-2" />
+              <span className="text-sm font-medium">Añadir fotos o videos</span>
+              <p className="text-xs text-gray-500">Máximo 5 archivos</p>
+            </div>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*,video/*"
+            />
+            {formData.evidence.length > 0 && (
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {formData.evidence.map((file, index) => (
+                  <div key={index} className="relative group">
+                    <div className="relative w-full h-24 rounded-lg overflow-hidden border border-gray-600">
+                      {file.type.startsWith('image/') ? (
+                        <Image
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          layout="fill"
+                          objectFit="cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                          <span className="text-xs text-gray-400">{file.name}</span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800"
+                    >
+                      <FiX className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        );
+
+      case 4:
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-gray-800/80 rounded-2xl shadow-lg p-6 mb-6 border border-gray-700"
+          >
             <h3 className="text-lg font-bold text-white mb-4 text-center">Fotos y resumen</h3>
               <div className="space-y-4">
                 <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
+                <label className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
                   <FiCamera className="inline w-4 h-4 mr-1" /> Fotos (opcional)
                   </label>
                   <div className="grid grid-cols-3 gap-3 mb-3">
                     {formData.evidence.map((file, index) => (
                     <div key={index} className="relative group">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={`Upload ${index + 1}`}
-                        className="w-full h-20 object-cover rounded-lg border-2 border-gray-700 shadow"
-                        />
+                        <div className="relative w-full h-24 rounded-lg overflow-hidden border border-gray-600">
+                          {file.type.startsWith('image/') ? (
+                            <Image
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              layout="fill"
+                              objectFit="cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                              <span className="text-xs text-gray-400">{file.name}</span>
+                            </div>
+                          )}
+                        </div>
                         <button
+                          type="button"
                           onClick={() => removeFile(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs shadow-lg opacity-80 group-hover:opacity-100"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800"
                         >
-                          ×
+                          <FiX className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
@@ -375,7 +443,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
         </div>
         {/* Indicador de pasos visual */}
         <div className="flex items-center justify-center gap-4 mb-1">
-          {[1, 2, 3].map((step) => (
+          {[1, 2, 3, 4].map((step) => (
             <div key={step} className="flex flex-col items-center">
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center text-base font-bold border-2 transition-all duration-200 shadow-md
@@ -384,7 +452,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                 {step < currentStep ? <FiCheck className="w-5 h-5" /> : step}
               </div>
               <span className={`text-xs mt-1 ${step === currentStep ? 'text-blue-400 font-semibold' : 'text-gray-400'}`}>
-                {step === 1 ? 'Tipo' : step === 2 ? 'Detalles' : 'Resumen'}
+                {step === 1 ? 'Tipo' : step === 2 ? 'Detalles' : step === 3 ? 'Evidencia' : 'Resumen'}
               </span>
             </div>
           ))}
@@ -407,7 +475,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               Anterior
             </button>
           )}
-          {currentStep < 3 ? (
+          {currentStep < 4 ? (
             <button
               onClick={() => setCurrentStep(prev => prev + 1)}
               disabled={!canProceedToNextStep()}

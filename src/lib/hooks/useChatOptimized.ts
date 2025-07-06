@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { intelligentChatCache } from '../chatCache';
+import { simpleChatCache } from '../chatCache';
 import { OnlineUser, TypingUser, chatServiceOptimized } from '../chatServiceOptimized';
 import { Message } from '../types';
 
@@ -115,7 +115,7 @@ export function useChatOptimized() {
         clearInterval(statsInterval);
       };
     }
-  }, [session?.user?.id, session?.user?.name, handleNewMessages, handleTypingUpdate, handleOnlineUpdate]);
+  }, [session?.user?.id, session?.user?.name, session?.user?.email, handleNewMessages, handleTypingUpdate, handleOnlineUpdate]);
 
   // Enviar mensaje optimizado
   const sendMessage = useCallback(async (message: string, type: 'normal' | 'panic' = 'normal') => {
@@ -196,7 +196,7 @@ export function useChatOptimized() {
 
   // Limpiar caché manualmente
   const clearCache = useCallback((type?: 'messages' | 'chatInfo' | 'typing' | 'online' | 'all') => {
-    intelligentChatCache.clearCache(type);
+    simpleChatCache.clearCache(type);
     setCacheStats(chatServiceOptimized.getCacheStats());
     console.log(`🗑️ Caché limpiado: ${type || 'all'}`);
   }, []);

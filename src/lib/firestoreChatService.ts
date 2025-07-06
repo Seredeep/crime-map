@@ -269,13 +269,16 @@ export async function addParticipantToChatInFirestore(chatId: string, userId: st
  */
 export async function updateUserChatIdInFirestore(userId: string, chatId: string): Promise<void> {
   try {
-    await firestore.collection('users').doc(userId).update({
-      chatId: chatId,
-      updatedAt: new Date()
-    });
-    console.log(`✅ chatId del usuario ${userId} actualizado a ${chatId}`);
+    await firestore.collection('users').doc(userId).update({ chatId });
+    console.log(`Updated user ${userId} with new chatId: ${chatId}`);
   } catch (error) {
-    console.error(`Error actualizando chatId del usuario ${userId}:`, error);
+    console.error('Error updating user chatId in Firestore:', error);
     throw error;
   }
+}
+
+// Placeholder for syncChatToFirestore - needs actual implementation
+export async function syncChatToFirestore(chatId: string): Promise<void> {
+  console.warn(`syncChatToFirestore called for chatId: ${chatId}. This function is a placeholder and needs implementation.`);
+  // TODO: Implement actual chat synchronization logic here
 }

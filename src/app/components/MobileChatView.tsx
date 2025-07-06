@@ -2,6 +2,7 @@
 
 import { ChatWithParticipants } from '@/lib/types';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiMapPin, FiSend, FiUsers } from 'react-icons/fi';
 
@@ -226,7 +227,13 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
                 {!message.isOwn && (
                   <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-600 flex items-center justify-center flex-shrink-0">
                     {participantProfileImage ? (
-                      <img src={participantProfileImage} alt={message.userName} className="w-full h-full object-cover" />
+                      <Image
+                        src={participantProfileImage}
+                        alt={message.userName}
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <span className="text-xs font-semibold text-white">
                         {participantNameInitial}

@@ -2,6 +2,7 @@ import { getDefaultRole, Role } from "@/lib/config/roles";
 import clientPromise from "@/lib/mongodb";
 import { verifyPassword } from "@/lib/utils";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import { ObjectId } from "mongodb";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
@@ -190,7 +191,7 @@ export const authOptions: NextAuthOptions = {
             const client = await clientPromise;
             const db = client.db();
             const dbUser = await db.collection("users").findOne({
-              _id: new (require('mongodb')).ObjectId(token.id)
+              _id: new ObjectId(token.id)
             });
 
             if (dbUser) {

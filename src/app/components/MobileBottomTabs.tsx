@@ -35,7 +35,7 @@ const MobileBottomTabs = ({
 }: MobileBottomTabsProps) => {
   const { data: session } = useSession();
 
-  const allTabs: TabItem[] = [
+  const allTabs: TabItem[] = useMemo(() => [
     {
       id: 'incidents',
       label: 'Mapa',
@@ -58,7 +58,7 @@ const MobileBottomTabs = ({
         <FiCheckCircle className="w-5 h-5" /> : <FiSettings className="w-5 h-5" />,
       requiresAuth: true
     }
-  ];
+  ], [session?.user?.role]);
 
   // Filtrar tabs disponibles y verificar autenticación
   const visibleTabs = useMemo(() => {
@@ -71,7 +71,7 @@ const MobileBottomTabs = ({
 
       return true;
     });
-  }, [allTabs, availableTabs, status, session?.user?.role]);
+  }, [allTabs, availableTabs, status]);
 
   const handleTabClick = (tabId: string) => {
     onTabChange(tabId);

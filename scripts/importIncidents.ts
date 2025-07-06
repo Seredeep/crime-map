@@ -160,7 +160,10 @@ function determineTags(incidentType: string, description: string): string[] {
 
 // Main
 async function main() {
-  const client = new MongoClient(MONGODB_URI);
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI is not defined in environment variables.");
+  }
+  const client = new (MongoClient as any)(MONGODB_URI);
   try {
     await client.connect();
     const db = client.db(DATABASE_NAME);

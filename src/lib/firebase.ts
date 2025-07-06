@@ -1,6 +1,5 @@
-// @ts-ignore
-const admin = require('firebase-admin');
-const path = require('path');
+import admin from 'firebase-admin';
+import path from 'path';
 
 // Inicializar Firebase Admin SDK solo una vez
 if (!admin.apps.length) {

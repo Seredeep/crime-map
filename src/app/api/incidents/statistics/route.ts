@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     if (params.stats.length === 0) missingParams.push('stats');
 
     if (missingParams.length > 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Missing required parameters',
         missingParams,
         receivedParams: params
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     // Check if neighborhoodId is required for heat-map-density
     if (params.stats.includes('heat-map-density') && !params.neighborhoodId) {
       return NextResponse.json(
-        { 
+        {
           error: 'neighborhoodId is required for heat-map-density calculation',
           receivedParams: params
         },
@@ -123,8 +123,8 @@ export async function GET(request: NextRequest) {
 
     const client = await clientPromise;
     const db = client.db();
-    const incidentsCollection = db.collection<Incident>('incident_draft');
-    const neighborhoodsCollection = db.collection<Neighborhood>('neighborhoods');
+    const incidentsCollection = db.collection('incident_draft');
+    const neighborhoodsCollection = db.collection('neighborhoods');
 
     // Build query
     const query: MongoQuery = {
@@ -139,12 +139,12 @@ export async function GET(request: NextRequest) {
       try {
         // Try to convert to number since properties.id is numeric
         const neighborhoodIdNum = parseInt(params.neighborhoodId, 10);
-        
+
         // Find the neighborhood - could be numeric ID from properties
         const neighborhood = await neighborhoodsCollection.findOne({
           'properties.id': isNaN(neighborhoodIdNum) ? params.neighborhoodId : neighborhoodIdNum
         });
-        
+
         if (neighborhood && neighborhood.geometry) {
           // Filter incidents by location within the neighborhood polygon
           query.location = {

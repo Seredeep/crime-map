@@ -1,11 +1,11 @@
 'use client';
 
+import { simpleChatCache } from '@/lib/chatCache';
 import { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiMessageCircle, FiUsers } from 'react-icons/fi';
-import { simpleChatCache } from '../../lib/chatCache';
 import MobileExploreCommunitiesView from './MobileExploreCommunitiesView';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
 
@@ -176,6 +176,66 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     return new Date(timestamp);
   };
 
+  // Cargar datos iniciales del chat
+  const loadChatData = useCallback(async () => {
+    try {
+      // Intentar obtener de la caché primero
+      const cachedData = simpleChatCache.getCachedChatInfo('user-chat');
+      if (cachedData) {
+        setChatInfo(cachedData);
+        return;
+      }
+
+      const response = await fetch('/api/chat/my-chat');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setChatInfo(result.data);
+          simpleChatCache.setCachedChatInfo('user-chat', result.data); // Guardar en caché
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar datos del chat:', error);
+    }
+  }, []);
+
+  const loadInitialMessage = useCallback(async () => {
+    setIsLoadingMessage(true);
+    try {
+      // Cache-first para el último mensaje
+      const cachedMessages = simpleChatCache.getCachedMessages('user-chat');
+      if (cachedMessages && cachedMessages.messages.length > 0) {
+        const message = cachedMessages.messages[0];
+        setLastMessage(message);
+        setLastMessageTimestamp(new Date(message.timestamp).getTime());
+        setIsLoadingMessage(false);
+        return;
+      }
+
+      const response = await fetch('/api/chat/firestore-messages?limit=1');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data && result.data.length > 0) {
+          const message = result.data[0];
+          const finalMessage = {
+            ...message,
+            timestamp: new Date(message.timestamp).toISOString(),
+            isOwn: message.userId === session?.user?.id || message.userName === session?.user?.name
+          };
+          setLastMessage(finalMessage);
+          setLastMessageTimestamp(new Date(message.timestamp).getTime());
+          simpleChatCache.setCachedMessages('user-chat', [finalMessage]);
+        } else {
+          setLastMessage(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar el mensaje inicial:', error);
+    } finally {
+      setIsLoadingMessage(false);
+    }
+  }, [session]);
+
   // Polling inteligente - solo cuando es necesario
   const startIntelligentPolling = useCallback(() => {
     if (pollingInterval) {
@@ -213,7 +273,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     }, 15000); // Polling cada 15 segundos (menos agresivo)
 
     setPollingInterval(interval);
-  }, [session, activeTab, lastMessageTimestamp, isActive]);
+  }, [session, activeTab, lastMessageTimestamp, isActive, pollingInterval]);
 
   // Cargar datos iniciales del chat
   useEffect(() => {
@@ -221,7 +281,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
       loadChatData();
       loadInitialMessage();
     }
-  }, [session, activeTab]);
+  }, [session, activeTab, loadChatData, loadInitialMessage]);
 
   // Iniciar polling inteligente
   useEffect(() => {
@@ -234,7 +294,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
         clearInterval(pollingInterval);
       }
     };
-  }, [session, activeTab, lastMessageTimestamp, startIntelligentPolling]);
+  }, [session, activeTab, lastMessageTimestamp, startIntelligentPolling, pollingInterval]);
 
   // Detectar cuando la ventana está activa/inactiva
   useEffect(() => {
@@ -260,83 +320,6 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
       window.removeEventListener('openFullscreenChat', handleOpenFullscreenChat);
     };
   }, [chatInfo]);
-
-  const loadChatData = async () => {
-    if (!session?.user) return;
-
-    try {
-      // Intentar obtener desde caché primero
-      const cachedChatInfo = simpleChatCache.getCachedChatInfo('user-chat');
-      if (cachedChatInfo) {
-        setChatInfo(cachedChatInfo);
-        return;
-      }
-
-      // Si no hay caché, obtener desde API
-      const response = await fetch('/api/chat/mine');
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          setChatInfo(result.data);
-          // Guardar en caché
-          simpleChatCache.setCachedChatInfo('user-chat', result.data);
-        }
-      }
-    } catch (error) {
-      console.error('Error al cargar datos del chat:', error);
-    }
-  };
-
-  const loadInitialMessage = async () => {
-    if (!session?.user) return;
-
-    setIsLoadingMessage(true);
-    try {
-      // Intentar obtener desde caché primero
-      const cachedMessages = simpleChatCache.getCachedMessages('user-chat');
-      if (cachedMessages && cachedMessages.messages.length > 0) {
-        const lastMessage = cachedMessages.messages[cachedMessages.messages.length - 1];
-        const formattedMessage = {
-          ...lastMessage,
-          timestamp: new Date(lastMessage.timestamp).toISOString(),
-          isOwn: lastMessage.userId === session.user?.id || lastMessage.userName === session.user?.name
-        };
-        setLastMessage(formattedMessage);
-        setLastMessageTimestamp(cachedMessages.lastMessageTimestamp);
-        setIsLoadingMessage(false);
-        return;
-      }
-
-      // Si no hay caché, obtener desde API
-      const response = await fetch('/api/chat/firestore-messages?limit=1');
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data && result.data.messages && result.data.messages.length > 0) {
-          const message = result.data.messages[0];
-          const formattedMessage = {
-            ...message,
-            timestamp: new Date(message.timestamp).toISOString(),
-            isOwn: message.userId === session.user?.id || message.userName === session.user?.name
-          };
-          setLastMessage(formattedMessage);
-          // Establecer timestamp de referencia para polling
-          const messageTimestamp = new Date(message.timestamp).getTime();
-          setLastMessageTimestamp(messageTimestamp);
-
-          // Guardar en caché
-          simpleChatCache.setCachedMessages('user-chat', result.data.messages);
-        } else {
-          setLastMessage(null);
-          setLastMessageTimestamp(Date.now()); // Usar timestamp actual si no hay mensajes
-        }
-      }
-    } catch (error) {
-      console.error('Error al cargar último mensaje:', error);
-      setLastMessage(null);
-    } finally {
-      setIsLoadingMessage(false);
-    }
-  };
 
   const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);

@@ -1,11 +1,12 @@
 'use client';
+import { useImageModal } from '@/lib/ImageModalContext';
+import { updateIncident } from '@/lib/incidentService';
+import supabase from '@/lib/supabase';
 import { Incident } from '@/lib/types';
 import { formatDate, formatTime } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { useState } from 'react';
-import { updateIncident } from '@/lib/incidentService';
-import supabase from '@/lib/supabase';
-import { useImageModal } from '@/lib/ImageModalContext';
 
 
 interface IncidentDetailsProps {
@@ -214,7 +215,7 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
               return (
                 <div key={index} className="bg-gray-700 rounded-lg overflow-hidden">
                   {fileType === 'image' && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.preventDefault();
                         openModal(url);
@@ -222,10 +223,11 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
                       className="w-full h-full"
                     >
                       <div className="aspect-square relative">
-                        <img
+                        <Image
                           src={url}
                           alt={fileName}
-                          className="object-cover hover:opacity-90 transition-opacity w-full h-full"
+                          layout="fill"
+                          className="object-cover hover:opacity-90 transition-opacity"
                         />
                       </div>
                     </button>
