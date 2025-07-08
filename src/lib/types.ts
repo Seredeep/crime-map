@@ -96,6 +96,8 @@ export interface ChatWithParticipants {
   _id: string;
   neighborhood: string;
   participants: User[];
+  lastMessageAt?: Date;
+  lastMessage?: Message;
   createdAt: Date;
   updatedAt?: Date;
 }

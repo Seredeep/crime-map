@@ -3,15 +3,6 @@ import { addParticipantToChatInFirestore, chatExistsInFirestore, createChatInFir
 import { ChatWithParticipants, User } from './types';
 
 /**
- * Calcula el neighborhood basado en blockNumber y lotNumber
- * Agrupa cada 10 bloques en un neighborhood
- */
-export function calculateNeighborhood(blockNumber: number, lotNumber: number): string {
-  const neighborhoodId = Math.floor(blockNumber / 10);
-  return `Barrio ${neighborhoodId}`;
-}
-
-/**
  * Asigna un neighborhood a un usuario y lo agrega al chat correspondiente
  */
 export async function assignUserToNeighborhood(userId: string, neighborhoodName: string): Promise<{ neighborhood: string; chatId: string }> {
@@ -91,6 +82,8 @@ export async function getUserChatById(userId: string): Promise<ChatWithParticipa
       _id: userData.chatId,
       neighborhood: chatData?.neighborhood || '',
       participants,
+      lastMessage: chatData?.lastMessage || null,
+      lastMessageAt: chatData?.lastMessageAt?.toDate() || null,
       createdAt: chatData?.createdAt?.toDate(),
       updatedAt: chatData?.updatedAt?.toDate(),
     } as ChatWithParticipants;

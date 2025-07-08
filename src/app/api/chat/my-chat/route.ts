@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Formatear la respuesta
     const chatInfo = {
       chatId: userChat._id,
       userId: userId,
@@ -51,6 +50,8 @@ export async function GET(request: NextRequest) {
         email: p.email,
         neighborhood: p.neighborhood
       })),
+      lastMessage: userChat.lastMessage || null,
+      lastMessageAt: userChat.lastMessageAt || null,
       createdAt: userChat.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: userChat.updatedAt?.toISOString() || new Date().toISOString()
     };

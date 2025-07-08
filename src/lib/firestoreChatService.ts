@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { firestore } from './firebase';
-import { ChatWithParticipants, User } from './types';
+import { ChatWithParticipants, Message, User } from './types';
 
 export interface FirestoreMessage {
   id?: string;
@@ -15,8 +15,8 @@ export interface FirestoreMessage {
 export interface FirestoreChat {
   neighborhood: string;
   participants: string[];
-  lastMessage?: string;
   lastMessageAt?: any; // Firestore Timestamp
+  lastMessage?: Message;
   createdAt?: any; // Firestore Timestamp
   updatedAt?: any; // Firestore Timestamp
 }
@@ -87,6 +87,8 @@ export async function getUserChatFromFirestore(userEmail: string): Promise<ChatW
       _id: chatDoc.id,
       neighborhood: chatData.neighborhood,
       participants,
+      lastMessageAt: chatData.lastMessageAt?.toDate(),
+      lastMessage: chatData.lastMessage,
       createdAt: chatData.createdAt?.toDate(),
       updatedAt: chatData.updatedAt?.toDate()
     };
@@ -179,7 +181,7 @@ export async function sendMessageToFirestore(
  */
 export async function getChatMessagesFromFirestore(
   chatId: string,
-  limit: number = 50
+  limit: number = 0
 ): Promise<FirestoreMessage[]> {
   try {
     const messagesSnapshot = await firestore
@@ -279,6 +281,10 @@ export async function updateUserChatIdInFirestore(userId: string, chatId: string
 
 // Placeholder for syncChatToFirestore - needs actual implementation
 export async function syncChatToFirestore(chatId: string): Promise<void> {
-  console.warn(`syncChatToFirestore called for chatId: ${chatId}. This function is a placeholder and needs implementation.`);
-  // TODO: Implement actual chat synchronization logic here
+  const chatDoc = await firestore.collection('chats').doc(chatId).get();
+  const chatData = chatDoc.data() as FirestoreChat;
+  const participants = await getChatParticipantsFromFirestore(chatData.participants);
+  await firestore.collection('chats').doc(chatId).update({
+    participants,
+  });
 }

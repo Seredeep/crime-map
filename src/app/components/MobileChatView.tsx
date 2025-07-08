@@ -163,37 +163,6 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
         </div>
       </div>
 
-      {/* Participants panel */}
-      {showParticipants && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="bg-gray-800/30 border-b border-gray-700/50 p-4"
-        >
-          <h3 className="text-sm font-medium text-gray-300 mb-3">Participantes</h3>
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            {chat.participants.map((participant) => (
-              <div key={participant._id} className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-semibold text-white">
-                    {participant.name?.charAt(0) || 'U'}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">
-                    {participant.name} {participant.surname}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Manzana {participant.blockNumber}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (

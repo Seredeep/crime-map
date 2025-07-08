@@ -1,21 +1,25 @@
 'use client';
 
+// #region Imports
 import { simpleChatCache } from '@/lib/chatCache';
 import { Message } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
-import { FiCompass, FiHome, FiMessageCircle, FiUsers } from 'react-icons/fi';
+import { FiCompass, FiHome, FiUsers } from 'react-icons/fi';
 import MobileExploreCommunitiesView from './MobileExploreCommunitiesView';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
+// #endregion
 
-// #region Types & Interfaces
+// #region Tipos e interfaces
 interface ChatInfo {
   chatId: string;
   userId: string;
   userName: string;
   neighborhood: string;
+  lastMessageAt: string | null;
   participantsCount: number;
+  lastMessage: Message | null;
   participants: Array<{
     id: string;
     name: string;
@@ -28,99 +32,22 @@ interface ChatInfo {
   updatedAt: string;
 }
 
-interface MobileCommunitiesViewProps {
-  className?: string;
-}
-
 type TabType = 'chat' | 'explore';
 type ViewMode = 'main' | 'fullscreenChat';
 // #endregion
 
-// #region Components
-/**
- * Vista previa del último mensaje estilo WhatsApp
- */
-const WhatsAppMessagePreview = ({
-  message,
-  isLoading,
-  formatTime
-}: {
-  message: Message | null;
-  isLoading: boolean;
-  formatTime: (dateString: string) => string;
-}) => {
-  if (isLoading) {
-    return (
-      <div className="flex items-center space-x-3 py-2">
-        <div className="loading-skeleton w-8 h-8 rounded-full"></div>
-        <div className="flex-1 space-y-1">
-          <div className="loading-skeleton h-3 w-20"></div>
-          <div className="loading-skeleton h-4 w-3/4"></div>
-        </div>
-        <div className="loading-skeleton h-3 w-8"></div>
-      </div>
-    );
-  }
-
-  if (!message) {
-    return (
-      <div className="flex items-center space-x-3 py-2">
-        <div className="w-8 h-8 bg-gray-700/50 rounded-full flex items-center justify-center">
-          <FiMessageCircle className="w-4 h-4 text-gray-500" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm text-gray-500">No hay mensajes</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center space-x-3 py-2">
-      {/* Avatar pequeño */}
-      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-        <span className="text-xs font-bold text-white">
-          {message.isOwn ? 'T' : message.userName?.charAt(0)?.toUpperCase() || '?'}
-        </span>
-      </div>
-
-      {/* Contenido del mensaje */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center space-x-1 mb-0.5">
-          <span className="text-sm font-medium text-gray-300">
-            {message.isOwn ? 'Tú:' : `${message.userName?.split(' ')[0] || 'Usuario'}:`}
-          </span>
-          {message.type === 'panic' && (
-            <span className="text-xs text-red-400">⚠️</span>
-          )}
-        </div>
-        <p className="text-sm text-gray-400 truncate leading-tight">
-          {message.message}
-        </p>
-      </div>
-
-      {/* Hora */}
-      <div className="flex flex-col items-end">
-        <span className="text-xs text-gray-500">
-          {formatTime(new Date(message.timestamp).toISOString())}
-        </span>
-      </div>
-    </div>
-  );
-};
 
 /**
  * Card del chat estilo WhatsApp - más minimalista
  */
-const WhatsAppChatCard = ({
+const ChatCard = ({
   chatInfo,
-  lastMessage,
-  isLoadingMessage,
   onClick,
   formatTime
 }: {
   chatInfo: ChatInfo | null;
-  lastMessage: Message | null;
+  lastMessage: Message | string | null;
+  lastMessageAt: string | null;
   isLoadingMessage: boolean;
   onClick: () => void;
   formatTime: (dateString: string) => string;
@@ -146,19 +73,20 @@ const WhatsAppChatCard = ({
         </div>
       </div>
 
-      {/* Vista previa del último mensaje estilo WhatsApp */}
-      <WhatsAppMessagePreview
-        message={lastMessage}
-        isLoading={isLoadingMessage}
-        formatTime={formatTime}
-      />
+        <div className="flex">
+          <p className="text-sm text-gray-400">
+            {typeof chatInfo?.lastMessage === 'string' ? chatInfo.lastMessage : chatInfo?.lastMessage?.message || "No hay mensajes aún. ¡Inicia la conversación!"}
+          </p>
+          <p className="text-xs text-gray-400">
+            {chatInfo?.lastMessageAt ? formatTime(chatInfo.lastMessageAt) : ''}
+          </p>
+        </div>
     </motion.div>
   );
 };
-// #endregion
 
-// #region Main Component
-const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) => {
+// #region Lógica principal del componente
+const MobileCommunitiesView = () => {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
@@ -166,15 +94,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
   const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(true);
   const [lastMessageTimestamp, setLastMessageTimestamp] = useState<number>(0);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
   const [isActive, setIsActive] = useState(true);
-
-  // Función para convertir timestamp a Date
-  const toDate = (timestamp: any): Date => {
-    if (!timestamp) return new Date();
-    if (timestamp instanceof Date) return timestamp;
-    return new Date(timestamp);
-  };
 
   // Cargar datos iniciales del chat
   const loadChatData = useCallback(async () => {
@@ -236,45 +156,6 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     }
   }, [session]);
 
-  // Polling inteligente - solo cuando es necesario
-  const startIntelligentPolling = useCallback(() => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-    }
-
-    const interval = setInterval(async () => {
-      if (!isActive || !session?.user || activeTab !== 'chat') return;
-
-      try {
-        // Solo hacer polling si tenemos un timestamp de referencia
-        if (lastMessageTimestamp > 0) {
-          const response = await fetch(`/api/chat/firestore-messages?limit=1&since=${lastMessageTimestamp}`);
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.data && result.data.length > 0) {
-              const message = result.data[0];
-              const messageTimestamp = new Date(message.timestamp).getTime();
-
-              // Solo actualizar si es realmente un mensaje nuevo
-              if (messageTimestamp > lastMessageTimestamp) {
-                setLastMessage({
-                  ...message,
-                  timestamp: new Date(message.timestamp).toISOString(),
-                  isOwn: message.userId === session.user?.id || message.userName === session.user?.name
-                });
-                setLastMessageTimestamp(messageTimestamp);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error en polling inteligente:', error);
-      }
-    }, 15000); // Polling cada 15 segundos (menos agresivo)
-
-    setPollingInterval(interval);
-  }, [session, activeTab, lastMessageTimestamp, isActive, pollingInterval]);
-
   // Cargar datos iniciales del chat
   useEffect(() => {
     if (session?.user && activeTab === 'chat') {
@@ -283,18 +164,6 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     }
   }, [session, activeTab, loadChatData, loadInitialMessage]);
 
-  // Iniciar polling inteligente
-  useEffect(() => {
-    if (session?.user && activeTab === 'chat' && lastMessageTimestamp > 0) {
-      startIntelligentPolling();
-    }
-
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [session, activeTab, lastMessageTimestamp, startIntelligentPolling, pollingInterval]);
 
   // Detectar cuando la ventana está activa/inactiva
   useEffect(() => {
@@ -306,7 +175,7 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-    // Escuchar evento para abrir chat fullscreen (desde desktop)
+  // Escuchar evento para abrir chat fullscreen (desde desktop)
   useEffect(() => {
     const handleOpenFullscreenChat = () => {
       if (chatInfo) {
@@ -345,10 +214,11 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
     return `${Math.floor(diffInMinutes / 1440)}d`;
   };
+  // #endregion
 
-  // #region Render
+  // #region Renderizado
   return (
-    <div className={`w-full h-full bg-gray-900 flex flex-col ${className}`}>
+    <div className="w-full h-full bg-gray-900 flex flex-col">
       <AnimatePresence mode="wait">
         {viewMode === 'fullscreenChat' ? (
           <MobileFullScreenChatView
@@ -374,22 +244,20 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
               <div className="flex bg-gray-800/50 rounded-xl p-1">
                 <button
                   onClick={() => handleTabChange('chat')}
-                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === 'chat'
+                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'chat'
                       ? 'bg-blue-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }`}
+                    }`}
                 >
                   <FiHome className="w-4 h-4 mx-auto mb-1" />
                   Mi Barrio
                 </button>
                 <button
                   onClick={() => handleTabChange('explore')}
-                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === 'explore'
+                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'explore'
                       ? 'bg-blue-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }`}
+                    }`}
                 >
                   <FiCompass className="w-4 h-4 mx-auto mb-1" />
                   Explorar
@@ -438,9 +306,10 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
                     </div>
                   ) : (
                     // Chat card
-                    <WhatsAppChatCard
+                    <ChatCard
                       chatInfo={chatInfo}
                       lastMessage={lastMessage}
+                      lastMessageAt={chatInfo.lastMessageAt}
                       isLoadingMessage={isLoadingMessage}
                       onClick={handleChatOpen}
                       formatTime={formatTime}
@@ -459,7 +328,8 @@ const MobileCommunitiesView = ({ className = '' }: MobileCommunitiesViewProps) =
       </AnimatePresence>
     </div>
   );
-};
-// #endregion
-
+  // #endregion
+}
+// #region Export
 export default MobileCommunitiesView;
+// #endregion

@@ -6,6 +6,7 @@ import { FiActivity, FiAlertTriangle, FiClock, FiMessageCircle, FiShield, FiUser
 interface ChatInfoProps {
   totalMessages?: number;
   todayMessages?: number;
+  lastMessageAt?: Date;
   activeUsers?: number;
   lastActivity?: Date;
   safetyLevel?: 'high' | 'medium' | 'low';
