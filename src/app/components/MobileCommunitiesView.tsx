@@ -1,14 +1,15 @@
 'use client';
 
 // #region Imports
-import { simpleChatCache } from '@/lib/chatCache';
-import { Message } from '@/lib/types';
+import { LastChatMessage } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiUsers } from 'react-icons/fi';
+import LazyImage from './LazyImage';
 import MobileExploreCommunitiesView from './MobileExploreCommunitiesView';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
+// NO IMPORTAR firestore AQUÍ. firestore es para el backend.
 // #endregion
 
 // #region Tipos e interfaces
@@ -19,14 +20,15 @@ interface ChatInfo {
   neighborhood: string;
   lastMessageAt: string | null;
   participantsCount: number;
-  lastMessage: Message | null;
+  lastMessage: LastChatMessage | null;
   participants: Array<{
     id: string;
     name: string;
     surname: string;
     email: string;
-    blockNumber: number;
-    lotNumber: number;
+    blockNumber?: number;
+    lotNumber?: number;
+    profileImage?: string;
   }>;
   createdAt: string;
   updatedAt: string;
@@ -43,28 +45,41 @@ type ViewMode = 'main' | 'fullscreenChat';
 const ChatCard = ({
   chatInfo,
   onClick,
-  formatTime
+  formatTime,
+  profileImage
 }: {
   chatInfo: ChatInfo | null;
-  lastMessage: Message | string | null;
+  lastMessage: LastChatMessage | null;
   lastMessageAt: string | null;
   isLoadingMessage: boolean;
   onClick: () => void;
   formatTime: (dateString: string) => string;
+  profileImage: string | null;
 }) => {
+  // Función para obtener la inicial del barrio
+  const getNeighborhoodInitial = (neighborhood: string) => {
+    if (!neighborhood) return 'B';
+    // Extraer solo la parte del nombre después de "Barrio" si existe
+    const cleanName = neighborhood.replace(/barrio\s*/i, '').trim();
+    return cleanName.charAt(0).toUpperCase() || 'B';
+  };
+
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="whatsapp-chat-card"
+      className="bg-gray-800 rounded-2xl p-5 shadow-lg space-y-4 border border-gray-700/50"
     >
-      {/* Header simplificado */}
-      <div className="flex items-center space-x-3 mb-4">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-          <FiHome className="w-6 h-6 text-white" />
+      {/* Header mejorado */}
+      <div className="flex items-center space-x-4">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+          {/* Mostrar inicial del barrio en lugar de la imagen del remitente */}
+          <span className="text-white font-bold text-lg">
+            {getNeighborhoodInitial(chatInfo?.neighborhood || '')}
+          </span>
         </div>
-        <div className="flex-1">
-          <h3 className="text-white font-semibold text-lg">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-white font-semibold text-lg truncate">
             {chatInfo?.neighborhood || 'Mi Barrio'}
           </h3>
           <p className="text-sm text-gray-400">
@@ -73,14 +88,45 @@ const ChatCard = ({
         </div>
       </div>
 
-        <div className="flex">
-          <p className="text-sm text-gray-400">
-            {typeof chatInfo?.lastMessage === 'string' ? chatInfo.lastMessage : chatInfo?.lastMessage?.message || "No hay mensajes aún. ¡Inicia la conversación!"}
-          </p>
-          <p className="text-xs text-gray-400">
-            {chatInfo?.lastMessageAt ? formatTime(chatInfo.lastMessageAt) : ''}
-          </p>
+      <div className="flex items-center space-x-2 text-sm">
+        {/* Mostrar imagen del remitente del último mensaje */}
+        <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+          {profileImage ? (
+            <LazyImage
+              src={profileImage}
+              alt="Perfil"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-600 flex items-center justify-center text-white text-xs font-semibold">
+              {chatInfo?.lastMessage?.userName?.charAt(0).toUpperCase() || '?'}
+            </div>
+          )}
         </div>
+
+        <div className="flex-1 min-w-0">
+          {/* Mostrar nombre del remitente y mensaje */}
+          {chatInfo?.lastMessage ? (
+            <p className="text-gray-300 overflow-hidden text-ellipsis whitespace-nowrap">
+              <span className="text-gray-400 font-medium">
+                {chatInfo.lastMessage.userName}:
+              </span>{' '}
+              {chatInfo.lastMessage.message}
+            </p>
+          ) : (
+            <p className="text-gray-400 italic">
+              No hay mensajes aún. ¡Inicia la conversación!
+            </p>
+          )}
+        </div>
+
+        {/* Timestamp */}
+        {chatInfo?.lastMessageAt && (
+          <p className="text-xs text-gray-500 flex-shrink-0">
+            {formatTime(chatInfo.lastMessageAt)}
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 };
@@ -91,78 +137,55 @@ const MobileCommunitiesView = () => {
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
-  const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(true);
-  const [lastMessageTimestamp, setLastMessageTimestamp] = useState<number>(0);
   const [isActive, setIsActive] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Cargar datos iniciales del chat
+  // Cargar datos del chat (incluyendo el último mensaje) desde la API
   const loadChatData = useCallback(async () => {
-    try {
-      // Intentar obtener de la caché primero
-      const cachedData = simpleChatCache.getCachedChatInfo('user-chat');
-      if (cachedData) {
-        setChatInfo(cachedData);
-        return;
-      }
+    if (!session?.user?.email) {
+      setIsLoadingMessage(false);
+      setError(null);
+      return;
+    }
 
+    setIsLoadingMessage(true);
+    setError(null);
+    try {
       const response = await fetch('/api/chat/my-chat');
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
           setChatInfo(result.data);
-          simpleChatCache.setCachedChatInfo('user-chat', result.data); // Guardar en caché
-        }
-      }
-    } catch (error) {
-      console.error('Error al cargar datos del chat:', error);
-    }
-  }, []);
-
-  const loadInitialMessage = useCallback(async () => {
-    setIsLoadingMessage(true);
-    try {
-      // Cache-first para el último mensaje
-      const cachedMessages = simpleChatCache.getCachedMessages('user-chat');
-      if (cachedMessages && cachedMessages.messages.length > 0) {
-        const message = cachedMessages.messages[0];
-        setLastMessage(message);
-        setLastMessageTimestamp(new Date(message.timestamp).getTime());
-        setIsLoadingMessage(false);
-        return;
-      }
-
-      const response = await fetch('/api/chat/firestore-messages?limit=1');
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data && result.data.length > 0) {
-          const message = result.data[0];
-          const finalMessage = {
-            ...message,
-            timestamp: new Date(message.timestamp).toISOString(),
-            isOwn: message.userId === session?.user?.id || message.userName === session?.user?.name
-          };
-          setLastMessage(finalMessage);
-          setLastMessageTimestamp(new Date(message.timestamp).getTime());
-          simpleChatCache.setCachedMessages('user-chat', [finalMessage]);
         } else {
-          setLastMessage(null);
+          setChatInfo(null);
+          setError(result.error || 'Error al cargar los datos del chat.');
         }
+      } else {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (error) {
-      console.error('Error al cargar el mensaje inicial:', error);
+    } catch (err) {
+      console.error('Error al cargar datos del chat:', err);
+      setError('Error al cargar los datos del chat. Por favor, inténtalo de nuevo.');
+      setChatInfo(null);
     } finally {
       setIsLoadingMessage(false);
     }
   }, [session]);
 
-  // Cargar datos iniciales del chat
   useEffect(() => {
     if (session?.user && activeTab === 'chat') {
       loadChatData();
-      loadInitialMessage();
+      // Opcional: implementar un polling aquí para actualizaciones periódicas
+      const intervalId = setInterval(() => {
+        if (!document.hidden) { // Solo hacer polling si la ventana está activa
+          loadChatData();
+        }
+      }, 8000); // Polling cada 8 segundos
+
+      return () => clearInterval(intervalId);
     }
-  }, [session, activeTab, loadChatData, loadInitialMessage]);
+  }, [session, activeTab, loadChatData]);
 
 
   // Detectar cuando la ventana está activa/inactiva
@@ -200,8 +223,8 @@ const MobileCommunitiesView = () => {
 
   const handleBackFromChat = () => {
     setViewMode('main');
-    // Recargar datos cuando regresamos del chat
-    loadInitialMessage();
+    // Recargar datos cuando regresamos del chat para ver el último mensaje actualizado
+    loadChatData();
   };
 
   const formatTime = (dateString: string) => {
@@ -214,7 +237,16 @@ const MobileCommunitiesView = () => {
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
     return `${Math.floor(diffInMinutes / 1440)}d`;
   };
-  // #endregion
+
+  const getLastMessageSenderProfileImage = useCallback(() => {
+    if (!chatInfo || !chatInfo.lastMessage || !chatInfo.participants) {
+      return null;
+    }
+    const sender = chatInfo.participants.find(
+      (p) => p.id === chatInfo.lastMessage?.userId
+    );
+    return sender?.profileImage || null;
+  }, [chatInfo]);
 
   // #region Renderizado
   return (
@@ -244,20 +276,22 @@ const MobileCommunitiesView = () => {
               <div className="flex bg-gray-800/50 rounded-xl p-1">
                 <button
                   onClick={() => handleTabChange('chat')}
-                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'chat'
+                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'chat'
                       ? 'bg-blue-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                    }`}
+                  }`}
                 >
                   <FiHome className="w-4 h-4 mx-auto mb-1" />
                   Mi Barrio
                 </button>
                 <button
                   onClick={() => handleTabChange('explore')}
-                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'explore'
+                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'explore'
                       ? 'bg-blue-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                    }`}
+                  }`}
                 >
                   <FiCompass className="w-4 h-4 mx-auto mb-1" />
                   Explorar
@@ -272,26 +306,23 @@ const MobileCommunitiesView = () => {
                 <div className="p-6">
                   {isLoadingMessage ? (
                     // Loading state mejorado
-                    <div className="community-card-minimal p-5">
-                      <div className="flex items-center space-x-4 mb-5">
-                        <div className="loading-skeleton w-12 h-12 rounded-xl"></div>
+                    <div className="bg-gray-800 rounded-2xl p-5 shadow-lg space-y-4 border border-gray-700/50">
+                      <div className="flex items-center space-x-4">
+                        <div className="loading-skeleton w-12 h-12 rounded-full"></div>
                         <div className="space-y-2 flex-1">
-                          <div className="loading-skeleton h-5 w-32"></div>
-                          <div className="loading-skeleton h-3 w-24"></div>
+                          <div className="loading-skeleton h-5 w-3/4 rounded"></div>
+                          <div className="loading-skeleton h-3 w-1/2 rounded"></div>
                         </div>
                       </div>
-                      <div className="space-y-3 mb-5">
-                        <div className="loading-skeleton h-3 w-full"></div>
-                        <div className="loading-skeleton h-3 w-3/4"></div>
-                      </div>
-                      <div className="flex justify-center pt-4 border-t border-gray-800/50">
-                        <div className="loading-skeleton h-4 w-28"></div>
+                      <div className="space-y-2">
+                        <div className="loading-skeleton h-3 w-full rounded"></div>
+                        <div className="loading-skeleton h-3 w-5/6 rounded"></div>
                       </div>
                     </div>
                   ) : !chatInfo ? (
                     // Estado sin chat asignado mejorado
-                    <div className="text-center py-16">
-                      <div className="w-24 h-24 bg-gray-800/50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-gray-700/50">
+                    <div className="text-center py-16 bg-gray-800 rounded-2xl p-5 shadow-lg border border-gray-700/50">
+                      <div className="w-24 h-24 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-600/50">
                         <FiUsers className="w-12 h-12 text-gray-500" />
                       </div>
                       <h3 className="text-2xl font-bold text-gray-200 mb-3">
@@ -300,7 +331,7 @@ const MobileCommunitiesView = () => {
                       <p className="text-gray-400 text-base max-w-sm mx-auto leading-relaxed mb-6">
                         Completa tu perfil para unirte al chat de tu barrio y conectar con tus vecinos
                       </p>
-                      <div className="text-xs text-gray-500 bg-gray-800/30 rounded-lg px-4 py-2 inline-block">
+                      <div className="text-xs text-gray-500 bg-gray-700/30 rounded-lg px-4 py-2 inline-block">
                         💡 Tip: Agrega tu dirección en configuración
                       </div>
                     </div>
@@ -308,11 +339,12 @@ const MobileCommunitiesView = () => {
                     // Chat card
                     <ChatCard
                       chatInfo={chatInfo}
-                      lastMessage={lastMessage}
+                      lastMessage={chatInfo.lastMessage}
                       lastMessageAt={chatInfo.lastMessageAt}
                       isLoadingMessage={isLoadingMessage}
                       onClick={handleChatOpen}
                       formatTime={formatTime}
+                      profileImage={getLastMessageSenderProfileImage()}
                     />
                   )}
                 </div>

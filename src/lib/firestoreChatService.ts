@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { firestore } from './firebase';
-import { ChatWithParticipants, Message, User } from './types';
+import { ChatWithParticipants, LastChatMessage, User } from './types';
 
 export interface FirestoreMessage {
   id?: string;
@@ -16,7 +16,7 @@ export interface FirestoreChat {
   neighborhood: string;
   participants: string[];
   lastMessageAt?: any; // Firestore Timestamp
-  lastMessage?: Message;
+  lastMessage?: LastChatMessage;
   createdAt?: any; // Firestore Timestamp
   updatedAt?: any; // Firestore Timestamp
 }
@@ -121,6 +121,7 @@ export async function getChatParticipantsFromFirestore(participantIds: string[])
         neighborhood: data.neighborhood,
         role: data.role,
         chatId: data.chatId,
+        profileImage: data.profileImage || null,
         createdAt: data.createdAt?.toDate(),
         updatedAt: data.updatedAt?.toDate(),
         onboarded: data.onboarded || false,
@@ -161,9 +162,13 @@ export async function sendMessageToFirestore(
       .collection('messages')
       .add(messageData);
 
-    // Actualizar último mensaje del chat
+    // Actualizar último mensaje del chat con la nueva estructura
     await firestore.collection('chats').doc(chatId).update({
-      lastMessage: message.trim(),
+      lastMessage: {
+        userId: userId,
+        userName: userName,
+        message: message.trim(),
+      },
       lastMessageAt: new Date(),
       updatedAt: new Date()
     });

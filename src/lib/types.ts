@@ -89,6 +89,13 @@ export interface Chat {
   updatedAt?: Date;
 }
 
+export interface LastChatMessage {
+  userId: string;
+  userName: string;
+  message: string;
+  profileImage: string;
+}
+
 /**
  * Represents a chat with populated participants
  */
@@ -97,7 +104,7 @@ export interface ChatWithParticipants {
   neighborhood: string;
   participants: User[];
   lastMessageAt?: Date;
-  lastMessage?: Message;
+  lastMessage?: LastChatMessage;
   createdAt: Date;
   updatedAt?: Date;
 }

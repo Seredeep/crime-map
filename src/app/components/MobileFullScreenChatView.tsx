@@ -4,6 +4,7 @@ import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiSend, FiUsers } from 'react-icons/fi';
+import LazyImage from './LazyImage';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -16,6 +17,7 @@ interface ChatParticipant {
   surname: string;
   blockNumber: number;
   lotNumber: number;
+  profileImage?: string;
 }
 
 interface ChatInfo {
@@ -36,6 +38,7 @@ interface Message {
     location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
     address?: string;
   };
+  senderProfileImage?: string;
 }
 
 const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenChatViewProps) => {
@@ -259,9 +262,29 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
   };
 
-  // Fix for isOwn issue - check current user email/id
   const isMessageOwn = (message: any) => {
+    if (!session?.user?.id) return false;
     return message.userId === session?.user?.id;
+  };
+
+  // Función helper para determinar las clases de border radius
+  const getBorderRadiusClass = (isOwn: boolean, isFirstInGroup: boolean, isLastInGroup: boolean) => {
+    // Base: todas las esquinas redondeadas
+    let classes = 'rounded-2xl';
+
+    if (isOwn) {
+      // Mensajes del usuario actual (derecha) - siempre tienen la "burbujita" en bottom-right
+      if (isLastInGroup) {
+        classes = 'rounded-2xl rounded-br-sm'; // Último mensaje o único con tail
+      }
+    } else {
+      // Mensajes de otros usuarios (izquierda) - siempre tienen la "burbujita" en bottom-left
+      if (isLastInGroup) {
+        classes = 'rounded-2xl rounded-bl-sm'; // Último mensaje o único con tail
+      }
+    }
+
+    return classes;
   };
 
   if (loading) {
@@ -337,13 +360,24 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* #endregion */}
 
       {/* #region Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
         {messages.map((message, index) => {
           const showDate = index === 0 || message.timestamp.toDateString() !== messages[index - 1].timestamp.toDateString();
           const isOwn = isMessageOwn(message);
 
+          // Lógica para agrupar mensajes consecutivos del mismo usuario
+          const prevMessage = index > 0 ? messages[index - 1] : null;
+          const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
+
+          const isFirstInGroup = !prevMessage || prevMessage.userId !== message.userId || showDate;
+          const isLastInGroup = !nextMessage || nextMessage.userId !== message.userId;
+
+          // Determinar si mostrar avatar y nombre
+          const showAvatar = !isOwn && isLastInGroup;
+          const showName = !isOwn && isFirstInGroup;
+
           return (
-            <div key={message.id} className="flex flex-col items-start">
+            <div key={message.id} className="flex flex-col">
               {showDate && (
                 <div className="text-center w-full my-4">
                   <span className="text-xs text-gray-500 bg-gray-800/50 px-3 py-1 rounded-full">
@@ -355,41 +389,68 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: index * 0.02 }}
-                className={`flex w-full ${isOwn ? 'justify-end' : 'justify-start'}`}
+                className={`flex w-full items-end ${isOwn ? 'justify-end' : 'justify-start'} ${isFirstInGroup ? 'mt-2' : 'mt-0.5' // Menos espacio entre mensajes del mismo usuario
+                  }`}
               >
-                <div
-                  className={`max-w-[80%] rounded-xl px-4 py-2 shadow-md ${isOwn
-                    ? 'bg-blue-600 text-white rounded-br-none'
-                    : message.type === 'panic'
-                      ? 'bg-red-700 text-white rounded-bl-none border border-red-600'
-                      : 'bg-gray-700 text-gray-100 rounded-bl-none'
-                    }`}
-                >
-                  <span className="block text-xs text-gray-300 mb-1">
-                    {isOwn ? 'Tú' : message.userName}
-                  </span>
-                  {message.type === 'panic' ? (
-                    <>
-                      <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
-                      <br />
-                      <span className="text-sm">
-                        {message.metadata?.address || 'Ubicación GPS exacta no disponible'}
-                      </span>
-                      <br />
-                      <span className="text-xs text-gray-300 mt-1 block">
-                        {formatTime(message.timestamp)}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-base leading-tight">
-                        {message.message}
-                      </span>
-                      <span className="text-xs text-gray-300 mt-1 block text-right">
-                        {formatTime(message.timestamp)}
-                      </span>
-                    </>
+                {/* Avatar solo para otros usuarios y solo en el último mensaje del grupo */}
+                {showAvatar ? (
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mr-2">
+                    {message.senderProfileImage ? (
+                      <LazyImage
+                        src={message.senderProfileImage}
+                        alt={`${message.userName}'s profile`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-600 flex items-center justify-center text-white text-xs font-semibold">
+                        {message.userName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                ) : !isOwn ? (
+                  <div className="w-8 h-8 mr-2"></div> // Espacio para mantener alineación
+                ) : null}
+
+                <div className="flex flex-col max-w-[80%]">
+                  {/* Mostrar nombre solo en el primer mensaje del grupo para otros usuarios */}
+                  {showName && (
+                    <span className="text-xs text-gray-400 mb-1 ml-3">
+                      {message.userName}
+                    </span>
                   )}
+
+                  <div
+                    className={`px-4 py-2 shadow-md ${isOwn
+                        ? 'bg-blue-600 text-white'
+                        : message.type === 'panic'
+                          ? 'bg-red-700 text-white border border-red-600'
+                          : 'bg-gray-700 text-gray-100'
+                      } ${getBorderRadiusClass(isOwn, isFirstInGroup, isLastInGroup)
+                      }`}
+                  >
+                    {message.type === 'panic' ? (
+                      <>
+                        <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
+                        <br />
+                        <span className="text-sm">
+                          {message.metadata?.address || 'Ubicación GPS exacta no disponible'}
+                        </span>
+                        <br />
+                        <span className="text-xs text-gray-300 mt-1 block">
+                          {formatTime(message.timestamp)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm leading-tight block">
+                          {message.message}
+                        </span>
+                        <span className={`text-xs text-gray-300 mt-1 block ${isOwn ? 'text-right' : 'text-left'}`}>
+                          {formatTime(message.timestamp)}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             </div>
@@ -400,7 +461,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* #endregion */}
 
       {/* #region Message Input */}
-      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-3 flex items-end space-x-2">
+      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex items-end space-x-2">
         <textarea
           ref={textareaRef}
           value={newMessage}
@@ -414,14 +475,14 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           }}
           onKeyPress={handleKeyPress}
           placeholder="Escribe un mensaje..."
-          className="flex-1 p-3 bg-gray-800 rounded-lg text-white resize-none max-h-32 scrollbar-hide outline-none"
+          className="flex-1 p-2 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm max-h-10"
         />
         <button
           onClick={handleSendMessage}
           disabled={!newMessage.trim() || isSending}
-          className="p-3 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
+          className="p-2.5 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
         >
-          <FiSend className="w-5 h-5" />
+          <FiSend className="w-4 h-4" />
         </button>
       </div>
       {/* #endregion */}
@@ -454,8 +515,18 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {chat?.participants.map((participant) => (
                 <div key={participant._id} className="flex items-center space-x-3 bg-gray-800/50 p-3 rounded-lg border border-gray-700/50">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-                    {participant.name.charAt(0).toUpperCase()}
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                    {participant.profileImage ? (
+                      <LazyImage
+                        src={participant.profileImage}
+                        alt={`${participant.name}'s profile`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                        {participant.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-white font-medium">{participant.name} {participant.surname}</p>

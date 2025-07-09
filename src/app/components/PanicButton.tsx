@@ -238,106 +238,255 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
           whileTap={{ scale: 0.95 }}
           animate={{
             borderRadius: ['20%', '30%', '24%'],
+            boxShadow: [
+              '0 0 25px rgba(251, 146, 60, 0.4), 0 0 50px rgba(251, 146, 60, 0.2)',
+              '0 0 35px rgba(251, 146, 60, 0.6), 0 0 70px rgba(251, 146, 60, 0.3)',
+              '0 0 25px rgba(251, 146, 60, 0.4), 0 0 50px rgba(251, 146, 60, 0.2)'
+            ],
             ...(panicState === 'alerting' && {
-              scale: [1, 1.05, 1],
-              transition: { duration: 1, repeat: Infinity }
+              scale: [1, 1.1, 1],
+              boxShadow: [
+                '0 0 40px rgba(239, 68, 68, 0.6), 0 0 80px rgba(239, 68, 68, 0.4)',
+                '0 0 60px rgba(239, 68, 68, 0.8), 0 0 120px rgba(239, 68, 68, 0.6)',
+                '0 0 40px rgba(239, 68, 68, 0.6), 0 0 80px rgba(239, 68, 68, 0.4)'
+              ],
+              transition: { duration: 0.8, repeat: Infinity }
             })
           }}
           transition={{ duration: 2, repeat: Infinity, repeatType: 'mirror' }}
         >
           <motion.button
             onClick={handlePanicClick}
-            whileHover={{ scale: 1.02 }}
-            className={`relative w-20 h-20 text-gray-800 flex items-center justify-center transition-all duration-300 group ${
+            whileHover={{
+              scale: 1.05,
+              boxShadow: panicState === 'alerting'
+                ? '0 0 60px rgba(239, 68, 68, 0.8), 0 0 120px rgba(239, 68, 68, 0.6)'
+                : '0 0 40px rgba(251, 146, 60, 0.6), 0 0 80px rgba(251, 146, 60, 0.4)'
+            }}
+            className={`relative w-24 h-24 text-gray-800 flex items-center justify-center transition-all duration-300 group overflow-hidden ${
               panicState === 'alerting' ? 'animate-pulse' : ''
             }`}
             style={{
               background: panicState === 'alerting'
-                ? 'rgba(239, 68, 68, 0.1)'
-                : 'rgba(255, 255, 255, 0.03)',
-              backdropFilter: 'blur(20px)',
-              border: panicState === 'alerting'
-                ? '1px solid rgba(239, 68, 68, 0.2)'
-                : '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: panicState === 'alerting'
                 ? `
-                  inset 0 0 10px rgba(239,68,68,0.1),
-                  0 0 30px rgba(239,68,68,0.15),
-                  0 8px 32px rgba(239, 68, 68, 0.1),
-                  0 4px 16px rgba(0, 0, 0, 0.06),
-                  0 2px 8px rgba(0, 0, 0, 0.04)
+                  radial-gradient(circle at 30% 30%, rgba(239, 68, 68, 0.3) 0%, transparent 50%),
+                  linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
+                  rgba(20, 20, 20, 0.9)
                 `
                 : `
-                  inset 0 0 10px rgba(255,255,255,0.04),
-                  0 0 30px rgba(255,255,255,0.02),
-                  0 8px 32px rgba(0, 0, 0, 0.08),
-                  0 44px 16px rgba(0, 0, 0, 0.06),
-                  0 2px 8px rgba(0, 0, 0, 0.04)
+                  radial-gradient(circle at 30% 30%, rgba(251, 146, 60, 0.2) 0%, transparent 50%),
+                  linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
+                  rgba(20, 20, 20, 0.8)
+                `,
+              backdropFilter: 'blur(20px)',
+              border: panicState === 'alerting'
+                ? '2px solid rgba(239, 68, 68, 0.5)'
+                : '2px solid rgba(251, 146, 60, 0.4)',
+              boxShadow: panicState === 'alerting'
+                ? `
+                  inset 0 0 20px rgba(239, 68, 68, 0.2),
+                  0 0 40px rgba(239, 68, 68, 0.4),
+                  0 8px 32px rgba(0, 0, 0, 0.3),
+                  0 4px 16px rgba(0, 0, 0, 0.2)
+                `
+                : `
+                  inset 0 0 20px rgba(251, 146, 60, 0.15),
+                  0 0 30px rgba(251, 146, 60, 0.3),
+                  0 8px 32px rgba(0, 0, 0, 0.3),
+                  0 4px 16px rgba(0, 0, 0, 0.2)
                 `,
               borderRadius: '30px'
             }}
           >
-            {/* Icono principal */}
-            <div className={`${getButtonColor()} group-hover:scale-110 transition-all duration-200`}>
-              {getIcon()}
-            </div>
+            {/* Efecto de pulso de fondo */}
+            <motion.div
+              className={`absolute inset-0 rounded-[28px] ${
+                panicState === 'alerting'
+                  ? 'bg-gradient-to-r from-red-500/30 to-red-600/30'
+                  : 'bg-gradient-to-r from-orange-500/20 to-orange-600/20'
+              }`}
+              animate={{
+                opacity: panicState === 'alerting' ? [0.4, 0.8, 0.4] : [0.3, 0.6, 0.3],
+                scale: panicState === 'alerting' ? [1, 1.05, 1] : [1, 1.02, 1]
+              }}
+              transition={{
+                duration: panicState === 'alerting' ? 1 : 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
 
-            {/* Efecto de brillo */}
+            {/* Icono principal con animación dramática */}
+            <motion.div
+              className={`relative z-10 ${getButtonColor()} group-hover:scale-110 transition-all duration-200`}
+              animate={panicState === 'alerting' ? {
+                scale: [1, 1.2, 1],
+                rotate: [0, 5, -5, 0]
+              } : {
+                scale: [1, 1.05, 1],
+                rotate: [0, 2, -2, 0]
+              }}
+              transition={{
+                duration: panicState === 'alerting' ? 0.6 : 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <div className="relative">
+                {getIcon()}
+                {/* Efecto de glow en el icono */}
+                <div
+                  className="absolute inset-0 blur-sm"
+                  style={{
+                    background: panicState === 'alerting'
+                      ? 'radial-gradient(circle, rgba(239, 68, 68, 0.6) 0%, transparent 70%)'
+                      : 'radial-gradient(circle, rgba(251, 146, 60, 0.4) 0%, transparent 70%)'
+                  }}
+                />
+              </div>
+            </motion.div>
+
+            {/* Ondas de impacto para estado de alerta */}
+            {panicState === 'alerting' && (
+              <motion.div className="absolute inset-0 pointer-events-none">
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute inset-0 border-2 border-red-400/30 rounded-full"
+                    initial={{ scale: 0.8, opacity: 0.8 }}
+                    animate={{
+                      scale: [0.8, 2.5],
+                      opacity: [0.8, 0]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: i * 0.6,
+                      ease: "easeOut"
+                    }}
+                  />
+                ))}
+              </motion.div>
+            )}
+
+            {/* Partículas de emergencia */}
+            {panicState === 'normal' && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+              >
+                {[...Array(8)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-1 h-1 bg-orange-400 rounded-full"
+                    style={{
+                      left: `${15 + (i * 8)}%`,
+                      top: `${15 + (i * 7)}%`,
+                    }}
+                    animate={{
+                      y: [-8, -16, -8],
+                      opacity: [0.4, 0.9, 0.4],
+                      scale: [0.5, 1.2, 0.5]
+                    }}
+                    transition={{
+                      duration: 1.5 + (i * 0.1),
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                      ease: "easeInOut"
+                    }}
+                  />
+                ))}
+              </motion.div>
+            )}
+
+            {/* Efecto de brillo mejorado */}
             <div
-              className="absolute inset-0 bg-gradient-to-tr from-white/3 to-transparent opacity-40"
+              className="absolute inset-0 bg-gradient-to-tr from-white/15 to-transparent opacity-60"
               style={{ borderRadius: '24px' }}
             />
 
-            {/* Reflejo superior */}
+            {/* Reflejo superior más pronunciado */}
             <div
-              className="absolute top-1 left-1 right-1 h-1/3 bg-gradient-to-b from-white/8 to-transparent"
+              className="absolute top-1 left-1 right-1 h-1/2 bg-gradient-to-b from-white/25 to-transparent"
               style={{ borderRadius: '20px 20px 8px 8px' }}
             />
 
             {/* Sombra interior */}
             <div
-              className="absolute inset-[2px] bg-gradient-to-b from-transparent via-transparent to-black/2"
+              className="absolute inset-[2px] bg-gradient-to-b from-transparent via-transparent to-black/15"
               style={{ borderRadius: '22px' }}
             />
 
-            {/* Texto "Pánico" flotante */}
+            {/* Texto "Pánico" con efecto de glow */}
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.3 }}
-              className="absolute bottom-2 text-xs font-semibold text-orange-500"
+              className={`absolute bottom-2 text-sm font-bold drop-shadow-lg ${
+                panicState === 'alerting' ? 'text-red-300' : 'text-orange-300'
+              }`}
+              style={{
+                textShadow: panicState === 'alerting'
+                  ? '0 0 15px rgba(239, 68, 68, 0.8)'
+                  : '0 0 10px rgba(251, 146, 60, 0.6)'
+              }}
             >
-              Pánico
+              {panicState === 'alerting' ? '¡ALERTA!' : 'Pánico'}
             </motion.p>
+
+            {/* Borde animado */}
+            <motion.div
+              className={`absolute inset-0 rounded-[28px] border-2 ${
+                panicState === 'alerting' ? 'border-red-400/60' : 'border-orange-400/50'
+              }`}
+              animate={{
+                borderColor: panicState === 'alerting' ? [
+                  'rgba(239, 68, 68, 0.4)',
+                  'rgba(239, 68, 68, 0.8)',
+                  'rgba(239, 68, 68, 0.4)'
+                ] : [
+                  'rgba(251, 146, 60, 0.3)',
+                  'rgba(251, 146, 60, 0.6)',
+                  'rgba(251, 146, 60, 0.3)'
+                ]
+              }}
+              transition={{
+                duration: panicState === 'alerting' ? 1 : 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
           </motion.button>
         </motion.div>
 
-        {/* Tooltip */}
+        {/* Tooltip mejorado */}
         {showTooltip && panicState === 'normal' && (
           <motion.div
             initial={{ opacity: 0, x: 10, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 10, scale: 0.9 }}
             transition={{ delay: 1, duration: 0.3 }}
-            className="absolute right-16 top-1/2 transform -translate-y-1/2 text-white px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap"
+            className="absolute right-20 top-1/2 transform -translate-y-1/2 text-white px-5 py-3 rounded-xl text-sm font-medium whitespace-nowrap"
             style={{
-              background: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(15px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(251, 146, 60, 0.4)',
               boxShadow: `
-                inset 0 0 5px rgba(0,255,255,0.05),
-                0 0 20px rgba(0,0,0,0.3),
-                0 8px 25px rgba(0,0,0,0.2),
-                0 4px 12px rgba(0,0,0,0.15)
+                inset 0 0 10px rgba(251, 146, 60, 0.1),
+                0 0 25px rgba(0, 0, 0, 0.5),
+                0 8px 30px rgba(0, 0, 0, 0.3),
+                0 4px 15px rgba(0, 0, 0, 0.2)
               `
             }}
           >
-            Botón de pánico
+            <span className="text-orange-300 font-semibold">⚠️ Botón de pánico</span>
             <div
-              className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-2 h-2 rotate-45"
+              className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-3 h-3 rotate-45"
               style={{
-                background: 'rgba(0, 0, 0, 0.8)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
+                border: '1px solid rgba(251, 146, 60, 0.4)',
                 borderLeft: 'none',
                 borderTop: 'none'
               }}
@@ -346,14 +495,14 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
         )}
       </motion.div>
 
-      {/* Modal de confirmación */}
+      {/* Modal de confirmación mejorado */}
       <AnimatePresence>
         {panicState === 'confirming' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4"
             onClick={handleCancel}
           >
             <motion.div
@@ -361,35 +510,66 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="bg-gray-900/95 backdrop-blur-md border border-gray-700/50 rounded-2xl p-6 max-w-sm w-full mx-4"
+              className="relative overflow-hidden rounded-2xl p-6 max-w-sm w-full mx-4"
+              style={{
+                background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '2px solid rgba(251, 146, 60, 0.3)',
+                boxShadow: `
+                  inset 0 0 20px rgba(251, 146, 60, 0.1),
+                  0 0 40px rgba(0, 0, 0, 0.5),
+                  0 8px 50px rgba(0, 0, 0, 0.4)
+                `
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertTriangle className="w-8 h-8 text-orange-500" />
-                </div>
+              {/* Efecto de brillo de fondo */}
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-50" />
 
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  Alerta de Pánico
+              <div className="relative text-center">
+                <motion.div
+                  className="w-20 h-20 bg-gradient-to-br from-orange-500/30 to-orange-600/30 rounded-full flex items-center justify-center mx-auto mb-4 relative overflow-hidden"
+                  animate={{
+                    boxShadow: [
+                      '0 0 20px rgba(251, 146, 60, 0.3)',
+                      '0 0 40px rgba(251, 146, 60, 0.5)',
+                      '0 0 20px rgba(251, 146, 60, 0.3)'
+                    ]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <AlertTriangle className="w-10 h-10 text-orange-400 drop-shadow-lg" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent rounded-full" />
+                </motion.div>
+
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  ⚠️ Alerta de Pánico
                 </h3>
 
-                <p className="text-gray-300 text-sm mb-6">
-                  ¿Confirmás la alerta para tu barrio? Se notificará a todos los vecinos conectados.
+                <p className="text-gray-300 text-sm mb-6 leading-relaxed">
+                  ¿Confirmás la alerta para tu barrio? Se notificará a todos los vecinos conectados de manera <span className="text-orange-400 font-semibold">inmediata</span>.
                 </p>
 
                 <div className="flex space-x-3">
                   <button
                     onClick={handleCancel}
-                    className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+                    className="flex-1 px-4 py-3 bg-gray-700/80 hover:bg-gray-600/80 text-white rounded-xl font-medium transition-all duration-200 backdrop-blur-sm border border-gray-600/50"
                   >
                     Cancelar
                   </button>
-                  <button
+                  <motion.button
                     onClick={handleConfirm}
-                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-4 py-3 text-white rounded-xl font-bold transition-all duration-200 relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)',
+                      boxShadow: '0 0 20px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+                    }}
                   >
-                    Sí, alertar
-                  </button>
+                    <span className="relative z-10">🚨 Sí, alertar</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200" />
+                  </motion.button>
                 </div>
               </div>
             </motion.div>

@@ -9,7 +9,8 @@ export async function middleware(request: NextRequest) {
   const isPublicApiRoute = request.nextUrl.pathname.startsWith('/api/auth') ||
     request.nextUrl.pathname === '/api/register' ||
     request.nextUrl.pathname === '/api/user/onboarding' ||
-    request.nextUrl.pathname === '/api/neighborhoods';
+    request.nextUrl.pathname === '/api/neighborhoods' ||
+    request.nextUrl.pathname.startsWith('/api/geocode');
 
   // Permitir acceso a rutas públicas
   if (isPublicApiRoute || isAuthPage || isOnboardingPage) {

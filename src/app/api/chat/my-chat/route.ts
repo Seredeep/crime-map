@@ -47,8 +47,10 @@ export async function GET(request: NextRequest) {
       participants: userChat.participants.map(p => ({
         id: p._id,
         name: p.name,
+        surname: p.surname,
         email: p.email,
-        neighborhood: p.neighborhood
+        neighborhood: p.neighborhood,
+        profileImage: p.profileImage || null
       })),
       lastMessage: userChat.lastMessage || null,
       lastMessageAt: userChat.lastMessageAt || null,

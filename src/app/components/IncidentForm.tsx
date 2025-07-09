@@ -128,47 +128,45 @@ export default function IncidentForm() {
       formDataToSend.append('time', formData.time);
       formDataToSend.append('date', formData.date);
 
-      // Add text fields
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('address', formData.address);
-      formDataToSend.append('time', formData.time);
-      formDataToSend.append('date', formData.date);
       formDataToSend.append('location', JSON.stringify(formData.location));
 
-      // Add tags
-      formData.tags.forEach(tag => formDataToSend.append('tags[]', tag));
+      formData.tags.forEach(tag => {
+        formDataToSend.append('tags[]', tag);
+      });
 
-      // Add evidence files
-      formData.evidence.forEach(file => formDataToSend.append('evidence', file));
+      formData.evidence.forEach((file) => {
+        formDataToSend.append(`evidence`, file);
+      });
 
       const response = await fetch('/api/incidents', {
         method: 'POST',
         body: formDataToSend,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSubmitMessage({
-          type: 'success',
-          message: 'Incidente reportado exitosamente'
-        });
-        setFormData({
-          description: '',
-          address: '',
-          time: '',
-          date: DateTime.now().toFormat('yyyy-MM-dd'),
-          evidence: [],
-          location: null,
-          tags: [],
-        });
-      } else {
-        throw new Error(data.message || 'Error al reportar el incidente');
+      if (!response.ok) {
+        throw new Error('Error al enviar el incidente');
       }
+
+      setFormData({
+        description: '',
+        address: '',
+        time: '',
+        date: DateTime.now().toFormat('yyyy-MM-dd'),
+        evidence: [],
+        location: null,
+        tags: [],
+      });
+
+      setSubmitMessage({
+        type: 'success',
+        message: 'Incidente reportado correctamente'
+      });
+
     } catch (error) {
+      console.error('Error al enviar el incidente:', error);
       setSubmitMessage({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Error al reportar el incidente'
+        message: 'No se pudo enviar el incidente. Por favor, inténtalo de nuevo.'
       });
     } finally {
       setIsSubmitting(false);
@@ -190,23 +188,22 @@ export default function IncidentForm() {
         </div>
       )}
 
-      <div className="flex flex-col space-y-6 md:flex-row md:space-x-6 md:space-y-0">
-        <div className="w-full md:w-1/2">
-          <div className="w-full md:w-auto" style={{ height: '200px', maxHeight: 250, minHeight: 180 }}>
-            <Map
-              markerPosition={
-                formData.location
-                  ? [formData.location.coordinates[1], formData.location.coordinates[0]]
-                  : undefined
-              }
-              onMarkerPositionChange={handleMapMarkerChange}
-              draggable={true}
-              setMarkerOnClick={true}
-              mode="form"
-            />
-          </div>
+      <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
+        <div className="md:w-1/2 w-full">
+          <Map
+            markerPosition={
+              formData.location
+                ? [formData.location.coordinates[1], formData.location.coordinates[0]]
+                : undefined
+            }
+            onMarkerPositionChange={handleMapMarkerChange}
+            draggable={true}
+            setMarkerOnClick={true}
+            mode="form"
+          />
         </div>
-        <div className="w-full md:w-1/2 space-y-4">
+
+        <div className="md:w-1/2 w-full space-y-4">
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1">
               Descripción
