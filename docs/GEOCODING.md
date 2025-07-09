@@ -64,7 +64,7 @@ const handleSearch = async (address: string) => {
     const response = await geocodeAddress(address);
     const firstResult = response.features[0];
     const [longitude, latitude] = firstResult.geometry.coordinates;
-    
+
     console.log(`Coordinates: ${latitude}, ${longitude}`);
   } catch (error) {
     console.error('Geocoding error:', error);
@@ -83,7 +83,7 @@ const handleReverseGeocode = async (latitude: number, longitude: number) => {
   try {
     const response = await reverseGeocode(latitude, longitude);
     const firstResult = response.features[0];
-    
+
     console.log(`Address: ${firstResult.properties.label}`);
   } catch (error) {
     console.error('Reverse geocoding error:', error);
@@ -144,4 +144,4 @@ Both endpoints return geocoding results in GeoJSON format with properties like n
 
 ## Limiting Results to Mar Del Plata
 
-The API has been configured with a bounding box around Mar Del Plata to prioritize local results. This improves search accuracy for local streets and landmarks. 
+The API has been configured with a bounding box around Mar Del Plata to prioritize local results. This improves search accuracy for local streets and landmarks.
