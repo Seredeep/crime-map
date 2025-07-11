@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { IncidentFilters, StatisticsResults } from '@/lib/types';
-import { fetchStatistics } from '@/lib/incidentService';
+import { fetchStatistics } from '@/lib/services/incidents/incidentService';
+import { IncidentFilters, StatisticsResults } from '@/lib/types/global';
+import { useEffect, useState } from 'react';
 import {
-  LineChart,
-  Line,
-  BarChart,
   Bar,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from 'recharts';
 
 // StatisticsResults is imported from @/lib/types
@@ -43,7 +43,7 @@ export default function IncidentStatistics({ filters, viewType = 'general' }: In
       } catch (err) {
         console.error('Error loading statistics:', err);
         let errorMessage = 'No se pudieron cargar las estadísticas';
-        
+
         // Try to get detailed error information
         if (err instanceof Error) {
           try {
@@ -59,7 +59,7 @@ export default function IncidentStatistics({ filters, viewType = 'general' }: In
             errorMessage = err.message;
           }
         }
-        
+
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -334,7 +334,7 @@ export default function IncidentStatistics({ filters, viewType = 'general' }: In
           <div className="p-4 bg-gray-800/50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-400 mb-1">Hora más frecuente</h4>
             <p className="text-2xl font-semibold text-blue-400">
-              {stats.hourDistribution ? 
+              {stats.hourDistribution ?
               `${stats.hourDistribution.hours[
                 stats.hourDistribution.counts.indexOf(Math.max(...stats.hourDistribution.counts))
               ]}:00` : '00:00'}
@@ -343,7 +343,7 @@ export default function IncidentStatistics({ filters, viewType = 'general' }: In
           <div className="p-4 bg-gray-800/50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-400 mb-1">Tipo más común</h4>
             <p className="text-2xl font-semibold text-blue-400">
-              {stats.tag ? 
+              {stats.tag ?
               stats.tag.tags[
                 stats.tag.counts.indexOf(Math.max(...stats.tag.counts))
               ] : 'N/A'}

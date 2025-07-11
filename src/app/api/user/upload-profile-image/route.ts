@@ -1,6 +1,6 @@
-import { firestore } from '@/lib/firebase';
-import clientPromise from '@/lib/mongodb';
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { firestore } from '@/lib/config/db/firebase';
+import clientPromise from '@/lib/config/db/mongodb';
+import { createSupabaseServerClient } from '@/lib/config/db/supabaseServer';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';

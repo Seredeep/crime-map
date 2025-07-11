@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
-import { FiList } from 'react-icons/fi';
 
 interface MobileDynamicNavbarProps {
   activeTab: string;

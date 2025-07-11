@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
-import { reverseGeocode } from '@/lib/geocoding';
-import { Incident } from '@/lib/types';
-import { Neighborhood } from '@/lib/neighborhoodService';
+import { reverseGeocode } from '@/lib/services/geo';
+import { updateIncident } from '@/lib/services/incidents/incidentService';
+import { Neighborhood } from '@/lib/services/neighborhoods';
+import { Incident } from '@/lib/types/global';
 import { useSession } from 'next-auth/react';
-import { updateIncident } from '@/lib/incidentService';
+import dynamic from 'next/dynamic';
+import { useState } from 'react';
 
 interface MapProps {
   markerPosition?: [number, number];
@@ -58,7 +58,7 @@ export default function Map({
   const handleMarkerChange = async (position: [number, number]) => {
     // Update last geocoded position
     setLastGeocodedPosition(position);
-    
+
     // Si estamos editando un incidente, actualizar su ubicación
     if (editingIncident) {
       try {
@@ -73,7 +73,7 @@ export default function Map({
           },
           address: newAddress || editingIncident.address // Si no se puede obtener la dirección, mantener la anterior
         });
-        
+
         // Actualizar el incidente en el estado local
         if (onIncidentUpdate) {
           onIncidentUpdate(updatedIncident);
@@ -84,10 +84,10 @@ export default function Map({
       }
       return;
     }
-    
+
     // Only geocode if the position has changed
-    if (!lastGeocodedPosition || 
-        lastGeocodedPosition[0] !== position[0] || 
+    if (!lastGeocodedPosition ||
+        lastGeocodedPosition[0] !== position[0] ||
         lastGeocodedPosition[1] !== position[1]) {
       try {
         const result = await reverseGeocode(position[0], position[1]);
@@ -121,7 +121,7 @@ export default function Map({
       // Si es un nuevo incidente, activar la edición
       setEditingIncident(incident);
     }
-    
+
     if (onIncidentSelect) {
       onIncidentSelect(incident);
     }
@@ -136,16 +136,16 @@ export default function Map({
 
   return (
     <div className="rounded-lg overflow-hidden shadow-lg">
-      <MapComponentWithNoSSR 
-        markerPosition={markerPosition && Array.isArray(markerPosition) && 
-          typeof markerPosition[0] === 'number' && 
-          typeof markerPosition[1] === 'number' ? 
+      <MapComponentWithNoSSR
+        markerPosition={markerPosition && Array.isArray(markerPosition) &&
+          typeof markerPosition[0] === 'number' &&
+          typeof markerPosition[1] === 'number' ?
           markerPosition : undefined}
-        incidents={incidents.filter(incident => 
-          incident.location && 
-          incident.location.coordinates && 
+        incidents={incidents.filter(incident =>
+          incident.location &&
+          incident.location.coordinates &&
           Array.isArray(incident.location.coordinates) &&
-          typeof incident.location.coordinates[0] === 'number' && 
+          typeof incident.location.coordinates[0] === 'number' &&
           typeof incident.location.coordinates[1] === 'number'
         )}
         onMarkerPositionChange={handleMarkerChange}
@@ -162,4 +162,4 @@ export default function Map({
       />
     </div>
   );
-} 
+}

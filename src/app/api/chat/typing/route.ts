@@ -1,4 +1,4 @@
-import { firestore } from '@/lib/firebase';
+import { firestore } from '@/lib/config/db/firebase';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {

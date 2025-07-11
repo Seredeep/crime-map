@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import { ReactNode, createContext, useContext, useState } from 'react';
 
 interface ImageModalContextType {
   openModal: (imageUrl: string) => void;

@@ -2,9 +2,9 @@
 
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { simpleChatCache } from '../chatCache';
-import { OnlineUser, TypingUser, chatServiceOptimized } from '../chatServiceOptimized';
-import { Message } from '../types';
+import { simpleChatCache } from '../services/chat/chatCache';
+import { OnlineUser, TypingUser, chatServiceOptimized } from '../services/chat/chatServiceOptimized';
+import { Message } from '../services/chat/types';
 
 export function useChatOptimized() {
   const { data: session } = useSession();

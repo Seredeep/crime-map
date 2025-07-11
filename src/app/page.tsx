@@ -10,7 +10,7 @@ import MobileBottomTabs from './components/MobileBottomTabs';
 import MobileCommunitiesView from './components/MobileCommunitiesView';
 import MobileDynamicNavbar from './components/MobileDynamicNavbar';
 import MobileProfileView from './components/MobileProfileView';
-import MobileReportForm from './components/MobileReportForm';
+import MobileReportView from './components/MobileReportView';
 import MobileSettingsPanel from './components/MobileSettingsPanel';
 import MobileStatsView from './components/MobileStatsView';
 import Sidebar from './components/Sidebar';
@@ -73,7 +73,7 @@ export default function Home() {
     }
   }, [status, session]);
 
-    // Escuchar evento para abrir chat del barrio (desde desktop)
+  // Escuchar evento para abrir chat del barrio (desde desktop)
   useEffect(() => {
     const handleOpenNeighborhoodChat = () => {
       setActiveTab('communities');
@@ -315,48 +315,23 @@ export default function Home() {
                   <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-12 bg-gray-600 rounded-r-full cursor-grab active:cursor-grabbing" />
 
                   {/* Header del panel */}
-                  <div className="sticky top-0 bg-gray-900/95 backdrop-blur-lg border-b border-gray-700/50 px-4 py-4 z-20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                  <div className="sticky top-0 bg-gray-900/95 border-b border-gray-700/10 backdrop-blur-lg px-3 py-1 z-20">
+                      <div className="flex items-center space-x-2">
                         <motion.button
                           onClick={handleCloseReportForm}
                           whileTap={{ scale: 0.95 }}
-                          className="p-2 rounded-full bg-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
+                          className="p-4 rounded-full bg-transparent text-gray-400 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
                         >
                           <FiArrowLeft className="w-5 h-5" />
                         </motion.button>
-                        <div className="p-2 bg-blue-500/20 rounded-lg">
-                          <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-white">Reportar Incidente</h2>
-                          <p className="text-sm text-gray-400">Completa la información del incidente</p>
-                        </div>
+                        <h1 className="text-lg font-semibold font-manrope text-white">Reportar Incidente</h1>
+
                       </div>
-                      <motion.button
-                        onClick={handleCloseReportForm}
-                        whileTap={{ scale: 0.95 }}
-                        className="p-2 rounded-full bg-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-600/50 transition-all duration-200"
-                      >
-                        <FiX className="w-5 h-5" />
-                      </motion.button>
-                    </div>
                   </div>
 
                   {/* Contenido del formulario */}
-                  <div className="flex-1 px-4 py-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
-                    <div
-                      className="bg-gray-800/50 rounded-2xl p-4 border border-gray-700/30"
-                      style={{
-                        background: 'rgba(31, 41, 55, 0.5)',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      <MobileReportForm />
-                    </div>
+                  <div className="flex-1 px-4 overflow-y-auto" style={{ maxHeight: '100vh' }}>
+                    <MobileReportView onBack={handleCloseReportForm} />
                   </div>
                 </motion.div>
               </>

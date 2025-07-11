@@ -1,6 +1,6 @@
 import { getDefaultRole } from "@/lib/config/roles";
-import { firestore } from "@/lib/firebase";
-import clientPromise from "@/lib/mongodb";
+import { firestore } from "@/lib/config/db/firebase";
+import clientPromise from "@/lib/config/db/mongodb";
 import { hashPassword } from "@/lib/utils";
 import { NextResponse } from "next/server";
 

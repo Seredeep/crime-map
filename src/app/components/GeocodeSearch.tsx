@@ -1,7 +1,8 @@
 'use client';
 
-import { GeocodingResult, geocodeAddress } from '@/lib/geocoding';
+import { GeocodingResult } from '@/lib/services/geo';
 import React, { useCallback, useEffect, useState } from 'react';
+import { FiSearch } from 'react-icons/fi';
 
 interface GeocodeSearchProps {
   onLocationSelect?: (result: GeocodingResult) => void;
@@ -13,7 +14,7 @@ interface GeocodeSearchProps {
 
 export default function GeocodeSearch({
   onLocationSelect,
-  placeholder = 'Search for an address or place...',
+  placeholder = 'Buscar dirección o lugar...',
   className = '',
   selectedAddress,
   selectedCoordinates,
@@ -25,70 +26,92 @@ export default function GeocodeSearch({
   const [showResults, setShowResults] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
+  // Cache for place details to avoid repeated API calls
+  const [placeDetailsCache, setPlaceDetailsCache] = useState<Map<string, GeocodingResult>>(new Map());
+
   // Use useEffect to mark component as mounted on the client side
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Add debounce to reduce API calls
+  // Generate session token for Google Places API cost optimization
+  const generateSessionToken = () => {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  const [sessionToken, setSessionToken] = useState(() => generateSessionToken());
+
+  // Manual search function - only called when button is clicked
   const handleSearch = useCallback(async () => {
-    if (!query.trim() || query.trim().length < 3) return;
+    if (!query.trim() || query.trim().length < 2) {
+      setError('Ingresa al menos 2 caracteres para buscar');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await geocodeAddress(query);
-      setResults(response.features || []);
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}&sessiontoken=${sessionToken}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch geocoding results');
+      }
+
+      const data = await response.json();
+      setResults(data.features || []);
       setShowResults(true);
     } catch (err) {
-      setError('Error searching for location. Please try again.');
+      setError('Error buscando ubicación. Intenta nuevamente.');
       console.error('Geocoding error:', err);
       setResults([]);
     } finally {
       setIsLoading(false);
     }
-  }, [query]);
-
-  // Then in your useEffect
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (query.trim().length >= 3) {
-        handleSearch();
-      } else if (query.trim().length === 0) {
-        setResults([]);
-        setShowResults(false);
-      }
-    }, 1500);
-
-    return () => clearTimeout(debounceTimer);
-  }, [query, handleSearch]);
+  }, [query, sessionToken]);
 
   const handleSelectResult = async (result: GeocodingResult) => {
-    // If the result doesn't have coordinates (which can happen with Places API),
-    // we need to get the full details first
+    // If the result doesn't have coordinates, fetch the full details
     if (result.geometry.coordinates[0] === 0 && result.geometry.coordinates[1] === 0) {
       try {
         setIsLoading(true);
-        // Fetch details for the selected place
-        const response = await fetch('/api/geocode', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ placeId: result.properties.id }),
-        });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch place details');
-        }
+        // Check cache first
+        const cachedResult = placeDetailsCache.get(result.properties.id);
+        if (cachedResult) {
+          result = cachedResult;
+        } else {
+          // Fetch details with session token
+          const response = await fetch('/api/geocode', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              placeId: result.properties.id,
+              sessiontoken: sessionToken
+            }),
+          });
 
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          result = data.features[0];
+          if (!response.ok) {
+            throw new Error('Failed to fetch place details');
+          }
+
+          const data = await response.json();
+          if (data.features && data.features.length > 0) {
+            result = data.features[0];
+
+            // Cache the result
+            setPlaceDetailsCache(prev => {
+              const newCache = new Map(prev);
+              newCache.set(result.properties.id, result);
+              return newCache;
+            });
+          }
         }
       } catch (err) {
         console.error('Error fetching place details:', err);
+        setError('Error obteniendo detalles de ubicación. Intenta nuevamente.');
       } finally {
         setIsLoading(false);
       }
@@ -98,26 +121,43 @@ export default function GeocodeSearch({
       onLocationSelect(result);
     }
 
-    // Clear results after selection
+    // Clear results after selection and generate new session token for next session
     setResults([]);
     setQuery('');
     setShowResults(false);
+    setSessionToken(generateSessionToken());
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
+    // Clear previous results when typing
+    if (showResults) {
+      setShowResults(false);
+      setResults([]);
+    }
+    // Clear error when user starts typing
+    if (error) {
+      setError(null);
+    }
   };
 
-  // If not mounted yet, render a placeholder with same dimensions to avoid layout shift
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
+    }
+  };
+
+  // If not mounted yet, render a placeholder
   if (!isMounted) {
     return (
       <div className={`geocode-search ${className || ''}`}>
         <div className="flex">
-          <div className="flex-grow px-4 py-2 border border-gray-300 rounded-l-md text-black opacity-0">
+          <div className="flex-grow px-4 py-3 bg-gray-700 border border-gray-600 rounded-l-xl opacity-50">
             {placeholder}
           </div>
-          <div className="px-4 py-2 bg-blue-500 text-white rounded-r-md opacity-0">
-            Search
+          <div className="px-4 py-3 bg-blue-500 text-white rounded-r-xl opacity-50">
+            <FiSearch className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -131,45 +171,67 @@ export default function GeocodeSearch({
           type="text"
           value={query}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="flex-grow px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 text-white placeholder-white/50 transition-all"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleSearch();
-            }
-          }}
+          className="flex-grow px-4 py-3 bg-gray-700 border border-gray-600 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400 transition-all"
         />
         <button
           type="button"
-          onClick={() => handleSearch()}
-          className="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-r-xl hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all disabled:opacity-50"
-          disabled={isLoading}
+          onClick={handleSearch}
+          className="px-4 py-3 bg-blue-500 text-white rounded-r-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading || !query.trim()}
         >
-          {isLoading ? '🔍' : '🔍'}
+          {isLoading ? (
+            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+          ) : (
+            <FiSearch className="w-5 h-5" />
+          )}
         </button>
       </div>
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
-
-      {showResults && results.length > 0 && (
-        <ul className="mt-2 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar">
-          {results.map((result) => (
-            <li
-              key={result.properties.gid}
-              className="p-3 hover:bg-white/20 cursor-pointer border-b border-white/10 last:border-b-0 text-white transition-all"
-              onClick={() => handleSelectResult(result)}
-            >
-              <p className="font-medium text-white">{result.properties.name}</p>
-              <p className="text-sm text-white/70">{result.properties.label}</p>
-            </li>
-          ))}
-        </ul>
+      {error && (
+        <div className="mt-2 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
+          <p className="text-red-300 text-sm">{error}</p>
+        </div>
       )}
 
-      {/* Display selected address from either search or map interaction */}
+      {showResults && results.length > 0 && (
+        <div className="mt-2 bg-gray-800 border border-gray-600 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+          {results.map((result) => (
+            <div
+              key={result.properties.gid}
+              className="p-3 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0 text-white transition-all"
+              onClick={() => handleSelectResult(result)}
+            >
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 mt-1">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-white truncate">
+                    {result.properties.main_text || result.properties.name}
+                  </p>
+                  <p className="text-sm text-gray-300 truncate">
+                    {result.properties.secondary_text || result.properties.locality || result.properties.label}
+                  </p>
+                  {result.properties.housenumber && (
+                    <p className="text-xs text-blue-300 mt-1">
+                      📍 Número {result.properties.housenumber}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Display selected address */}
       {selectedAddress && (
-        <div className="mt-3 p-4 backdrop-blur-sm bg-green-500/20 border border-green-400/30 rounded-xl text-white">
+        <div className="mt-3 p-4 bg-green-500/20 border border-green-400/30 rounded-xl text-white">
           <div className="flex items-start">
             <div className="flex-shrink-0 mt-0.5">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">

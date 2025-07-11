@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { Incident } from '@/lib/types/global';
+import { useMemo } from 'react';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
 } from 'recharts';
-import { Incident } from '@/lib/types';
 
 interface IncidentChartsProps {
   incidents: Incident[];
@@ -136,4 +136,4 @@ export default function IncidentCharts({ incidents }: IncidentChartsProps) {
       </div>
     </div>
   );
-} 
+}

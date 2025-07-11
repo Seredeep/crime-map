@@ -1,5 +1,5 @@
+import clientPromise from "@/lib/config/db/mongodb";
 import { getDefaultRole, Role } from "@/lib/config/roles";
-import clientPromise from "@/lib/mongodb";
 import { verifyPassword } from "@/lib/utils";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { ObjectId } from "mongodb";

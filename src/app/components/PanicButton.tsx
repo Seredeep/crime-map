@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { formatAddress, reverseGeocode } from '../../lib/geocoding';
+import { formatAddress, reverseGeocode } from '@/lib/services/geo/geocoding';
 
 interface PanicButtonProps {
   isVisible?: boolean;

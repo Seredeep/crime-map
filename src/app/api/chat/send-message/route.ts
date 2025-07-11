@@ -1,5 +1,5 @@
-import { sendMessageToFirestore } from '@/lib/firestoreChatService';
-import clientPromise from '@/lib/mongodb';
+import clientPromise from '@/lib/config/db/mongodb';
+import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 

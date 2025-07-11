@@ -1,6 +1,6 @@
 'use client';
 
-import { GeocodingResult } from '@/lib/geocoding';
+import { GeocodingResult } from '@/lib/services/geo';
 import { DateTime } from 'luxon';
 import { ChangeEvent, useEffect, useState } from 'react';
 import GeocodeSearch from './GeocodeSearch';

@@ -1,5 +1,5 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
-import { getUserChatFromFirestore } from '@/lib/firestoreChatService';
+import { getUserChatFromFirestore } from '@/lib/services/chat/firestoreChatService';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 

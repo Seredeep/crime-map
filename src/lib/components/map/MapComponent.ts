@@ -1,4 +1,4 @@
-import { Incident } from "./types";
+import { Incident } from "../../types/global";
 
 export interface MapComponentProps {
   // Single marker position [lat, lng] for form mode

@@ -1,25 +1,7 @@
 import * as admin from 'firebase-admin';
-import { firestore } from './firebase';
-import { ChatWithParticipants, LastChatMessage, User } from './types';
-
-export interface FirestoreMessage {
-  id?: string;
-  message: string;
-  timestamp: any; // Firestore Timestamp
-  type: 'normal' | 'panic';
-  userId: string;
-  userName: string;
-  metadata?: any;
-}
-
-export interface FirestoreChat {
-  neighborhood: string;
-  participants: string[];
-  lastMessageAt?: any; // Firestore Timestamp
-  lastMessage?: LastChatMessage;
-  createdAt?: any; // Firestore Timestamp
-  updatedAt?: any; // Firestore Timestamp
-}
+import { firestore } from '../../config/db/firebase';
+import { User } from '../../types/global';
+import { FirestoreChat, FirestoreMessage, ChatWithParticipants} from './types';
 
 /**
  * Obtiene el chat de un usuario desde Firestore

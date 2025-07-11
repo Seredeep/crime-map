@@ -5,8 +5,94 @@ import { NextRequest, NextResponse } from 'next/server';
 // Google Geocoding API configuration
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const GOOGLE_GEOCODING_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
-const GOOGLE_PLACES_AUTOCOMPLETE_URL = 'https://maps.googleapis.com/maps/api/place/autocomplete/json';
-const GOOGLE_PLACES_DETAILS_URL = 'https://maps.googleapis.com/maps/api/place/details/json';
+const GOOGLE_PLACES_AUTOCOMPLETE_URL = 'https://places.googleapis.com/v1/places:autocomplete';
+const GOOGLE_PLACES_DETAILS_URL = 'https://places.googleapis.com/v1/places';
+
+// Mar del Plata coordinates for location biasing
+const MAR_DEL_PLATA_LOCATION = {
+  lat: -38.0055,
+  lng: -57.5426
+};
+
+// Types for Google Places API (New)
+interface GooglePlacesAutocompleteRequest {
+  input: string;
+  sessionToken?: string;
+  languageCode?: string;
+  regionCode?: string;
+  locationBias?: {
+    circle?: {
+      center: {
+        latitude: number;
+        longitude: number;
+      };
+      radius: number;
+    };
+    rectangle?: {
+      low: {
+        latitude: number;
+        longitude: number;
+      };
+      high: {
+        latitude: number;
+        longitude: number;
+      };
+    };
+  };
+  includedPrimaryTypes?: string[];
+  includedRegionCodes?: string[];
+  inputOffset?: number;
+}
+
+interface GooglePlacesAutocompleteSuggestion {
+  placePrediction: {
+    place: string;
+    placeId: string;
+    text: {
+      text: string;
+      matches: Array<{
+        startOffset?: number;
+        endOffset: number;
+      }>;
+    };
+    structuredFormat: {
+      mainText: {
+        text: string;
+        matches: Array<{
+          startOffset?: number;
+          endOffset: number;
+        }>;
+      };
+      secondaryText?: {
+        text: string;
+      };
+    };
+    types: string[];
+  };
+}
+
+interface GooglePlacesAutocompleteResponse {
+  suggestions: GooglePlacesAutocompleteSuggestion[];
+}
+
+// Types for Google Places Details API (New)
+interface GooglePlaceDetailsResponse {
+  id: string;
+  displayName: {
+    text: string;
+    languageCode: string;
+  };
+  formattedAddress: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  addressComponents: Array<{
+    longText: string;
+    shortText: string;
+    types: string[];
+  }>;
+}
 
 /**
  * Interface for Google Geocoding API result
@@ -162,17 +248,31 @@ function googleToGeoJSON(data: { results: GoogleGeocodingResult[] }) {
 }
 
 /**
- * Converts Google Places Autocomplete results to GeoJSON format
+ * Converts Google Places Autocomplete (New) results to GeoJSON format
  */
-function googlePlacesToGeoJSON(predictions: GooglePlacesAutocompleteResult[]) {
-  if (!predictions || predictions.length === 0) {
+function googlePlacesToGeoJSON(suggestions: GooglePlacesAutocompleteSuggestion[]) {
+  if (!suggestions || suggestions.length === 0) {
     return {
       type: "FeatureCollection",
       features: []
     };
   }
 
-  const features = predictions.map(item => {
+  const features = suggestions.map(suggestion => {
+    const prediction = suggestion.placePrediction;
+
+    // Extract structured information from the prediction
+    const mainText = prediction.structuredFormat.mainText.text;
+    const secondaryText = prediction.structuredFormat.secondaryText?.text || '';
+
+    // Try to extract street number and name from main text
+    const streetMatch = mainText.match(/^(\d+)\s+(.+)$/);
+    const streetNumber = streetMatch ? streetMatch[1] : undefined;
+    const streetName = streetMatch ? streetMatch[2] : mainText;
+
+    // Extract locality from secondary text (usually contains neighborhood, city)
+    const localityMatch = secondaryText ? secondaryText.split(',')[0].trim() : undefined;
+
     // Since autocomplete doesn't provide coordinates, we'll need to fetch details
     // separately or use a placeholder until selection
     return {
@@ -182,13 +282,21 @@ function googlePlacesToGeoJSON(predictions: GooglePlacesAutocompleteResult[]) {
         coordinates: [0, 0] // Placeholder coordinates
       },
       properties: {
-        id: item.place_id,
-        gid: item.place_id,
-        layer: "search_result",
-        source: "google",
-        name: item.structured_formatting.main_text,
+        id: prediction.placeId,
+        gid: prediction.placeId,
+        layer: "address",
+        source: "google_places_new",
+        name: mainText,
+        housenumber: streetNumber,
+        street: streetName,
+        locality: localityMatch,
         confidence: 1,
-        label: item.description
+        label: prediction.text.text,
+        // Additional properties for better UX
+        main_text: mainText,
+        secondary_text: secondaryText,
+        structured_formatting: prediction.structuredFormat,
+        types: prediction.types
       }
     };
   });
@@ -201,9 +309,9 @@ function googlePlacesToGeoJSON(predictions: GooglePlacesAutocompleteResult[]) {
       attribution: "Data © Google",
       query: {},
       engine: {
-        name: "Google Places API",
+        name: "Google Places Autocomplete API (New)",
         author: "Google",
-        version: "1.0"
+        version: "2.0"
       },
       timestamp: Date.now()
     }
@@ -240,15 +348,17 @@ function calculateBBox(features: GeoJSONFeature[]) {
 }
 
 /**
- * Geocodes an address using Google Geocoding API
+ * Route handler for geocoding
  * @route GET /api/geocode
  * @param {string} q - The address or location query
+ * @param {string} sessiontoken - Optional session token for Google Places API
  * @returns {Object} Geocoding results with coordinates
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q');
+    const sessiontoken = searchParams.get('sessiontoken');
 
     if (!query) {
       return NextResponse.json(
@@ -264,38 +374,96 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // First, try to get autocomplete suggestions
-    const autocompleteUrl = new URL(GOOGLE_PLACES_AUTOCOMPLETE_URL);
-    autocompleteUrl.searchParams.append('input', query);
-    autocompleteUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+    // First, try to get autocomplete suggestions with enhanced parameters using Places API (New)
+    const autocompleteRequestBody: GooglePlacesAutocompleteRequest = {
+      input: query,
+      languageCode: 'es',
+      regionCode: 'ar',
+      includedRegionCodes: ['ar'],
+      includedPrimaryTypes: ['street_address', 'route', 'premise', 'subpremise'],
+      locationBias: {
+        circle: {
+          center: {
+            latitude: MAR_DEL_PLATA_LOCATION.lat,
+            longitude: MAR_DEL_PLATA_LOCATION.lng
+          },
+          radius: 50000 // 50km radius
+        }
+      },
+      inputOffset: query.length
+    };
 
-    console.log(`Google Places Autocomplete request for query: "${query}"`);
+    // Add session token if provided (for cost optimization)
+    if (sessiontoken) {
+      autocompleteRequestBody.sessionToken = sessiontoken;
+    }
 
-    const autocompleteResponse = await fetch(autocompleteUrl.toString(), {
-      method: 'GET',
+    console.log(`Google Places Autocomplete (New) request for query: "${query}" with enhanced parameters`);
+
+    const autocompleteResponse = await fetch(GOOGLE_PLACES_AUTOCOMPLETE_URL, {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json'
-      }
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+        'X-Goog-FieldMask': 'suggestions.placePrediction.place,suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types'
+      },
+      body: JSON.stringify(autocompleteRequestBody)
     });
 
     if (!autocompleteResponse.ok) {
-      console.error('Google Places API error:', autocompleteResponse.statusText);
+      const errorText = await autocompleteResponse.text();
+      console.error('Google Places API (New) error:', errorText);
       return NextResponse.json(
         { error: 'Failed to fetch autocomplete suggestions' },
         { status: autocompleteResponse.status }
       );
     }
 
-    const autocompleteData = await autocompleteResponse.json();
-    console.log('Autocomplete response:', JSON.stringify(autocompleteData, null, 2));
+    const autocompleteData: GooglePlacesAutocompleteResponse = await autocompleteResponse.json();
+    console.log('Autocomplete (New) response:', JSON.stringify(autocompleteData, null, 2));
 
-    // If we have autocomplete results, return those
-    if (autocompleteData.predictions && autocompleteData.predictions.length > 0) {
-      console.log(`Found ${autocompleteData.predictions.length} autocomplete predictions`);
-      const geoJsonResponse = googlePlacesToGeoJSON(autocompleteData.predictions);
+    // If we have autocomplete results, return those with enhanced formatting
+    if (autocompleteData.suggestions && autocompleteData.suggestions.length > 0) {
+      console.log(`Found ${autocompleteData.suggestions.length} autocomplete predictions`);
+      const geoJsonResponse = googlePlacesToGeoJSON(autocompleteData.suggestions);
       return NextResponse.json(geoJsonResponse);
-    } else {
-      console.log('No autocomplete predictions found, trying geocoding...');
+    }
+
+    // If no autocomplete results, try a broader search without location restriction
+    if (!autocompleteData.suggestions || autocompleteData.suggestions.length === 0) {
+      console.log('No results with location bias, trying broader search...');
+
+      const broaderRequestBody: GooglePlacesAutocompleteRequest = {
+        input: `${query}, Mar del Plata, Argentina`,
+        languageCode: 'es',
+        regionCode: 'ar',
+        includedRegionCodes: ['ar'],
+        includedPrimaryTypes: ['street_address', 'route', 'premise', 'subpremise'],
+        inputOffset: query.length
+      };
+
+      if (sessiontoken) {
+        broaderRequestBody.sessionToken = sessiontoken;
+      }
+
+      const broaderResponse = await fetch(GOOGLE_PLACES_AUTOCOMPLETE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+          'X-Goog-FieldMask': 'suggestions.placePrediction.place,suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types'
+        },
+        body: JSON.stringify(broaderRequestBody)
+      });
+
+      if (broaderResponse.ok) {
+        const broaderData: GooglePlacesAutocompleteResponse = await broaderResponse.json();
+        if (broaderData.suggestions && broaderData.suggestions.length > 0) {
+          console.log(`Found ${broaderData.suggestions.length} broader autocomplete predictions`);
+          const geoJsonResponse = googlePlacesToGeoJSON(broaderData.suggestions);
+          return NextResponse.json(geoJsonResponse);
+        }
+      }
     }
 
     // If no autocomplete results, fall back to geocoding
@@ -499,7 +667,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { lat, lon, placeId } = body;
+    const { lat, lon, placeId, sessiontoken } = body;
 
     if (!GOOGLE_MAPS_API_KEY) {
       return NextResponse.json(
@@ -508,42 +676,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If we have a placeId, get the details
+    // If we have a placeId, get the details using Places API (New)
     if (placeId) {
-      const detailsUrl = new URL(GOOGLE_PLACES_DETAILS_URL);
-      detailsUrl.searchParams.append('place_id', placeId);
-      detailsUrl.searchParams.append('fields', 'geometry,formatted_address,name,address_component');
-      detailsUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+      const detailsUrl = `${GOOGLE_PLACES_DETAILS_URL}/${placeId}`;
 
-      console.log(`Google Places Details request for place ID: "${placeId}"`);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+        'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,addressComponents'
+      };
 
-      const detailsResponse = await fetch(detailsUrl.toString(), {
+      // Add session token if provided
+      if (sessiontoken) {
+        headers['X-Goog-Session-Token'] = sessiontoken;
+      }
+
+      console.log(`Google Places Details (New) request for place ID: "${placeId}"`);
+
+      const detailsResponse = await fetch(detailsUrl, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
+        headers
       });
 
       if (!detailsResponse.ok) {
-        console.error('Google Places API error:', detailsResponse.statusText);
+        const errorText = await detailsResponse.text();
+        console.error('Google Places API (New) error:', errorText);
         return NextResponse.json(
           { error: 'Failed to fetch place details' },
           { status: detailsResponse.status }
         );
       }
 
-      const detailsData = await detailsResponse.json();
+      const detailsData: GooglePlaceDetailsResponse = await detailsResponse.json();
 
-      if (detailsData.result) {
-        // Convert place details to GeoJSON format
+      if (detailsData.id) {
+        // Convert place details to legacy format for compatibility
         const result = {
           results: [
             {
-              place_id: placeId,
-              formatted_address: detailsData.result.formatted_address,
-              geometry: detailsData.result.geometry,
-              address_components: detailsData.result.address_components,
-              types: detailsData.result.types || ['place']
+              place_id: detailsData.id,
+              formatted_address: detailsData.formattedAddress,
+              geometry: {
+                location: {
+                  lat: detailsData.location.latitude,
+                  lng: detailsData.location.longitude
+                },
+                location_type: "ROOFTOP",
+                viewport: {
+                  northeast: {
+                    lat: detailsData.location.latitude + 0.001,
+                    lng: detailsData.location.longitude + 0.001
+                  },
+                  southwest: {
+                    lat: detailsData.location.latitude - 0.001,
+                    lng: detailsData.location.longitude - 0.001
+                  }
+                }
+              },
+              address_components: detailsData.addressComponents.map(component => ({
+                long_name: component.longText,
+                short_name: component.shortText,
+                types: component.types
+              })),
+              types: ['place']
             }
           ]
         };

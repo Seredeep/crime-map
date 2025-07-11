@@ -1,6 +1,6 @@
-import { firestore } from '@/lib/firebase'; // Importar firestore para obtener usuarios
-import { getChatMessagesFromFirestore } from '@/lib/firestoreChatService';
-import clientPromise from '@/lib/mongodb';
+import { firestore } from '@/lib/config/db/firebase'; // Importar firestore para obtener usuarios
+import clientPromise from '@/lib/config/db/mongodb';
+import { getChatMessagesFromFirestore } from '@/lib/services/chat/firestoreChatService';
 import admin from 'firebase-admin'; // Importar admin
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';

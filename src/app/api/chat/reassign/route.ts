@@ -1,6 +1,6 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
-import { assignUserToNeighborhood } from '@/lib/chatService';
-import { firestore } from '@/lib/firebase';
+import { firestore } from '@/lib/config/db/firebase';
+import { assignUserToNeighborhood } from '@/lib/services/chat/chatService';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 

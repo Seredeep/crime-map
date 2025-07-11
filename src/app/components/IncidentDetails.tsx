@@ -1,8 +1,8 @@
 'use client';
-import { useImageModal } from '@/lib/ImageModalContext';
-import { updateIncident } from '@/lib/incidentService';
-import supabase from '@/lib/supabase';
-import { Incident } from '@/lib/types';
+import supabase from '@/lib/config/db/supabase';
+import { useImageModal } from '@/lib/contexts';
+import { updateIncident } from '@/lib/services/incidents/incidentService';
+import { Incident } from '@/lib/types/global';
 import { formatDate, formatTime } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';

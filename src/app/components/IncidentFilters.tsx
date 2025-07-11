@@ -1,17 +1,17 @@
 'use client';
 
-import { Neighborhood, fetchNeighborhoods } from '@/lib/neighborhoodService';
-import { IncidentFilters as FiltersType } from '@/lib/types';
+import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
+import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Calendar,
-    CheckCircle,
-    Clock,
-    Clock3,
-    List,
-    MapPin,
-    Tags,
-    Trash2
+  Calendar,
+  CheckCircle,
+  Clock,
+  Clock3,
+  List,
+  MapPin,
+  Tags,
+  Trash2
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';

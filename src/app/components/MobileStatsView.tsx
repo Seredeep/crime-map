@@ -1,7 +1,7 @@
 'use client';
 
-import { fetchIncidents } from '@/lib/incidentService';
-import { Incident } from '@/lib/types';
+import { fetchIncidents } from '@/lib/services/incidents/incidentService';
+import { Incident } from '@/lib/types/global';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';

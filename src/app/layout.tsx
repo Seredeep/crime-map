@@ -2,7 +2,7 @@
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { ImageModalProvider } from "../lib/ImageModalContext";
+import { ImageModalProvider } from "../lib/contexts";
 import AppWrapper from "./components/AppWrapper";
 import GlobalPanicButton from "./components/GlobalPanicButton";
 import ImageModal from "./components/ImageModal";
@@ -32,7 +32,6 @@ export const metadata: Metadata = {
   description:
     "Claridad es una aplicación de seguridad vecinal que te permite reportar delitos, activar alertas comunitarias en tiempo real y consultar un mapa de incidentes en tu zona. Pensado para fortalecer la red entre vecinos.",
   manifest: "/manifest.json",
-  themeColor: "#111827",
 
   // #region SEO Keywords
   keywords: [

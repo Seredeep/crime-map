@@ -1,6 +1,6 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
+import clientPromise from '@/lib/config/db/mongodb';
 import { ROLES, Role, hasRequiredRole } from '@/lib/config/roles';
-import clientPromise from '@/lib/mongodb';
 import { createClient } from '@supabase/supabase-js';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';

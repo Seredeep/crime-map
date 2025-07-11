@@ -1,6 +1,7 @@
-import { firestore } from './firebase';
+import { firestore } from '../../config/db/firebase';
+import { User } from '../../types/global';
+import { ChatWithParticipants } from './types';
 import { addParticipantToChatInFirestore, chatExistsInFirestore, createChatInFirestore, getChatParticipantsFromFirestore, getUserChatFromFirestore, updateUserChatIdInFirestore } from './firestoreChatService';
-import { ChatWithParticipants, User } from './types';
 
 /**
  * Asigna un neighborhood a un usuario y lo agrega al chat correspondiente

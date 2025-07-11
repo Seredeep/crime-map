@@ -1,18 +1,6 @@
+import { firestore } from '../../config/db/firebase'; // Import Firestore
 import { simpleChatCache as intelligentChatCache } from './chatCache';
-import { firestore } from './firebase'; // Import Firestore
-import { ChatData, Message } from './types';
-
-interface TypingUser {
-  userId: string;
-  userName: string;
-  timestamp: number;
-}
-
-interface OnlineUser {
-  userId: string;
-  userName: string;
-  lastSeen: number;
-}
+import { ChatData, Message, OnlineUser, TypingUser } from './types';
 
 class ChatServiceOptimized {
   private chatId: string | null = null;

@@ -1,7 +1,6 @@
 'use client';
-import React from 'react';
+import { useImageModal } from '@/lib/contexts';
 import Image from 'next/image';
-import { useImageModal } from '../../lib/ImageModalContext';
 
 export default function ImageModal() {
   const { isOpen, closeModal, currentImage } = useImageModal();

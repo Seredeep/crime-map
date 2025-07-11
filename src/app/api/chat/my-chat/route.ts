@@ -1,5 +1,5 @@
-import { getUserChatById } from '@/lib/chatService';
-import { firestore } from '@/lib/firebase';
+import { firestore } from '@/lib/config/db/firebase';
+import { getUserChatById } from '@/lib/services/chat/chatService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 

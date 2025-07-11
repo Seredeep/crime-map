@@ -1,7 +1,6 @@
+import clientPromise from '@/lib/config/db/mongodb';
+import { Incident } from '@/lib/types/global';
 import { NextRequest, NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
-import { Incident } from '@/lib/types';
-import { Neighborhood } from '@/lib/neighborhoodService';
 
 type StatType = 'day' | 'week' | 'month' | 'weekday-distribution' | 'hour-distribution' | 'rate' | 'tag' | 'heat-map-density';
 
@@ -185,8 +184,9 @@ export async function GET(request: NextRequest) {
       switch (stat) {
         case 'day':
           const dailyStats = new Map<string, number>();
-          incidents.forEach((incident: Incident) => {
-            const date = incident.date;
+          incidents.forEach((incident) => {
+            const incidentData = incident as unknown as Incident;
+            const date = incidentData.date;
             dailyStats.set(date, (dailyStats.get(date) || 0) + 1);
           });
           results.day = {
@@ -198,8 +198,9 @@ export async function GET(request: NextRequest) {
 
         case 'week':
           const weeklyStats = new Map<string, number>();
-          incidents.forEach((incident: Incident) => {
-            const date = new Date(incident.date);
+          incidents.forEach((incident) => {
+            const incidentData = incident as unknown as Incident;
+            const date = new Date(incidentData.date);
             const weekStart = new Date(date);
             weekStart.setDate(date.getDate() - date.getDay());
             const weekKey = weekStart.toISOString().split('T')[0];
@@ -214,8 +215,9 @@ export async function GET(request: NextRequest) {
 
         case 'month':
           const monthlyStats = new Map<string, number>();
-          incidents.forEach((incident: Incident) => {
-            const date = new Date(incident.date);
+          incidents.forEach((incident) => {
+            const incidentData = incident as unknown as Incident;
+            const date = new Date(incidentData.date);
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             monthlyStats.set(monthKey, (monthlyStats.get(monthKey) || 0) + 1);
           });
@@ -227,8 +229,9 @@ export async function GET(request: NextRequest) {
 
         case 'weekday-distribution':
           const weekdayStats = new Array(7).fill(0);
-          incidents.forEach((incident: Incident) => {
-            const date = new Date(incident.date);
+          incidents.forEach((incident) => {
+            const incidentData = incident as unknown as Incident;
+            const date = new Date(incidentData.date);
             weekdayStats[date.getDay()]++;
           });
           results.weekdayDistribution = {
@@ -239,8 +242,9 @@ export async function GET(request: NextRequest) {
 
         case 'hour-distribution':
           const hourStats = new Array(24).fill(0);
-          incidents.forEach((incident: Incident) => {
-            const time = incident.time.split(':')[0];
+          incidents.forEach((incident) => {
+            const incidentData = incident as unknown as Incident;
+            const time = incidentData.time.split(':')[0];
             hourStats[parseInt(time)]++;
           });
           results.hourDistribution = {
@@ -251,8 +255,9 @@ export async function GET(request: NextRequest) {
 
         case 'tag':
           const tagStats = new Map<string, number>();
-          incidents.forEach((incident: Incident) => {
-            incident.tags?.forEach(tag => {
+          incidents.forEach((incident) => {
+            const incidentData = incident as unknown as Incident;
+            incidentData.tags?.forEach(tag => {
               tagStats.set(tag, (tagStats.get(tag) || 0) + 1);
             });
           });

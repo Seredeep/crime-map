@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatWithParticipants } from '@/lib/types';
+import { ChatWithParticipants } from '@/lib/services/chat/types';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';

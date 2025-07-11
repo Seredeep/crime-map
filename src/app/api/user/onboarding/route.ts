@@ -1,11 +1,11 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/auth.config";
-import { firestore } from "@/lib/firebase";
+import { firestore } from "@/lib/config/db/firebase";
+import clientPromise from '@/lib/config/db/mongodb';
 import {
-    addParticipantToChatInFirestore,
-    chatExistsInFirestore,
-    createChatInFirestore
-} from '@/lib/firestoreChatService';
-import clientPromise from '@/lib/mongodb';
+  addParticipantToChatInFirestore,
+  chatExistsInFirestore,
+  createChatInFirestore
+} from '@/lib/services/chat/firestoreChatService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 

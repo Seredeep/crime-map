@@ -1,30 +1,7 @@
 'use client';
 
-import { Incident } from './types';
-
-interface EvidenceFile {
-  name: string;
-  type: string;
-  size: number;
-  path: string;
-  url?: string;
-}
-
-export interface IncidentFilters {
-  neighborhoodId?: string;
-  date?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  time?: string;
-  timeFrom?: string;
-  timeTo?: string;
-  status?: string;
-  tags?: string[];
-  location?: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
-}
+import { Incident } from '../../types/global';
+import { IncidentFilters } from './types';
 
 export interface StatisticsResults {
   day?: {
@@ -69,42 +46,42 @@ export interface StatisticsResults {
 export async function fetchIncidents(filters?: IncidentFilters): Promise<Incident[]> {
   try {
     let url = '/api/incidents';
-    
+
     if (filters) {
       const params = new URLSearchParams();
-      
+
       if (filters.neighborhoodId) {
         params.append('neighborhoodId', filters.neighborhoodId);
       }
-      
+
       if (filters.dateFrom) {
         params.append('dateFrom', filters.dateFrom);
       }
-      
+
       if (filters.dateTo) {
         params.append('dateTo', filters.dateTo);
       }
-      
+
       if (filters.date) {
         params.append('date', filters.date);
       }
-      
+
       if (filters.timeFrom) {
         params.append('timeFrom', filters.timeFrom);
       }
-      
+
       if (filters.timeTo) {
         params.append('timeTo', filters.timeTo);
       }
-      
+
       if (filters.time) {
         params.append('time', filters.time);
       }
-      
+
       if (filters.status) {
         params.append('status', filters.status);
       }
-      
+
       if (filters.tags && filters.tags.length > 0) {
         filters.tags.forEach(tag => params.append('tag', tag));
       }
@@ -112,19 +89,19 @@ export async function fetchIncidents(filters?: IncidentFilters): Promise<Inciden
       if (filters.location) {
         params.append('location', JSON.stringify(filters.location));
       }
-      
+
       const queryString = params.toString();
       if (queryString) {
         url = `${url}?${queryString}`;
       }
     }
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    
+
     const data = await response.json();
     return data as Incident[];
   } catch (error) {
@@ -147,7 +124,7 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
       const today = new Date();
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(today.getDate() - 30);
-      
+
       params.append('dateFrom', thirtyDaysAgo.toISOString().split('T')[0]);
       params.append('dateTo', today.toISOString().split('T')[0]);
     } else {
@@ -178,19 +155,19 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
       'hour-distribution',
       'tag'
     ];
-    
+
     // Only include heat-map-density if we have a neighborhoodId
     if (filters?.neighborhoodId) {
       stats.push('heat-map-density');
     }
-    
+
     stats.push('rate');
     params.append('stats', stats.join(','));
 
     url = `${url}?${params.toString()}`;
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(JSON.stringify(errorData));
@@ -215,7 +192,7 @@ export async function fetchIncidentById(id: string): Promise<Incident | null> {
     }
 
     const incident = await response.json();
-    
+
     // No need to process URLs as they should now be provided directly from the API
     return incident;
   } catch (error) {
@@ -249,7 +226,7 @@ export async function updateIncident(incidentId: string, updates: Partial<Incide
     if (!data.success || !data.incident) {
       throw new Error('Error al actualizar el incidente: respuesta inválida del servidor');
     }
-    
+
     return data.incident as Incident;
   } catch (error) {
     console.error('Error updating incident:', error);

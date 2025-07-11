@@ -1,5 +1,5 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
-import { firestore } from '@/lib/firebase';
+import { firestore } from '@/lib/config/db/firebase';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 

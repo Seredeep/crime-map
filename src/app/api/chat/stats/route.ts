@@ -1,5 +1,5 @@
-import { firestore } from '@/lib/firebase';
-import clientPromise from '@/lib/mongodb';
+import { firestore } from '@/lib/config/db/firebase';
+import clientPromise from '@/lib/config/db/mongodb';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authOptions } from '../../auth/[...nextauth]/auth.config';

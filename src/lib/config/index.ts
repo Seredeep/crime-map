@@ -1,0 +1,36 @@
+/**
+ * CONFIGURACIÓN DEL SISTEMA
+ * =========================
+ *
+ * Punto de entrada principal para toda la configuración del sistema.
+ * Exporta todas las constantes, configuraciones y reglas de validación
+ * de forma organizada y centralizada.
+ */
+
+// #region Exportaciones de Configuración de Aplicación
+export {
+    API_ENDPOINTS, APP_CONFIG, DATE_FORMATS, INCIDENT_SEVERITY, INCIDENT_STATUS, MAP_CONFIG, TIME_RANGES, UPLOAD_CONFIG, USER_ROLES
+} from './app';
+export type { UserRole } from './app';
+// #endregion
+
+// #region Exportaciones de Configuración de UI
+export {
+    CAROUSEL_CONFIG,
+    GRID_CONFIG, INCIDENT_COLORS, MESSAGES, TIME_CONFIG
+} from './ui';
+// #endregion
+
+// #region Exportaciones de Configuración de Validación
+export {
+    COMMON_TAGS, FORM_LIMITS, VALIDATION_RULES
+} from './validation';
+// #endregion
+
+// #region Exportaciones de Roles (para compatibilidad)
+export {
+    REQUIRED_ROLES, ROLES,
+    ROLE_PERMISSIONS, getDefaultRole, hasPermission, hasRequiredRole
+} from './roles';
+export type { Role } from './roles';
+// #endregion

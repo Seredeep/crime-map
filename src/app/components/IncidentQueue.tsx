@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Incident } from '@/lib/types';
-import { fetchIncidents } from '@/lib/incidentService';
+import { COMMON_TAGS } from '@/lib/config';
+import { fetchIncidents } from '@/lib/services/incidents/incidentService';
+import { Incident } from '@/lib/types/global';
 import { formatDate, formatTime, timeAgo } from '@/lib/utils';
-import { COMMON_TAGS } from '@/lib/constants';
+import { useEffect, useState } from 'react';
 
 interface IncidentQueueProps {
   onIncidentSelect?: (incident: Incident) => void;
@@ -61,7 +61,7 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           incidentId: selectedIncident._id,
           status: pendingStatus,
           reason: reason.trim() || undefined
@@ -74,8 +74,8 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
       }
 
       // Update the local state
-      setIncidents(incidents.map(incident => 
-        incident._id === selectedIncident._id 
+      setIncidents(incidents.map(incident =>
+        incident._id === selectedIncident._id
           ? { ...incident, status: pendingStatus }
           : incident
       ));
@@ -232,4 +232,4 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
       )}
     </div>
   );
-} 
+}

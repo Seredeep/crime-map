@@ -1,5 +1,3 @@
-// lib/geocoding.ts
-
 /**
  * Geocoding utilities for interacting with the Google Geocoding API
  */
@@ -27,6 +25,17 @@ export interface GeocodingResult {
     country?: string;
     confidence: number;
     label: string;
+    // Additional properties for Google Places structured formatting
+    main_text?: string;
+    secondary_text?: string;
+    structured_formatting?: {
+      main_text: string;
+      main_text_matched_substrings: {
+        offset: number;
+        length: number;
+      }[];
+      secondary_text: string;
+    };
   };
 }
 
@@ -57,12 +66,12 @@ export interface GeocodingResponse {
  */
 export async function geocodeAddress(query: string): Promise<GeocodingResponse> {
   const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
- 
+
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(`Geocoding failed: ${errorData.error || response.statusText}`);
   }
- 
+
   return response.json();
 }
 
@@ -80,12 +89,12 @@ export async function reverseGeocode(lat: number, lon: number): Promise<Geocodin
     },
     body: JSON.stringify({ lat, lon }),
   });
- 
+
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(`Reverse geocoding failed: ${errorData.error || response.statusText}`);
   }
- 
+
   return response.json();
 }
 
@@ -98,28 +107,28 @@ export function formatAddress(result: GeocodingResult): string {
   if (result.properties.label) {
     return result.properties.label;
   }
- 
+
   const parts = [];
- 
+
   if (result.properties.housenumber) {
     parts.push(result.properties.housenumber);
   }
- 
+
   if (result.properties.street) {
     parts.push(result.properties.street);
   }
- 
+
   if (result.properties.locality) {
     parts.push(result.properties.locality);
   }
- 
+
   if (result.properties.region) {
     parts.push(result.properties.region);
   }
- 
+
   if (result.properties.country) {
     parts.push(result.properties.country);
   }
- 
+
   return parts.join(', ');
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { Neighborhood } from '@/lib/services/neighborhoods';
+import { IncidentFilters } from '@/lib/types/global';
+import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { FiX, FiFilter } from 'react-icons/fi';
+import { FiFilter, FiX } from 'react-icons/fi';
 import IncidentFiltersComponent from './IncidentFilters';
-import { IncidentFilters } from '@/lib/types';
-import { Neighborhood } from '@/lib/neighborhoodService';
 
 interface MobileSlidePanelProps {
   isOpen: boolean;

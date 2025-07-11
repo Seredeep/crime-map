@@ -1,8 +1,8 @@
 'use client';
 
-import { fetchIncidents } from '@/lib/incidentService';
-import { Neighborhood } from '@/lib/neighborhoodService';
-import { Incident, IncidentFilters } from '@/lib/types';
+import { Neighborhood } from '@/lib/services/neighborhoods/neighborhoodService';
+import { fetchIncidents } from '@/lib/services/incidents/incidentService';
+import { Incident, IncidentFilters } from '@/lib/types/global';
 import { formatDate } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';

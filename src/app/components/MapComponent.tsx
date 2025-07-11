@@ -8,10 +8,10 @@ import { GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, u
 // #endregion
 
 // #region Internal Services & Types
-import { reverseGeocode } from '@/lib/geocoding';
-import { updateIncident } from '@/lib/incidentService';
-import { Neighborhood } from '@/lib/neighborhoodService';
-import { Incident } from '@/lib/types';
+import { reverseGeocode } from '@/lib/services/geo';
+import { updateIncident } from '@/lib/services/incidents/incidentService';
+import { Neighborhood } from '@/lib/services/neighborhoods';
+import { Incident } from '@/lib/types/global';
 // #endregion
 
 // #region Leaflet Configuration

@@ -1,7 +1,7 @@
 'use client';
 
 // #region Imports
-import { LastChatMessage } from '@/lib/types';
+import { LastChatMessage } from '@/lib/services/chat/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
