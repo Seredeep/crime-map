@@ -8,12 +8,16 @@ const __dirname = dirname(__filename);
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // NO usar output: 'export' para compatibilidad con rutas API
   eslint: {
     ignoreDuringBuilds: true, // Temporalmente desactivamos ESLint durante el build
   },
   images: {
     domains: ['eplgvickazxsrlohrpan.supabase.co', 'maps.googleapis.com'],
+    unoptimized: true, // Requerido para export estático
   },
+  // Configuración para export estático (requerido por Capacitor)
+  trailingSlash: true,
   // Configuración para solucionar problemas de cache en Windows
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,

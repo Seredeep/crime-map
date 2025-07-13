@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ImageModalProvider } from "../lib/contexts";
 import AppWrapper from "./components/AppWrapper";
+import CapacitorProvider from "./components/CapacitorProvider";
 import GlobalPanicButton from "./components/GlobalPanicButton";
 import ImageModal from "./components/ImageModal";
 import Navbar from "./components/Navbar";
@@ -138,27 +139,30 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased min-h-full`}
         suppressHydrationWarning
       >
-        {/* Session Management */}
-        <SessionProvider>
-          <SessionRefresh />
+        {/* Capacitor Provider - Inicializa plugins nativos */}
+        <CapacitorProvider>
+          {/* Session Management */}
+          <SessionProvider>
+            <SessionRefresh />
 
-          {/* #region Image Modal Context */}
-          <ImageModalProvider>
-            {/* App Wrapper with Loading Screen */}
-            <AppWrapper
-              navbar={<Navbar />}
-              globalComponents={
-                <>
-                  <ImageModal />
-                  <GlobalPanicButton />
-                </>
-              }
-            >
-              {children}
-            </AppWrapper>
-          </ImageModalProvider>
-          {/* #endregion */}
-        </SessionProvider>
+            {/* #region Image Modal Context */}
+            <ImageModalProvider>
+              {/* App Wrapper with Loading Screen */}
+              <AppWrapper
+                navbar={<Navbar />}
+                globalComponents={
+                  <>
+                    <ImageModal />
+                    <GlobalPanicButton />
+                  </>
+                }
+              >
+                {children}
+              </AppWrapper>
+            </ImageModalProvider>
+            {/* #endregion */}
+          </SessionProvider>
+        </CapacitorProvider>
 
         {/* Analytics */}
         <Analytics />

@@ -1,24 +1,74 @@
 {
-  "name": "Crime Map",
-  "short_name": "CrimeMap",
-  "description": "Interactive crime map application to report and track local incidents",
+  "name": "Claridad - Seguridad Vecinal",
+  "short_name": "Claridad",
+  "description": "Aplicación de seguridad vecinal que te permite reportar delitos, activar alertas comunitarias en tiempo real y consultar un mapa de incidentes en tu zona.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#111827",
+  "background_color": "#040910",
+  "theme_color": "#B5CCF4",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "es-AR",
+  "categories": ["safety", "utilities", "social"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     }
-  ]
-} 
+  ],
+  "shortcuts": [
+    {
+      "name": "Reportar Incidente",
+      "short_name": "Reportar",
+      "description": "Reportar un nuevo incidente de seguridad",
+      "url": "/report",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ver Mapa",
+      "short_name": "Mapa",
+      "description": "Ver el mapa de incidentes",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.claridad.app"
+    }
+  ],
+  "prefer_related_applications": false
+}
