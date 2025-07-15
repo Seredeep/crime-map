@@ -7,7 +7,7 @@
  * relacionadas con el manejo de incidentes.
  */
 
-import { Region } from '../../types/global';
+import { Region } from './types';
 
 // #region Configuración Regional
 /**
