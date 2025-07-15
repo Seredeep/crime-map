@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
-import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -8,7 +8,8 @@ const __dirname = dirname(__filename);
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // NO usar output: 'export' para compatibilidad con rutas API
+  // Usar export solo para Capacitor builds
+  ...(process.env.CAPACITOR_BUILD && { output: 'export' }),
   eslint: {
     ignoreDuringBuilds: true, // Temporalmente desactivamos ESLint durante el build
   },

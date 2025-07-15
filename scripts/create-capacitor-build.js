@@ -74,17 +74,27 @@ const indexHtml = `<!DOCTYPE html>
     </div>
 
     <script>
-        // Intentar conectar con el servidor de desarrollo
-        setTimeout(() => {
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                // En desarrollo, redirigir al servidor Next.js
-                window.location.href = 'http://localhost:3000';
-            } else {
-                // En producción, mostrar mensaje
-                document.querySelector('.message').textContent = 'Aplicación lista para usar';
-                document.querySelector('.spinner').style.display = 'none';
-            }
-        }, 2000);
+        // Mantener la app nativa - NO redirigir
+        document.addEventListener('DOMContentLoaded', () => {
+            // Cargar contenido dentro de la app nativa usando iframe o fetch
+            const container = document.querySelector('.container');
+
+            // Mostrar mensaje de conexión
+            document.querySelector('.message').textContent = 'Conectando con servidor...';
+
+            // Crear iframe para cargar el contenido
+            setTimeout(() => {
+                const iframe = document.createElement('iframe');
+                iframe.src = 'http://192.168.0.114:3000';
+                iframe.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; background: white;';
+
+                // Ocultar la pantalla de carga
+                container.style.display = 'none';
+
+                // Agregar iframe al body
+                document.body.appendChild(iframe);
+            }, 2000);
+        });
     </script>
 </body>
 </html>`;

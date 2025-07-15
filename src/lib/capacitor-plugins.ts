@@ -12,7 +12,7 @@ import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { Keyboard } from '@capacitor/keyboard';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { PushNotifications } from '@capacitor/push-notifications';
+
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
@@ -199,37 +199,7 @@ export const configureLocalNotifications = async () => {
 };
 // #endregion
 
-// #region Configuración de Push Notifications
-export const configurePushNotifications = async () => {
-  if (isNativePlatform()) {
-    try {
-      const permissions = await PushNotifications.checkPermissions();
-      if (permissions.receive !== 'granted') {
-        await PushNotifications.requestPermissions();
-      }
 
-      await PushNotifications.register();
-
-      PushNotifications.addListener('registration', (token) => {
-        console.log('Push registration success, token: ' + token.value);
-      });
-
-      PushNotifications.addListener('registrationError', (error) => {
-        console.error('Error on registration: ' + JSON.stringify(error));
-      });
-
-      PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('Push notification received: ', notification);
-      });
-
-      PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-        console.log('Push notification action performed', notification.actionId, notification.inputValue);
-      });
-    } catch (error) {
-      console.error('Error configurando push notifications:', error);
-    }
-  }
-};
 // #endregion
 
 // #region Función de Inicialización
@@ -240,7 +210,6 @@ export const initializeCapacitorPlugins = async () => {
       configureKeyboard();
       configureApp();
       await configureLocalNotifications();
-      await configurePushNotifications();
       await hideSplashScreen();
 
       console.log('Plugins de Capacitor inicializados correctamente');

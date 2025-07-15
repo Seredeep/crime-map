@@ -5,8 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Claridad',
   webDir: 'out',
   server: {
-    androidScheme: 'https',
-    url: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : undefined,
+    androidScheme: 'http',
+    url: 'http://192.168.0.114:3000',
     cleartext: true
   },
   plugins: {
