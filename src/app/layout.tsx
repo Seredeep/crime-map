@@ -141,27 +141,27 @@ export default function RootLayout({
       >
         {/* Capacitor Provider - Inicializa plugins nativos */}
         <CapacitorProvider>
-          {/* Session Management */}
-          <SessionProvider>
-            <SessionRefresh />
+        {/* Session Management */}
+        <SessionProvider>
+          <SessionRefresh />
 
-            {/* #region Image Modal Context */}
-            <ImageModalProvider>
-              {/* App Wrapper with Loading Screen */}
-              <AppWrapper
-                navbar={<Navbar />}
-                globalComponents={
-                  <>
-                    <ImageModal />
-                    <GlobalPanicButton />
-                  </>
-                }
-              >
-                {children}
-              </AppWrapper>
-            </ImageModalProvider>
-            {/* #endregion */}
-          </SessionProvider>
+          {/* #region Image Modal Context */}
+          <ImageModalProvider>
+            {/* App Wrapper with Loading Screen */}
+            <AppWrapper
+              navbar={<Navbar />}
+              globalComponents={
+                <>
+                  <ImageModal />
+                  <GlobalPanicButton />
+                </>
+              }
+            >
+              {children}
+            </AppWrapper>
+          </ImageModalProvider>
+          {/* #endregion */}
+        </SessionProvider>
         </CapacitorProvider>
 
         {/* Analytics */}

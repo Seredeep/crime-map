@@ -117,7 +117,6 @@ npm run cap:build  # Reconstruye todo limpio
 
 Una vez que veas tu app corriendo nativamente, podrás:
 
-- 📱 **Mostrarle a Matías** la experiencia nativa
 - 🚀 **Comparar performance** web vs nativa
 - 🔧 **Probar funcionalidades** que solo funcionan en móvil
 - 📦 **Generar APK** para compartir con el equipo
