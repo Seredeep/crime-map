@@ -11,17 +11,9 @@ import { NextRequest, NextResponse } from 'next/server';
 /* ─────────────────────────────
  *  GET → ping de salud
  * ───────────────────────────── */
-export async function GET() {
-  return NextResponse.json({ ok: true, msg: 'device alert endpoint vivo' });
-}
-
-/* ─────────────────────────────
- *  POST → alerta desde el ESP
- * ───────────────────────────── */
 export async function POST(req: NextRequest) {
   try {
-    /* 0. Payload mínimo: { mac, location? } */
-    const { mac, location } = await req.json();
+    const { mac, location, email } = await req.json();
 
     if (!mac) {
       return NextResponse.json(
@@ -30,12 +22,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    /* 1. Normalizar y buscar usuario dueño de la MAC */
     const normMac = mac.toString().trim().toLowerCase();
     const db      = (await clientPromise).db();
+    const users   = db.collection('users');
 
-    // ajusta el campo si tu colección se llama deviceMacs o similar
-    const user = await db.collection('users').findOne({ deviceMac: normMac });
+    // 1. Buscar usuario con esa MAC
+    let user = await users.findOne({ deviceMac: normMac });
+
+    // 2. Si no está asociado, buscar por email y asociar
+    if (!user && email) {
+      const normEmail = email.toString().trim().toLowerCase();
+      const userByEmail = await users.findOne({ email: normEmail });
+
+      if (userByEmail) {
+        await users.updateOne(
+          { _id: userByEmail._id },
+          { $set: { deviceMac: normMac } }
+        );
+        user = { ...userByEmail, deviceMac: normMac }; // actualizamos el objeto local
+      }
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -44,28 +50,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    /* 2. Fabricar JWT firmado con NEXTAUTH_SECRET */
+    // 3. Fabricar JWT
     const jwt = await encode({
       secret: process.env.NEXTAUTH_SECRET!,
       token : {
-        /* campos que tu tipo JWT marca como necesarios */
         id  : user._id.toString(),
         role: user.role ?? 'device',
-
-        /* payload estándar de NextAuth */
-        sub  : user._id.toString(),
-        name : user.name  ?? '',
+        sub : user._id.toString(),
+        name: user.name ?? '',
         email: user.email ?? '',
       },
     });
 
-    /* 3. Nombre de la cookie según entorno */
     const cookieName =
       process.env.NODE_ENV === 'production'
         ? '__Secure-next-auth.session-token'
         : 'next-auth.session-token';
 
-    /* 4. Reenviar al endpoint /api/panic con la cookie puesta */
     const backendUrl =
       `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/panic/send`;
 
