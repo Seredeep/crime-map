@@ -74,7 +74,7 @@ export async function getChatParticipants(chatId: string): Promise<User[]> {
   const db = client.db();
 
   // Buscar el chat
-  const chat = await db.collection('chats').findOne({ _id: new ObjectId(chatId) });
+  const chat = await db.collection('chats').findOne({ chatId: chatId });
 
   if (!chat) {
     throw new Error('Chat no encontrado');

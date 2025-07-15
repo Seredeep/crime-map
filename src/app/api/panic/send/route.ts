@@ -1,6 +1,5 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import clientPromise from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
 
@@ -176,7 +175,7 @@ export async function POST(request: Request) {
 
     // Actualizar el chat con el último mensaje
     await db.collection('chats').updateOne(
-      { _id: new ObjectId(user.chatId) },
+      { chatId: user.chatId },
       {
         $set: {
           lastMessage: panicMessage.message,
