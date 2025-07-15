@@ -1,6 +1,6 @@
 'use client';
 
-import { CAROUSEL_CONFIG, GRID_CONFIG, INCIDENT_COLORS, MESSAGES, TIME_CONFIG } from '@/lib/config';
+import { CAROUSEL_CONFIG, MESSAGES, TIME_CONFIG } from '@/lib/config';
 import { GeocodingResult } from '@/lib/services/geo';
 import { ACTIVE_INCIDENT_TYPES } from '@/lib/services/incidents';
 import { motion } from 'framer-motion';
@@ -19,16 +19,50 @@ interface MobileReportViewProps {
 // Usar los tipos de incidentes organizados por regiones
 const INCIDENT_TYPES = ACTIVE_INCIDENT_TYPES;
 
-// Simplificar los colores usando la nueva estructura
-const COLORS = {
-  red: `${INCIDENT_COLORS.red.border} ${INCIDENT_COLORS.red.bg} ${INCIDENT_COLORS.red.text}`,
-  orange: `${INCIDENT_COLORS.orange.border} ${INCIDENT_COLORS.orange.bg} ${INCIDENT_COLORS.orange.text}`,
-  yellow: `${INCIDENT_COLORS.yellow.border} ${INCIDENT_COLORS.yellow.bg} ${INCIDENT_COLORS.yellow.text}`,
-  blue: `${INCIDENT_COLORS.blue.border} ${INCIDENT_COLORS.blue.bg} ${INCIDENT_COLORS.blue.text}`,
-  purple: `${INCIDENT_COLORS.purple.border} ${INCIDENT_COLORS.purple.bg} ${INCIDENT_COLORS.purple.text}`,
-  pink: `${INCIDENT_COLORS.pink.border} ${INCIDENT_COLORS.pink.bg} ${INCIDENT_COLORS.pink.text}`,
-  gray: `${INCIDENT_COLORS.gray.border} ${INCIDENT_COLORS.gray.bg} ${INCIDENT_COLORS.gray.text}`,
-  green: `${INCIDENT_COLORS.green.border} ${INCIDENT_COLORS.green.bg} ${INCIDENT_COLORS.green.text}`
+// Función mejorada para obtener los colores de los tipos de incidentes
+const getIncidentColors = (type: typeof INCIDENT_TYPES[0], isSelected: boolean) => {
+  if (!isSelected) {
+    // Cuando no está seleccionado, usar colores blancos/grises
+    return 'border-white/40 bg-gray-800/30 hover:bg-gray-800/50 hover:border-white/60 text-white/80';
+  }
+
+  // Cuando está seleccionado, usar el color específico del tipo
+  switch (type.color) {
+    case 'red':
+      return 'border-red-500 bg-red-500/15 text-red-400 shadow-lg scale-105';
+    case 'yellow':
+      return 'border-yellow-500 bg-yellow-500/15 text-yellow-400 shadow-lg scale-105';
+    case 'orange':
+      return 'border-orange-500 bg-orange-500/15 text-orange-400 shadow-lg scale-105';
+    case 'amber':
+      return 'border-amber-500 bg-amber-500/15 text-amber-400 shadow-lg scale-105';
+    case 'gray':
+      return 'border-gray-500 bg-gray-500/15 text-gray-400 shadow-lg scale-105';
+    case 'violet':
+      return 'border-violet-500 bg-violet-500/15 text-violet-400 shadow-lg scale-105';
+    case 'emerald':
+      return 'border-emerald-500 bg-emerald-500/15 text-emerald-400 shadow-lg scale-105';
+    case 'blue':
+      return 'border-blue-500 bg-blue-500/15 text-blue-400 shadow-lg scale-105';
+    case 'purple':
+      return 'border-purple-500 bg-purple-500/15 text-purple-400 shadow-lg scale-105';
+    case 'pink':
+      return 'border-pink-500 bg-pink-500/15 text-pink-400 shadow-lg scale-105';
+    case 'green':
+      return 'border-green-500 bg-green-500/15 text-green-400 shadow-lg scale-105';
+    case 'cyan':
+      return 'border-cyan-500 bg-cyan-500/15 text-cyan-400 shadow-lg scale-105';
+    case 'teal':
+      return 'border-teal-500 bg-teal-500/15 text-teal-400 shadow-lg scale-105';
+    case 'indigo':
+      return 'border-indigo-500 bg-indigo-500/15 text-indigo-400 shadow-lg scale-105';
+    case 'rose':
+      return 'border-rose-500 bg-rose-500/15 text-rose-400 shadow-lg scale-105';
+    case 'lime':
+      return 'border-lime-500 bg-lime-500/15 text-lime-400 shadow-lg scale-105';
+    default:
+      return 'border-white/40 bg-gray-800/30 text-white/80 shadow-lg scale-105';
+  }
 };
 
 interface IncidentFormData {
@@ -58,6 +92,8 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -67,6 +103,16 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
       time: DateTime.now().toFormat('HH:mm')
     }));
   }, []);
+
+  // Exponer la función handleBackClick para uso externo
+  useEffect(() => {
+    // Si el componente padre necesita acceso a la función de back
+    (window as any).handleReportBackClick = handleBackClick;
+
+    return () => {
+      delete (window as any).handleReportBackClick;
+    };
+  }, [formData]);
 
   // Auto-scroll SOLO cuando NO hay elementos seleccionados
   useEffect(() => {
@@ -91,6 +137,17 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
 
   const handleLocationSelect = (result: GeocodingResult) => {
     const [longitude, latitude] = result.geometry.coordinates;
+
+    // Si las coordenadas son [0, 0], significa que se está limpiando la selección
+    if (longitude === 0 && latitude === 0) {
+      setFormData(prev => ({
+        ...prev,
+        address: '',
+        location: null
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       address: result.properties.label,
@@ -124,8 +181,25 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     setFormData(prev => ({ ...prev, evidence: prev.evidence.filter((_, i) => i !== index) }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfirmSubmit = () => {
+    setShowConfirmModal(false);
+    handleSubmit();
+  };
+
+  const handleBackClick = () => {
+    if (hasFormData) {
+      setShowDiscardModal(true);
+    } else {
+      onBack();
+    }
+  };
+
+  const handleDiscardAndBack = () => {
+    setShowDiscardModal(false);
+    onBack();
+  };
+
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     setSubmitMessage(null);
 
@@ -190,11 +264,11 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   };
 
   const isFormValid = formData.description.trim() && formData.location && formData.tags.length > 0;
+  const hasFormData = formData.description.trim() || formData.location || formData.tags.length > 0 || formData.evidence.length > 0;
 
   const renderIncidentButton = (type: typeof INCIDENT_TYPES[0], isCarousel = false) => {
     const isSelected = formData.tags.includes(type.id);
-    const selectedClass = isSelected ? COLORS[type.color as keyof typeof COLORS] :
-      `border-${type.color}-500/40 text-${type.color}-400/80 bg-gray-800/30 hover:bg-gray-800/50`;
+    const colorClasses = getIncidentColors(type, isSelected);
 
     const IconComponent = type.icon;
 
@@ -205,16 +279,15 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
         onClick={() => handleTagToggle(type.id)}
         className={`
           ${isCarousel
-            ? `flex-shrink-0 w-${GRID_CONFIG.CAROUSEL_BUTTON_WIDTH} h-${GRID_CONFIG.CAROUSEL_BUTTON_HEIGHT}`
-            : `w-full h-${GRID_CONFIG.BUTTON_HEIGHT} p-3`
+            ? 'flex-shrink-0 w-20 h-16'
+            : 'w-full h-20 p-3'
           }
-          rounded-xl border-2 transition-all duration-300 ${selectedClass}
-          ${isSelected ? 'shadow-lg scale-105' : ''}
+          rounded-xl border-2 transition-all duration-300 ${colorClasses}
           flex flex-col items-center justify-center gap-1
         `}
       >
         <IconComponent className={`${isCarousel ? 'w-4 h-4' : 'w-6 h-6'} flex-shrink-0`} />
-        <span className={`font-medium text-center leading-tight ${isCarousel ? 'text-[7px] px-1' : 'text-xs'}`}>
+        <span className={`font-medium text-center leading-tight ${isCarousel ? 'text-[8px] px-1' : 'text-sm'}`}>
           {type.label}
         </span>
       </button>
@@ -223,8 +296,8 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
 
   return (
     <div className={`w-full h-full min-h-screen ${className}`}>
-      <div className="p-3 max-w-md mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="p-3 max-w-md mx-auto pb-24">
+        <div className="space-y-8">
           {/* Mensaje de estado */}
           {submitMessage && (
             <motion.div
@@ -364,7 +437,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                 </div>
               </div>
             ) : (
-              <div className={`grid grid-cols-${GRID_CONFIG.COLUMNS} gap-${GRID_CONFIG.GAP}`}>
+              <div className="grid grid-cols-2 gap-4">
                 {INCIDENT_TYPES.map((type, index) => (
                   <motion.div
                     key={type.id}
@@ -387,60 +460,68 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               <h2 className="text-md font-medium text-gray-300">Evidencia <span className="text-xs text-gray-500">(opcional)</span></h2>
             </div>
 
-            <label className="flex flex-col items-center justify-center w-full h-20 border border-dashed border-gray-600 rounded-lg cursor-pointer bg-gray-800/30 hover:bg-gray-800/50 transition-colors">
-              <div className="flex flex-col items-center justify-center py-2">
-                <FiCamera className="w-5 h-5 text-gray-500 mb-1" />
-                <p className="text-xs text-gray-400">Subir fotos o videos</p>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileChange}
-                className="hidden"
-                multiple
-                accept="image/*,video/*"
-              />
-            </label>
-
-            {formData.evidence.length > 0 && (
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {formData.evidence.map((file, index) => (
-                  <div key={index} className="relative group">
-                    <div className="relative w-full h-20 rounded-lg overflow-hidden border border-gray-600">
-                      {file.type.startsWith('image/') ? (
-                        <Image
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                          <span className="text-xs text-gray-400 text-center px-1">{file.name}</span>
-                        </div>
-                      )}
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {/* Botón de subir fotos */}
+              <label className="flex-shrink-0 flex flex-col items-center justify-center w-28 h-28 border border-dashed border-gray-600 rounded-lg cursor-pointer bg-gray-800/30 hover:bg-gray-800/50 transition-colors">
+                <div className="flex flex-col items-center justify-center">
+                  {formData.evidence.length > 0 ? (
+                    <div className="w-7 h-7 rounded-full bg-pink-500/20 border border-pink-500/40 flex items-center justify-center mb-1">
+                      <span className="text-pink-400 text-xl font-bold leading-none">+</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(index)}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
-                    >
-                      <FiX className="w-3 h-3" />
-                    </button>
+                  ) : (
+                    <FiCamera className="w-6 h-6 text-gray-500 mb-1" />
+                  )}
+                  <p className="text-xs text-gray-400 text-center leading-tight">
+                    {formData.evidence.length > 0 ? 'Agregar' : 'Subir'}
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  multiple
+                  accept="image/*,video/*"
+                />
+              </label>
+
+              {/* Imágenes subidas */}
+              {formData.evidence.map((file, index) => (
+                <div key={index} className="relative group flex-shrink-0">
+                  <div className="relative w-28 h-28 rounded-lg overflow-hidden border border-gray-600">
+                    {file.type.startsWith('image/') ? (
+                      <Image
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                        <span className="text-xs text-gray-400 text-center px-1 leading-tight">{file.name}</span>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                  <button
+                    type="button"
+                    onClick={() => removeFile(index)}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                  >
+                    <FiX className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </motion.div>
 
           {/* Ubicación */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-lg my-4">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <FiMapPin className="w-4 h-4 text-purple-400" />
               <h2 className="text-md font-medium text-gray-300">Ubicación del incidente</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <GeocodeSearch
                 onLocationSelect={handleLocationSelect}
                 placeholder="Buscar dirección..."
@@ -453,7 +534,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                 }
               />
 
-              <div className="w-full h-56 rounded-lg overflow-hidden border border-gray-600/50 bg-gray-900">
+              <div className="w-full h-[500px] rounded-lg overflow-hidden border border-gray-600/50 bg-gray-900 shadow-lg">
                 <Map
                   markerPosition={
                     formData.location
@@ -466,39 +547,268 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                   mode="form"
                 />
               </div>
-
-              {formData.location && (
-                <div className="text-xs text-gray-400 bg-gray-800/50 p-2 rounded">
-                  <strong>Coordenadas:</strong> {formData.location.coordinates[1].toFixed(4)}, {formData.location.coordinates[0].toFixed(4)}
-                </div>
-              )}
             </div>
+
           </motion.div>
 
-          {/* Botón de envío */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting || !isFormValid}
-              className={`w-full py-3 px-4 rounded-lg font-medium text-sm transition-all ${isFormValid && !isSubmitting
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                }`}
+          {/* Botón flotante estilo Claridad */}
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="fixed bottom-6 right-6 z-[9999]"
+          >
+            <motion.div
+              whileTap={{ scale: 0.95 }}
+              animate={{
+                borderRadius: ['20%', '30%', '24%'],
+                boxShadow: isFormValid && !isSubmitting ? [
+                  '0 0 25px rgba(59, 130, 246, 0.4), 0 0 50px rgba(59, 130, 246, 0.2)',
+                  '0 0 35px rgba(59, 130, 246, 0.6), 0 0 70px rgba(59, 130, 246, 0.3)',
+                  '0 0 25px rgba(59, 130, 246, 0.4), 0 0 50px rgba(59, 130, 246, 0.2)'
+                ] : [
+                  '0 0 15px rgba(107, 114, 128, 0.2), 0 0 30px rgba(107, 114, 128, 0.1)',
+                  '0 0 20px rgba(107, 114, 128, 0.3), 0 0 40px rgba(107, 114, 128, 0.15)',
+                  '0 0 15px rgba(107, 114, 128, 0.2), 0 0 30px rgba(107, 114, 128, 0.1)'
+                ]
+              }}
+              transition={{ duration: 2, repeat: Infinity, repeatType: 'mirror' }}
             >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                  <span>Enviando...</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <FiSend className="w-4 h-4" />
-                  <span>Reportar Incidente</span>
-                </div>
-              )}
-            </button>
+              <motion.button
+                onClick={() => isFormValid ? setShowConfirmModal(true) : null}
+                disabled={isSubmitting}
+                whileHover={isFormValid ? {
+                  scale: 1.05,
+                  boxShadow: '0 0 40px rgba(59, 130, 246, 0.6), 0 0 80px rgba(59, 130, 246, 0.4)'
+                } : {}}
+                className={`relative w-16 h-16 flex items-center rounded-[28px] justify-center transition-all duration-300 group overflow-hidden ${isSubmitting ? 'animate-pulse' : ''
+                  } ${isFormValid ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                style={{
+                  background: isFormValid && !isSubmitting
+                    ? `
+                      radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                      linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
+                      rgba(20, 20, 20, 0.9)
+                    `
+                    : `
+                      radial-gradient(circle at 30% 30%, rgba(107, 114, 128, 0.2) 0%, transparent 50%),
+                      linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
+                      rgba(20, 20, 20, 0.8)
+                    `,
+                  backdropFilter: 'blur(20px)',
+                  border: isFormValid && !isSubmitting
+                    ? '2px solid rgba(59, 130, 246, 0.5)'
+                    : '2px solid rgba(107, 114, 128, 0.4)',
+                  boxShadow: isFormValid && !isSubmitting
+                    ? `
+                      inset 0 0 20px rgba(59, 130, 246, 0.2),
+                      0 0 40px rgba(59, 130, 246, 0.4),
+                      0 8px 32px rgba(0, 0, 0, 0.3),
+                      0 4px 16px rgba(0, 0, 0, 0.2)
+                    `
+                    : `
+                      inset 0 0 20px rgba(107, 114, 128, 0.15),
+                      0 0 20px rgba(107, 114, 128, 0.2),
+                      0 8px 32px rgba(0, 0, 0, 0.3),
+                      0 4px 16px rgba(0, 0, 0, 0.2)
+                    `,
+                  borderRadius: '30px'
+                }}
+              >
+                {/* Efecto de pulso de fondo */}
+                <motion.div
+                  className={`absolute inset-0 rounded-[28px] ${isFormValid && !isSubmitting
+                      ? 'bg-gradient-to-r from-blue-500/30 to-blue-600/30'
+                      : 'bg-gradient-to-r from-gray-500/20 to-gray-600/20'
+                    }`}
+                  animate={{
+                    opacity: isFormValid ? [0.4, 0.8, 0.4] : [0.2, 0.4, 0.2],
+                    scale: isFormValid ? [1, 1.05, 1] : [1, 1.02, 1]
+                  }}
+                  transition={{
+                    duration: isFormValid ? 1.5 : 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+
+                {/* Icono principal */}
+                <motion.div
+                  className={`relative z-10 transition-all duration-300 ${isFormValid && !isSubmitting ? 'text-blue-400' : 'text-gray-400'
+                    }`}
+                  animate={isFormValid ? {
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 3, -3, 0]
+                  } : {
+                    scale: [1, 1.02, 1]
+                  }}
+                  transition={{
+                    duration: isFormValid ? 1.5 : 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  {isSubmitting ? (
+                    <div className="animate-spin w-6 h-6 border-2 border-current border-t-transparent rounded-full" />
+                  ) : (
+                    <div className="relative">
+                      <FiSend className="w-6 h-6" />
+                      {/* Efecto de glow en el icono */}
+                      <div
+                        className="absolute inset-0 blur-sm"
+                        style={{
+                          background: isFormValid && !isSubmitting
+                            ? 'radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, transparent 70%)'
+                            : 'radial-gradient(circle, rgba(107, 114, 128, 0.4) 0%, transparent 70%)'
+                        }}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+
+                {/* Efecto de brillo */}
+                <div
+                  className="absolute inset-0 bg-gradient-to-tr from-white/15 to-transparent opacity-60"
+                  style={{ borderRadius: '24px' }}
+                />
+
+                {/* Reflejo superior */}
+                <div
+                  className="absolute top-1 left-1 right-1 h-1/2 bg-gradient-to-b from-white/25 to-transparent"
+                  style={{ borderRadius: '20px 20px 8px 8px' }}
+                />
+
+                {/* Borde animado */}
+                <motion.div
+                  className={`absolute inset-0 rounded-[28px] border-2 ${isFormValid && !isSubmitting ? 'border-blue-400/60' : 'border-gray-400/40 rounded-[28px]'
+                    }`}
+                  animate={{
+                    borderColor: isFormValid && !isSubmitting ? [
+                      'rgba(59, 130, 246, 0.4)',
+                      'rgba(59, 130, 246, 0.8)',
+                      'rgba(59, 130, 246, 0.4)'
+                    ] : [
+                      'rgba(107, 114, 128, 0.3)',
+                      'rgba(107, 114, 128, 0.5)',
+                      'rgba(107, 114, 128, 0.3)'
+                    ]
+                  }}
+                  transition={{
+                    duration: isFormValid ? 1.5 : 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </motion.button>
+            </motion.div>
           </motion.div>
-        </form>
+
+          {/* Modal de confirmación */}
+          {showConfirmModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
+              onClick={() => setShowConfirmModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full border border-gray-600/50 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FiAlertCircle className="w-8 h-8 text-blue-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    ¿Confirmar reporte?
+                  </h3>
+                  <p className="text-gray-300 text-sm">
+                    ¿Estás seguro de que querés enviar este reporte de incidente?
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={handleConfirmSubmit}
+                    disabled={isSubmitting}
+                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                        <span>Enviando...</span>
+                      </div>
+                    ) : (
+                      'Sí, enviar reporte'
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setShowConfirmModal(false)}
+                    disabled={isSubmitting}
+                    className="w-full py-3 px-4 bg-gray-600 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Modal de descarte */}
+          {showDiscardModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
+              onClick={() => setShowDiscardModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full border border-gray-600/50 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FiAlertCircle className="w-8 h-8 text-yellow-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    ¿Descartar reporte?
+                  </h3>
+                  <p className="text-gray-300 text-sm">
+                    Si volvés atrás, se perderá toda la información que completaste.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    onClick={handleDiscardAndBack}
+                    className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Sí, descartar y volver
+                  </button>
+
+                  <button
+                    onClick={() => setShowDiscardModal(false)}
+                    className="w-full py-3 px-4 bg-gray-600 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors"
+                  >
+                    Continuar editando
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -8,9 +8,8 @@
  */
 
 import { INCIDENT_COLORS } from '../../config/ui';
-import { IncidentCategory, IncidentColor, Region } from '../../types/global';
 import { CURRENT_REGION, INCIDENT_FILTER_CONFIG, INCIDENT_SEARCH_CONFIG } from './config';
-import { IncidentType, REGION_INCIDENT_TYPES } from './types';
+import { IncidentCategory, IncidentColor, IncidentType, Region, REGION_INCIDENT_TYPES } from './types';
 
 // #region Funciones de Obtención de Tipos
 /**

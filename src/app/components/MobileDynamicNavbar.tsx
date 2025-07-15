@@ -75,7 +75,12 @@ const MobileDynamicNavbar = ({
       initial={{ y: -64 }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="fixed top-0 left-0 right-0 z-[130] md:hidden bg-[#040910] backdrop-blur-lg shadow-lg"
+      className="fixed top-0 left-0 right-0 z-[130] md:hidden backdrop-blur-lg shadow-lg"
+      style={{
+        background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%)',
+        borderBottom: '1px solid rgba(139, 181, 255, 0.15)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+      }}
     >
       <div className="flex items-center justify-between h-16 px-4">
         {/* Lado izquierdo - Logo de Claridad */}

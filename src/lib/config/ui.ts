@@ -7,7 +7,7 @@
  * y mensajes del sistema.
  */
 
-import { IncidentColor } from '../types/global';
+import { IncidentColor } from '../services/incidents/types';
 
 // #region Configuración de Colores para Incidentes
 /**
@@ -67,6 +67,54 @@ export const INCIDENT_COLORS: Record<IncidentColor, {
     bg: 'bg-green-500/15',
     text: 'text-green-400',
     hover: 'hover:bg-green-500/25'
+  },
+  cyan: {
+    border: 'border-cyan-500',
+    bg: 'bg-cyan-500/15',
+    text: 'text-cyan-400',
+    hover: 'hover:bg-cyan-500/25'
+  },
+  teal: {
+    border: 'border-teal-500',
+    bg: 'bg-teal-500/15',
+    text: 'text-teal-400',
+    hover: 'hover:bg-teal-500/25'
+  },
+  indigo: {
+    border: 'border-indigo-500',
+    bg: 'bg-indigo-500/15',
+    text: 'text-indigo-400',
+    hover: 'hover:bg-indigo-500/25'
+  },
+  violet: {
+    border: 'border-violet-500',
+    bg: 'bg-violet-500/15',
+    text: 'text-violet-400',
+    hover: 'hover:bg-violet-500/25'
+  },
+  rose: {
+    border: 'border-rose-500',
+    bg: 'bg-rose-500/15',
+    text: 'text-rose-400',
+    hover: 'hover:bg-rose-500/25'
+  },
+  emerald: {
+    border: 'border-emerald-500',
+    bg: 'bg-emerald-500/15',
+    text: 'text-emerald-400',
+    hover: 'hover:bg-emerald-500/25'
+  },
+  amber: {
+    border: 'border-amber-500',
+    bg: 'bg-amber-500/15',
+    text: 'text-amber-400',
+    hover: 'hover:bg-amber-500/25'
+  },
+  lime: {
+    border: 'border-lime-500',
+    bg: 'bg-lime-500/15',
+    text: 'text-lime-400',
+    hover: 'hover:bg-lime-500/25'
   }
 } as const;
 // #endregion

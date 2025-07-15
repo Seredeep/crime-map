@@ -192,6 +192,29 @@ function MapEventHandler({
   return null;
 }
 
+// Component to handle automatic map centering when marker position changes
+function MapCenterUpdater({
+  markerPosition,
+  mode
+}: {
+  markerPosition?: [number, number];
+  mode?: string;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (mode === 'form' && markerPosition) {
+      // Fly to the new position with zoom
+      map.setView(markerPosition, 16, {
+        animate: true,
+        duration: 1
+      });
+    }
+  }, [map, markerPosition, mode]);
+
+  return null;
+}
+
 // Componente para hacer zoom al barrio seleccionado
 function NeighborhoodFitBounds({ neighborhood }: { neighborhood: Neighborhood }) {
   const map = useMap();
@@ -463,6 +486,12 @@ export default function MapComponent({
           onZoomChange={onZoomChange}
         />
       )}
+
+      {/* Automatic map centering for form mode */}
+      <MapCenterUpdater
+        markerPosition={position}
+        mode={mode}
+      />
 
       {/* Click handler for form mode */}
       {mode === 'form' && setMarkerOnClick && (

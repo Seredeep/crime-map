@@ -137,32 +137,6 @@ export interface StatisticsResults {
   };
 }
 // #endregion
-
-// #region Tipos Base para Incidentes
-/**
- * Colores disponibles para tipos de incidentes
- */
-export type IncidentColor =
-  | 'red' | 'orange' | 'yellow' | 'blue'
-  | 'purple' | 'pink' | 'gray' | 'green';
-
-/**
- * Categorías generales de incidentes
- */
-export type IncidentCategory =
-  | 'violence' | 'theft' | 'property' | 'suspicious'
-  | 'traffic' | 'disturbance' | 'emergency' | 'other';
-
-/**
- * Regiones disponibles para configuración
- */
-export type Region = 'argentina' | 'mexico' | 'colombia' | 'chile' | 'general';
-
-/**
- * Estados posibles de un incidente
- */
-export type IncidentStatus = 'pending' | 'verified' | 'resolved';
-
 /**
  * Tipos de mensaje en el chat
  */

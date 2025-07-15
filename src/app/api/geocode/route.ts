@@ -14,6 +14,159 @@ const MAR_DEL_PLATA_LOCATION = {
   lng: -57.5426
 };
 
+// Street type patterns for normalization
+const STREET_TYPE_PATTERNS = {
+  'avenida': ['av ', 'ave ', 'avda ', 'avenida ', 'avenue '],
+  'calle': ['calle ', 'c/ ', 'c. '],
+  'diagonal': ['diag ', 'diagonal ', 'diagonale '],
+  'ruta': ['ruta ', 'rt ', 'route '],
+  'pasaje': ['pje ', 'pasaje ', 'passage '],
+  'boulevard': ['bv ', 'blvd ', 'boulevard '],
+  'plaza': ['pl ', 'plaza '],
+  'costanera': ['costanera '],
+  'camino': ['camino '],
+  'corredor': ['corredor '],
+  'circunvalacion': ['circunvalación ', 'circunvalacion ']
+};
+
+// Common intersection keywords and patterns
+const INTERSECTION_KEYWORDS = [
+  'y', '&', 'con', 'esquina', 'esq', 'entre', 'interseccion', 'intersección',
+  'cruz', 'cruce', 'x', 'vs'
+];
+
+/**
+ * Normalizes street names by adding common prefixes and handling local patterns
+ */
+function normalizeStreetName(streetName: string): string {
+  if (!streetName) return streetName;
+
+  const normalized = streetName.toLowerCase().trim();
+
+  // If it already has a street type prefix, return as is
+  for (const patterns of Object.values(STREET_TYPE_PATTERNS)) {
+    if (patterns.some(pattern => normalized.startsWith(pattern))) {
+      return streetName;
+    }
+  }
+
+  // Common abbreviations and full names mapping
+  const nameMapping: { [key: string]: string } = {
+    'jb justo': 'juan b justo',
+    'juan b justo': 'avenida juan b. justo',
+    'juan domingo peron': 'avenida juan domingo perón',
+    'peron': 'avenida juan domingo perón',
+    'colon': 'avenida colón',
+    'mitre': 'avenida mitre',
+    'luro': 'avenida luro',
+    'constitucion': 'avenida constitución',
+    'independencia': 'avenida independencia',
+    'libertad': 'avenida libertad',
+    'tetamanti': 'avenida tetamanti',
+    'martinez de hoz': 'avenida martínez de hoz',
+    'felix u camet': 'avenida félix u. camet',
+    'camet': 'avenida félix u. camet',
+    '11 de septiembre': 'avenida 11 de septiembre',
+    'edison': 'avenida edison',
+    'arturo alfonsin': 'avenida arturo alfonsín',
+    'alfonsin': 'avenida arturo alfonsín'
+  };
+
+  // Check if the normalized name matches any mapping
+  for (const [key, value] of Object.entries(nameMapping)) {
+    if (normalized === key || normalized === key.replace(/\./g, '')) {
+      return value;
+    }
+  }
+
+  // If no specific mapping, try to add common prefixes for Mar del Plata streets
+  if (!normalized.includes('avenida') && !normalized.includes('calle') && !normalized.includes('diagonal')) {
+    // Major streets are usually avenidas
+    const majorStreets = [
+      'colon', 'mitre', 'luro', 'constitucion', 'independencia', 'libertad',
+      'juan b justo', 'peron', 'tetamanti', 'martinez de hoz', 'edison',
+      'camet', '11 de septiembre', 'alfonsin'
+    ];
+
+    if (majorStreets.some(major => normalized.includes(major.replace(/\./g, '')))) {
+      return `avenida ${streetName}`;
+    } else {
+      return `calle ${streetName}`;
+    }
+  }
+
+  return streetName;
+}
+
+/**
+ * Detects if a query is searching for an intersection and formats it appropriately
+ */
+function detectAndFormatIntersection(query: string): { isIntersection: boolean; formattedQuery: string; streets?: string[] } {
+  const normalizedQuery = query.toLowerCase().trim();
+
+  // Check for intersection keywords
+  const hasIntersectionKeyword = INTERSECTION_KEYWORDS.some(keyword =>
+    normalizedQuery.includes(` ${keyword} `) ||
+    normalizedQuery.includes(`${keyword} `) ||
+    normalizedQuery.includes(` ${keyword}`)
+  );
+
+  if (!hasIntersectionKeyword) {
+    return { isIntersection: false, formattedQuery: query };
+  }
+
+  // Find the keyword that was used
+  let usedKeyword = '';
+  let splitPattern = '';
+
+  for (const keyword of INTERSECTION_KEYWORDS) {
+    const patterns = [
+      ` ${keyword} `,
+      `${keyword} `,
+      ` ${keyword}`
+    ];
+
+    for (const pattern of patterns) {
+      if (normalizedQuery.includes(pattern)) {
+        usedKeyword = keyword;
+        splitPattern = pattern;
+        break;
+      }
+    }
+    if (usedKeyword) break;
+  }
+
+  if (!usedKeyword) {
+    return { isIntersection: false, formattedQuery: query };
+  }
+
+  // Split the query by the keyword
+  const parts = normalizedQuery.split(splitPattern);
+  if (parts.length !== 2) {
+    return { isIntersection: false, formattedQuery: query };
+  }
+
+  const street1 = parts[0].trim();
+  const street2 = parts[1].trim();
+
+  if (!street1 || !street2) {
+    return { isIntersection: false, formattedQuery: query };
+  }
+
+  // Normalize both street names
+  const normalizedStreet1 = normalizeStreetName(street1);
+  const normalizedStreet2 = normalizeStreetName(street2);
+
+  // Format the intersection query for Google
+  const formattedQuery = `${normalizedStreet1} y ${normalizedStreet2}, Mar del Plata, Argentina`;
+
+  return {
+    isIntersection: true,
+    formattedQuery,
+    streets: [normalizedStreet1, normalizedStreet2]
+  };
+}
+
 // Types for Google Places API (New)
 interface GooglePlacesAutocompleteRequest {
   input: string;
@@ -374,9 +527,108 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // First, try to get autocomplete suggestions with enhanced parameters using Places API (New)
+    // Detect if this is an intersection search and format accordingly
+    const intersectionResult = detectAndFormatIntersection(query);
+    let searchQuery = intersectionResult.formattedQuery;
+
+    console.log(`Original query: "${query}"`);
+    if (intersectionResult.isIntersection) {
+      console.log(`Detected intersection: "${searchQuery}"`);
+      console.log(`Streets: ${intersectionResult.streets?.join(' y ')}`);
+    } else {
+      // For non-intersection queries, try to normalize the street name
+      const normalizedQuery = normalizeStreetName(query);
+      searchQuery = `${normalizedQuery}, Mar del Plata, Argentina`;
+      console.log(`Normalized query: "${searchQuery}"`);
+    }
+
+    // If it's an intersection, try direct geocoding first for better results
+    if (intersectionResult.isIntersection) {
+      console.log(`Google Geocoding request for intersection: "${searchQuery}"`);
+
+      const geocodeUrl = new URL(GOOGLE_GEOCODING_URL);
+      geocodeUrl.searchParams.append('address', searchQuery);
+      geocodeUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+
+      const geocodeResponse = await fetch(geocodeUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (geocodeResponse.ok) {
+        const geocodeData = await geocodeResponse.json();
+
+        if (geocodeData.results && geocodeData.results.length > 0) {
+          console.log(`Intersection geocoding successful, found ${geocodeData.results.length} results`);
+
+          // Add intersection information to the results
+          const enhancedResults = {
+            ...geocodeData,
+            results: geocodeData.results.map((result: any) => ({
+              ...result,
+              intersection_info: {
+                is_intersection: true,
+                streets: intersectionResult.streets,
+                original_query: query
+              }
+            }))
+          };
+
+          const geoJsonResponse = googleToGeoJSON(enhancedResults);
+          return NextResponse.json(geoJsonResponse);
+        }
+      }
+
+      // If direct geocoding fails for intersection, try with alternative formats
+      const alternativeFormats = [
+        `intersección de ${intersectionResult.streets?.[0]} y ${intersectionResult.streets?.[1]}, Mar del Plata, Argentina`,
+        `esquina ${intersectionResult.streets?.[0]} y ${intersectionResult.streets?.[1]}, Mar del Plata, Argentina`,
+        `cruce de ${intersectionResult.streets?.[0]} con ${intersectionResult.streets?.[1]}, Mar del Plata, Argentina`
+      ];
+
+      for (const altFormat of alternativeFormats) {
+        console.log(`Trying alternative intersection format: "${altFormat}"`);
+
+        const altGeocodeUrl = new URL(GOOGLE_GEOCODING_URL);
+        altGeocodeUrl.searchParams.append('address', altFormat);
+        altGeocodeUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
+
+        const altResponse = await fetch(altGeocodeUrl.toString(), {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (altResponse.ok) {
+          const altData = await altResponse.json();
+          if (altData.results && altData.results.length > 0) {
+            console.log(`Alternative intersection format successful`);
+
+            const enhancedResults = {
+              ...altData,
+              results: altData.results.map((result: any) => ({
+                ...result,
+                intersection_info: {
+                  is_intersection: true,
+                  streets: intersectionResult.streets,
+                  original_query: query
+                }
+              }))
+            };
+
+            const geoJsonResponse = googleToGeoJSON(enhancedResults);
+            return NextResponse.json(geoJsonResponse);
+          }
+        }
+      }
+    }
+
+    // Original autocomplete logic with enhanced search query
     const autocompleteRequestBody: GooglePlacesAutocompleteRequest = {
-      input: query,
+      input: searchQuery,
       languageCode: 'es',
       regionCode: 'ar',
       includedRegionCodes: ['ar'],
@@ -390,7 +642,7 @@ export async function GET(request: NextRequest) {
           radius: 50000 // 50km radius
         }
       },
-      inputOffset: query.length
+      inputOffset: searchQuery.length
     };
 
     // Add session token if provided (for cost optimization)
@@ -398,7 +650,7 @@ export async function GET(request: NextRequest) {
       autocompleteRequestBody.sessionToken = sessiontoken;
     }
 
-    console.log(`Google Places Autocomplete (New) request for query: "${query}" with enhanced parameters`);
+    console.log(`Google Places Autocomplete (New) request for query: "${searchQuery}" with enhanced parameters`);
 
     const autocompleteResponse = await fetch(GOOGLE_PLACES_AUTOCOMPLETE_URL, {
       method: 'POST',
@@ -426,6 +678,22 @@ export async function GET(request: NextRequest) {
     if (autocompleteData.suggestions && autocompleteData.suggestions.length > 0) {
       console.log(`Found ${autocompleteData.suggestions.length} autocomplete predictions`);
       const geoJsonResponse = googlePlacesToGeoJSON(autocompleteData.suggestions);
+
+      // Add intersection info if applicable
+      if (intersectionResult.isIntersection) {
+        geoJsonResponse.features = geoJsonResponse.features.map((feature: any) => ({
+          ...feature,
+          properties: {
+            ...feature.properties,
+            intersection_info: {
+              is_intersection: true,
+              streets: intersectionResult.streets,
+              original_query: query
+            }
+          }
+        }));
+      }
+
       return NextResponse.json(geoJsonResponse);
     }
 
@@ -434,12 +702,12 @@ export async function GET(request: NextRequest) {
       console.log('No results with location bias, trying broader search...');
 
       const broaderRequestBody: GooglePlacesAutocompleteRequest = {
-        input: `${query}, Mar del Plata, Argentina`,
+        input: searchQuery,
         languageCode: 'es',
         regionCode: 'ar',
         includedRegionCodes: ['ar'],
         includedPrimaryTypes: ['street_address', 'route', 'premise', 'subpremise'],
-        inputOffset: query.length
+        inputOffset: searchQuery.length
       };
 
       if (sessiontoken) {
@@ -461,6 +729,22 @@ export async function GET(request: NextRequest) {
         if (broaderData.suggestions && broaderData.suggestions.length > 0) {
           console.log(`Found ${broaderData.suggestions.length} broader autocomplete predictions`);
           const geoJsonResponse = googlePlacesToGeoJSON(broaderData.suggestions);
+
+          // Add intersection info if applicable
+          if (intersectionResult.isIntersection) {
+            geoJsonResponse.features = geoJsonResponse.features.map((feature: any) => ({
+              ...feature,
+              properties: {
+                ...feature.properties,
+                intersection_info: {
+                  is_intersection: true,
+                  streets: intersectionResult.streets,
+                  original_query: query
+                }
+              }
+            }));
+          }
+
           return NextResponse.json(geoJsonResponse);
         }
       }
@@ -468,10 +752,10 @@ export async function GET(request: NextRequest) {
 
     // If no autocomplete results, fall back to geocoding
     const geocodeUrl = new URL(GOOGLE_GEOCODING_URL);
-    geocodeUrl.searchParams.append('address', query);
+    geocodeUrl.searchParams.append('address', searchQuery);
     geocodeUrl.searchParams.append('key', GOOGLE_MAPS_API_KEY);
 
-    console.log(`Google Geocoding request for query: "${query}"`);
+    console.log(`Google Geocoding request for query: "${searchQuery}"`);
 
     const geocodeResponse = await fetch(geocodeUrl.toString(), {
       method: 'GET',
@@ -497,7 +781,7 @@ export async function GET(request: NextRequest) {
       console.log('No Google results, trying OpenStreetMap Nominatim...');
       try {
         const nominatimUrl = new URL('https://nominatim.openstreetmap.org/search');
-        nominatimUrl.searchParams.append('q', `${query}, Mar del Plata, Argentina`);
+        nominatimUrl.searchParams.append('q', `${searchQuery}, Mar del Plata, Argentina`);
         nominatimUrl.searchParams.append('format', 'json');
         nominatimUrl.searchParams.append('limit', '10');
         nominatimUrl.searchParams.append('addressdetails', '1');

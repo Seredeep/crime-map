@@ -129,7 +129,20 @@ export default function GeocodeSearch({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
+    const newValue = e.target.value;
+    setQuery(newValue);
+
+    // Si había una dirección seleccionada y el usuario está editando, limpiar la selección
+    if (selectedAddress && newValue !== selectedAddress) {
+      // Notificar al padre que se limpió la selección
+      if (onLocationSelect) {
+        onLocationSelect({
+          geometry: { coordinates: [0, 0] },
+          properties: { label: '' }
+        } as GeocodingResult);
+      }
+    }
+
     // Clear previous results when typing
     if (showResults) {
       setShowResults(false);
@@ -152,11 +165,11 @@ export default function GeocodeSearch({
   if (!isMounted) {
     return (
       <div className={`geocode-search ${className || ''}`}>
-        <div className="flex">
-          <div className="flex-grow px-4 py-3 bg-gray-700 border border-gray-600 rounded-l-xl opacity-50">
+        <div className="flex rounded-xl overflow-hidden border border-gray-600/50 bg-gray-800/50">
+          <div className="flex-grow px-4 py-3 bg-gray-800 opacity-50 text-gray-400">
             {placeholder}
           </div>
-          <div className="px-4 py-3 bg-blue-500 text-white rounded-r-xl opacity-50">
+          <div className="px-4 py-3 bg-purple-500 text-white opacity-50">
             <FiSearch className="w-5 h-5" />
           </div>
         </div>
@@ -165,20 +178,20 @@ export default function GeocodeSearch({
   }
 
   return (
-    <div className={`geocode-search ${className || ''}`}>
-      <div className="flex">
+    <div className={`geocode-search relative ${className || ''}`}>
+      <div className="flex rounded-xl overflow-hidden border border-gray-600/50 bg-gray-800/50 shadow-lg">
         <input
           type="text"
-          value={query}
+          value={selectedAddress || query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="flex-grow px-4 py-3 bg-gray-700 border border-gray-600 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400 transition-all"
+          className="flex-grow px-4 py-3 bg-gray-800 border-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-white placeholder-gray-400 transition-all"
         />
         <button
           type="button"
           onClick={handleSearch}
-          className="px-4 py-3 bg-blue-500 text-white rounded-r-xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-5 py-3 bg-purple-500 text-white hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-inner"
           disabled={isLoading || !query.trim()}
         >
           {isLoading ? (
@@ -190,22 +203,22 @@ export default function GeocodeSearch({
       </div>
 
       {error && (
-        <div className="mt-2 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
+        <div className="mt-3 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
           <p className="text-red-300 text-sm">{error}</p>
         </div>
       )}
 
       {showResults && results.length > 0 && (
-        <div className="mt-2 bg-gray-800 border border-gray-600 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-600/50 rounded-xl shadow-xl max-h-60 overflow-y-auto z-[9999]">
           {results.map((result) => (
             <div
               key={result.properties.gid}
-              className="p-3 hover:bg-gray-700 cursor-pointer border-b border-gray-600 last:border-b-0 text-white transition-all"
+              className="p-3 hover:bg-gray-700/50 cursor-pointer border-b border-gray-600/50 last:border-b-0 text-white transition-all"
               onClick={() => handleSelectResult(result)}
             >
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0 mt-1">
-                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -218,7 +231,7 @@ export default function GeocodeSearch({
                     {result.properties.secondary_text || result.properties.locality || result.properties.label}
                   </p>
                   {result.properties.housenumber && (
-                    <p className="text-xs text-blue-300 mt-1">
+                    <p className="text-xs text-purple-300 mt-1">
                       📍 Número {result.properties.housenumber}
                     </p>
                   )}
@@ -229,27 +242,7 @@ export default function GeocodeSearch({
         </div>
       )}
 
-      {/* Display selected address */}
-      {selectedAddress && (
-        <div className="mt-3 p-4 bg-green-500/20 border border-green-400/30 rounded-xl text-white">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 mt-0.5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-2 flex-1">
-              <p className="font-medium text-sm mb-1 text-green-100">📍 Ubicación seleccionada:</p>
-              <p className="text-sm text-green-50 break-words">{selectedAddress}</p>
-              {selectedCoordinates && (
-                <p className="mt-1 text-xs text-green-200">
-                  GPS: {selectedCoordinates[0].toFixed(6)}, {selectedCoordinates[1].toFixed(6)}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

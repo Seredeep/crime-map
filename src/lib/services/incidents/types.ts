@@ -28,7 +28,6 @@ import {
     MdOutlinePersonSearch
 } from 'react-icons/md';
 
-import { IncidentCategory, IncidentColor, Region } from '@/lib/types/global';
 
 // #region Definición de Tipo de Incidente
 /**
@@ -53,6 +52,28 @@ export interface IncidentType {
   category: IncidentCategory;
 }
 
+// #region Tipos Base para Incidentes
+/**
+ * Colores disponibles para tipos de incidentes
+ */
+export type IncidentColor =
+  | 'red' | 'orange' | 'yellow' | 'blue'
+  | 'purple' | 'pink' | 'gray' | 'green'
+  | 'cyan' | 'teal' | 'indigo' | 'violet'
+  | 'rose' | 'emerald' | 'amber' | 'lime';
+
+/**
+ * Categorías generales de incidentes
+ */
+export type IncidentCategory =
+  | 'violence' | 'theft' | 'property' | 'suspicious'
+  | 'traffic' | 'disturbance' | 'emergency' | 'other';
+
+/**
+ * Estados posibles de un incidente
+ */
+export type IncidentStatus = 'pending' | 'verified' | 'resolved';
+
 interface EvidenceFile {
   name: string;
   type: string;
@@ -60,6 +81,8 @@ interface EvidenceFile {
   path: string;
   url?: string;
 }
+
+
 
 export interface IncidentFilters {
   neighborhoodId?: string;
@@ -88,7 +111,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'amenaza',
     label: 'Amenaza',
     icon: FiAlertTriangle,
-    color: 'pink',
+    color: 'yellow',
     description: 'Intimidación o amenaza verbal o escrita',
     priority: 3,
     urgent: false,
@@ -98,7 +121,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'asalto',
     label: 'Asalto',
     icon: FiShield,
-    color: 'orange',
+    color: 'red',
     description: 'Ataque físico o amenaza directa a personas',
     priority: 5,
     urgent: true,
@@ -108,7 +131,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'disturbio',
     label: 'Disturbio',
     icon: FiVolumeX,
-    color: 'yellow',
+    color: 'amber',
     description: 'Alteración del orden público o ruidos molestos',
     priority: 2,
     urgent: false,
@@ -138,7 +161,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'robo',
     label: 'Robo',
     icon: FiLock,
-    color: 'red',
+    color: 'rose',
     description: 'Sustracción de bienes con violencia o intimidación',
     priority: 4,
     urgent: true,
@@ -148,7 +171,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'sospechoso',
     label: 'Actividad Sospechosa',
     icon: FiEye,
-    color: 'blue',
+    color: 'pink',
     description: 'Comportamiento o situación que genera sospecha',
     priority: 2,
     urgent: false,
@@ -158,7 +181,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'vandalismo',
     label: 'Vandalismo',
     icon: FiTool,
-    color: 'purple',
+    color: 'violet',
     description: 'Daños intencionales a propiedad pública o privada',
     priority: 2,
     urgent: false,
@@ -168,7 +191,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'violencia',
     label: 'Violencia',
     icon: FiZap,
-    color: 'red',
+    color: 'indigo',
     description: 'Actos violentos o agresiones físicas',
     priority: 5,
     urgent: true,
@@ -187,7 +210,7 @@ export const ARGENTINA_INCIDENT_TYPES: IncidentType[] = [
     id: 'motochorro',
     label: 'Motochorro',
     icon: MdOutlineDirectionsBike,
-    color: 'red',
+    color: 'emerald',
     description: 'Robo realizado desde motocicleta',
     priority: 5,
     urgent: true,
@@ -204,7 +227,7 @@ export const MEXICO_INCIDENT_TYPES: IncidentType[] = [
     id: 'secuestro_express',
     label: 'Secuestro Express',
     icon: BiSolidCar,
-    color: 'red',
+    color: 'indigo',
     description: 'Secuestro de corta duración para extorsión',
     priority: 5,
     urgent: true,
@@ -214,7 +237,7 @@ export const MEXICO_INCIDENT_TYPES: IncidentType[] = [
     id: 'extorsion',
     label: 'Extorsión',
     icon: FiPhone,
-    color: 'orange',
+    color: 'teal',
     description: 'Amenazas para obtener dinero o beneficios',
     priority: 4,
     urgent: true,
@@ -231,7 +254,7 @@ export const COLOMBIA_INCIDENT_TYPES: IncidentType[] = [
     id: 'atraco',
     label: 'Atraco',
     icon: GiRevolver,
-    color: 'red',
+    color: 'pink',
     description: 'Robo a mano armada',
     priority: 5,
     urgent: true,
@@ -241,7 +264,7 @@ export const COLOMBIA_INCIDENT_TYPES: IncidentType[] = [
     id: 'cosquilleo',
     label: 'Cosquilleo',
     icon: MdOutlinePersonSearch,
-    color: 'orange',
+    color: 'lime',
     description: 'Hurto mediante distracción o engaño',
     priority: 3,
     urgent: false,
@@ -258,7 +281,7 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
     id: 'lanza',
     label: 'Lanza',
     icon: FiTarget,
-    color: 'orange',
+    color: 'yellow',
     description: 'Hurto especializado y sigiloso',
     priority: 3,
     urgent: false,
@@ -268,7 +291,7 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
     id: 'portonazo',
     label: 'Portonazo',
     icon: FiLock,
-    color: 'red',
+    color: 'purple',
     description: 'Robo al ingresar a domicilio',
     priority: 4,
     urgent: true,
@@ -276,6 +299,13 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
   }
 ];
 // #endregion
+
+
+/**
+ * Regiones disponibles para configuración
+ */
+export type Region = 'argentina' | 'mexico' | 'colombia' | 'chile' | 'general';
+
 
 // #region Mapa de Regiones
 /**
