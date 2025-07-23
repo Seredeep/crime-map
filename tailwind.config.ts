@@ -8,6 +8,26 @@ export default {
   theme: {
   	extend: {
   		colors: {
+  			// Claridad Brand Colors
+  			clarity: {
+  				white: '#FFFFFF',
+  				'off-white': '#FAFAFA',
+  				'light-gray': '#F3F4F6',
+  				gray: '#9CA3AF',
+  				'dark-gray': '#374151',
+  				'darker-gray': '#1F2937',
+  				black: '#111827',
+  				primary: '#FFFFFF',
+  				'primary-hover': '#F9FAFB',
+  				secondary: '#F3F4F6',
+  				accent: '#E5E7EB',
+  				success: '#10B981',
+  				warning: '#F59E0B',
+  				error: '#EF4444',
+  				info: '#3B82F6',
+  				alert: '#DC2626',
+  				panic: '#EA580C',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

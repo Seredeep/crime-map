@@ -40,7 +40,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
     opacity: 0;
     transition: opacity 0.2s ease;
   }
@@ -64,7 +64,7 @@
   }
 
   .status-online {
-    @apply text-green-400;
+    @apply text-emerald-400;
   }
 
   .status-offline {
@@ -89,8 +89,8 @@
 
   .neighborhood-avatar {
     @apply w-12 h-12 rounded-xl flex items-center justify-center;
-    background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, #FFFFFF 0%, #F3F4F6 100%);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
   }
 
   .loading-skeleton {
@@ -129,46 +129,88 @@
 }
 
 :root {
-  /* Light mode colors */
-  --primary: #0A84FF;
-  --verified: #B3BC4E;
-  --alert: #FF7F11;
-  --text: #333333;
-  --background: #F8F9FA;
+  /* Claridad Brand Colors - Minimalista y elegante */
+  --clarity-white: #FFFFFF;
+  --clarity-off-white: #FAFAFA;
+  --clarity-light-gray: #F3F4F6;
+  --clarity-gray: #9CA3AF;
+  --clarity-dark-gray: #374151;
+  --clarity-darker-gray: #1F2937;
+  --clarity-black: #111827;
 
-  /* Dark mode colors */
-  --bg-dark: #121417;
-  --bg-surface: #1B1D22;
-  --text-inverted: #F8F9FA;
-  --border-dark: #2A2E35;
+  /* Accent colors - sutiles y elegantes */
+  --clarity-primary: #FFFFFF; /* Blanco puro como color principal */
+  --clarity-primary-hover: #F9FAFB;
+  --clarity-secondary: #F3F4F6;
+  --clarity-accent: #E5E7EB;
 
-  /* Additional dark mode variables */
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --error: #EF4444;
-  --info: #3B82F6;
+  /* Status colors - más sutiles */
+  --clarity-success: #10B981;
+  --clarity-warning: #F59E0B;
+  --clarity-error: #EF4444;
+  --clarity-info: #3B82F6;
 
-  /* Shadows and overlays */
+  /* Alert colors - para botones de emergencia */
+  --clarity-alert: #DC2626;
+  --clarity-panic: #EA580C;
+
+  /* Text colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D5DB;
+  --text-muted: #9CA3AF;
+  --text-inverted: #111827;
+
+  /* Background colors */
+  --bg-primary: #000000;
+  --bg-secondary: #1F2937;
+  --bg-tertiary: #374151;
+  --bg-surface: #1F2937;
+
+  /* Border colors */
+  --border-primary: #374151;
+  --border-secondary: #4B5563;
+  --border-accent: #6B7280;
+
+  /* Shadow colors */
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.15);
   --shadow-heavy: rgba(0, 0, 0, 0.25);
+  --shadow-white: rgba(255, 255, 255, 0.1);
+
+  /* Overlay colors */
   --overlay: rgba(0, 0, 0, 0.5);
+  --overlay-light: rgba(0, 0, 0, 0.3);
 
   /* Transitions */
   --transition-fast: 0.15s ease-out;
   --transition-normal: 0.3s ease-out;
   --transition-slow: 0.5s ease-out;
+
+  /* Legacy colors for compatibility */
+  --primary: var(--clarity-primary);
+  --verified: var(--clarity-success);
+  --alert: var(--clarity-alert);
+  --text: var(--text-primary);
+  --background: var(--bg-primary);
+  --bg-dark: var(--bg-primary);
+  --bg-surface: var(--bg-secondary);
+  --text-inverted: var(--text-primary);
+  --border-dark: var(--border-primary);
+  --text-secondary: var(--text-secondary);
+  --text-muted: var(--text-muted);
+  --success: var(--clarity-success);
+  --warning: var(--clarity-warning);
+  --error: var(--clarity-error);
+  --info: var(--clarity-info);
 }
 
 /* Dark theme class */
 .dark {
-  --background: var(--bg-dark);
-  --text: var(--text-inverted);
-  --text-secondary: #D1D5DB;
-  --text-muted: #9CA3AF;
-  --border: var(--border-dark);
+  --background: var(--bg-primary);
+  --text: var(--text-primary);
+  --text-secondary: var(--text-secondary);
+  --text-muted: var(--text-muted);
+  --border: var(--border-primary);
 
   /* Adjust shadows for dark mode */
   --shadow-light: rgba(0, 0, 0, 0.3);
@@ -191,8 +233,8 @@ body {
   font-family: 'Manrope', var(--font-inter, Arial, Helvetica, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-dark);
-  color: var(--text-inverted);
+  background-color: #000000;
+  color: var(--text-primary);
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
@@ -346,16 +388,16 @@ button:focus svg {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-dark);
+  background: var(--border-primary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3A3E45;
+  background: var(--border-secondary);
 }
 
 /* Focus styles for accessibility */
@@ -363,7 +405,7 @@ button:focus,
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--clarity-primary);
   outline-offset: 2px;
 }
 
@@ -380,40 +422,40 @@ textarea:focus {
 
 /* Utility classes for consistent spacing and colors */
 .bg-surface {
-  background-color: var(--bg-surface);
+  background-color: var(--bg-secondary);
 }
 
 .bg-dark {
-  background-color: var(--bg-dark);
+  background-color: var(--bg-primary);
 }
 
 .text-primary {
-  color: var(--primary);
+  color: var(--clarity-primary);
 }
 
 .text-alert {
-  color: var(--alert);
+  color: var(--clarity-alert);
 }
 
 .text-verified {
-  color: var(--verified);
+  color: var(--clarity-success);
 }
 
 .border-dark {
-  border-color: var(--border-dark);
+  border-color: var(--border-primary);
 }
 
 /* Form styling */
 input, select, textarea {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-dark);
-  color: var(--text-inverted);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
+  border-color: var(--clarity-primary);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
 input::placeholder, textarea::placeholder {
@@ -441,18 +483,18 @@ input::placeholder, textarea::placeholder {
 }
 
 .btn-primary {
-  background-color: var(--primary);
-  color: white;
+  background-color: var(--clarity-primary);
+  color: var(--text-inverted);
 }
 
 .btn-primary:hover {
-  background-color: #0066CC;
+  background-color: var(--clarity-primary-hover);
 }
 
 /* Card styles */
 .card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-dark);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px var(--shadow-light);
@@ -532,33 +574,33 @@ input::placeholder, textarea::placeholder {
 
 /* Icon styles with glassmorphism effect */
 .icon {
-  @apply text-[#8BB5FF] text-xl transition-all duration-200 ease-in-out;
-  filter: drop-shadow(0 0 3px rgba(139, 181, 255, 0.4));
+  @apply text-white text-xl transition-all duration-200 ease-in-out;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
 }
 
 .icon:hover {
-  filter: drop-shadow(0 0 5px rgba(139, 181, 255, 0.7));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
   transform: scale(1.05);
 }
 
 /* Glassmorphism navbar */
 .navbar-glass {
   @apply flex justify-around items-center px-6 py-3 rounded-2xl w-[280px] mx-auto;
-  background: rgba(30, 41, 59, 0.4);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(71, 85, 105, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Tab glassmorphism styling */
 .tab-glass {
   @apply flex justify-center items-center space-x-1 px-2 py-2 rounded-2xl mb-8 w-fit mx-auto;
-  background: rgba(30, 41, 59, 0.4);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(71, 85, 105, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tab-button {
@@ -566,9 +608,9 @@ input::placeholder, textarea::placeholder {
 }
 
 .tab-button.active {
-  @apply text-[#8BB5FF];
-  background: rgba(139, 181, 255, 0.15);
-  box-shadow: 0 2px 8px rgba(139, 181, 255, 0.2);
+  @apply text-white;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
 }
 
 .tab-button.inactive {
@@ -576,14 +618,14 @@ input::placeholder, textarea::placeholder {
 }
 
 .tab-button.inactive:hover {
-  background: rgba(71, 85, 105, 0.2);
+  background: rgba(75, 85, 99, 0.2);
 }
 
 /* Title styling */
 .app-title {
   @apply text-center text-3xl font-light tracking-wide mb-8;
-  color: #8BB5FF;
-  text-shadow: 0 0 10px rgba(139, 181, 255, 0.3);
+  color: #FFFFFF;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 /* Estilos personalizados para el chat */
@@ -599,7 +641,7 @@ input::placeholder, textarea::placeholder {
   }
 
   .whatsapp-chat-card:hover {
-    @apply shadow-lg shadow-blue-500/10 border-gray-600/50;
+    @apply shadow-lg shadow-white/10 border-gray-600/50;
   }
 
   /* Mensaje preview truncado */
@@ -673,7 +715,7 @@ input::placeholder, textarea::placeholder {
   }
 
   .send-button.active {
-    @apply bg-blue-500 hover:bg-blue-600 text-white shadow-lg;
+    @apply bg-white hover:bg-gray-100 text-gray-900 shadow-lg;
     transform: scale(1.05);
   }
 
@@ -702,7 +744,7 @@ input::placeholder, textarea::placeholder {
   }
 
   .participant-avatar {
-    @apply w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center;
+    @apply w-8 h-8 bg-gradient-to-br from-white to-gray-200 rounded-full flex items-center justify-center;
   }
 
   /* Estados de conexión */
@@ -711,7 +753,7 @@ input::placeholder, textarea::placeholder {
   }
 
   .connection-indicator.connected {
-    @apply text-green-400;
+    @apply text-emerald-400;
   }
 
   .connection-indicator.disconnected {

@@ -4,15 +4,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FiArrowLeft, FiX } from 'react-icons/fi';
+import { FiArrowLeft } from 'react-icons/fi';
 import FloatingReportButton from './components/FloatingReportButton';
 import MobileBottomTabs from './components/MobileBottomTabs';
 import MobileCommunitiesView from './components/MobileCommunitiesView';
-import MobileDynamicNavbar from './components/MobileDynamicNavbar';
 import MobileProfileView from './components/MobileProfileView';
 import MobileReportView from './components/MobileReportView';
 import MobileSettingsPanel from './components/MobileSettingsPanel';
 import MobileStatsView from './components/MobileStatsView';
+import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import SwipeableIncidentsView from './components/SwipeableIncidentsView';
 
@@ -192,7 +192,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col w-screen bg-gray-900 dark:bg-gray-900 ">
+    <div className="flex flex-col w-screen bg-black dark:bg-black">
       {/* Main content area - Below navbar */}
       <div className="flex flex-1 relative h-[calc(100vh-4rem)] ">
         {/* Desktop Layout */}
@@ -238,7 +238,7 @@ export default function Home() {
         {/* Mobile Layout */}
         <div className="md:hidden w-full relative">
           {/* Nueva navbar dinámica para móvil */}
-          <MobileDynamicNavbar
+          <Navbar
             activeTab={activeTab}
             onFiltersClick={handleFiltersClick}
             onSettingsClick={handleSettingsClick}
@@ -300,9 +300,9 @@ export default function Home() {
                       handleCloseReportForm();
                     }
                   }}
-                  className="fixed top-0 right-0 bottom-0 w-full bg-gray-900/95 backdrop-blur-lg border-l border-gray-700/50 shadow-2xl z-[210] md:hidden"
+                  className="fixed top-0 right-0 bottom-0 w-full bg-black/95 backdrop-blur-lg border-l border-gray-700/50 shadow-2xl z-[210] md:hidden"
                   style={{
-                    background: 'rgba(17, 24, 39, 0.95)',
+                    background: 'rgba(0, 0, 0, 0.95)',
                     backdropFilter: 'blur(20px)',
                     boxShadow: `
                       -10px 0 50px rgba(0, 0, 0, 0.3),
@@ -315,7 +315,7 @@ export default function Home() {
                   <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-12 bg-gray-600 rounded-r-full cursor-grab active:cursor-grabbing" />
 
                   {/* Header del panel */}
-                  <div className="sticky top-0 bg-gray-900/95 border-b border-gray-700/10 backdrop-blur-lg px-3 py-1 z-20">
+                  <div className="sticky top-0 bg-black/95 border-b border-gray-700/10 backdrop-blur-lg px-3 py-1 z-20">
                       <div className="flex items-center space-x-2">
                         <motion.button
                           onClick={handleCloseReportForm}

@@ -100,7 +100,7 @@ export const metadata: Metadata = {
 
   // #region App icons
   icons: {
-    icon: "/icons/icon-192x192.png",
+    icon: "/favicon.svg",
     apple: "/icons/apple-touch-icon.png",
   },
   // #endregion

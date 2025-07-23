@@ -1,7 +1,7 @@
 'use client';
 
-import { Neighborhood } from '@/lib/services/neighborhoods/neighborhoodService';
 import { fetchIncidents } from '@/lib/services/incidents/incidentService';
+import { Neighborhood } from '@/lib/services/neighborhoods/neighborhoodService';
 import { Incident, IncidentFilters } from '@/lib/types/global';
 import { formatDate } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -141,11 +141,11 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
   return (
     <div
       ref={panelRef}
-      className={`bg-gray-900/95 backdrop-blur-sm text-white h-full shadow-2xl z-10 border-r border-gray-700/50 relative transition-all duration-200 flex flex-col ${isResizing ? 'select-none' : ''} ${isMobile ? 'w-full' : ''}`}
+      className={`bg-gray-800/95 backdrop-blur-sm text-white h-full shadow-2xl z-10 border-r border-gray-600/50 relative transition-all duration-200 flex flex-col ${isResizing ? 'select-none' : ''} ${isMobile ? 'w-full' : ''}`}
       style={isMobile ? {} : { width: `${panelWidth}px` }}
     >
       {/* Header con controles */}
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-20">
+      <div className="sticky top-0 bg-gray-800/95 backdrop-blur-sm border-b border-gray-600/50 z-20">
         <div className={`p-4 ${isMobile ? 'pr-16' : ''}`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-xl text-white">Incidentes</h2>
@@ -219,7 +219,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                     x: isSearchOpen ? 0 : 0
                   }}
                   transition={{ duration: 0.2, ease: "easeInOut" }}
-                  className="w-full bg-gray-800/50 border border-gray-600/50 rounded-xl px-4 py-3 pl-11 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/10 transition-all duration-200"
+                  className="w-full bg-gray-700/50 border border-gray-500/50 rounded-xl px-4 py-3 pl-11 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/10 transition-all duration-200"
                   onBlur={() => setIsSearchOpen(false)}
                   autoFocus={isSearchOpen}
                   style={{ pointerEvents: isSearchOpen ? 'auto' : 'none' }}
@@ -311,7 +311,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 }}
                       onClick={() => onIncidentClick(filteredIncidents[0])}
-                      className="relative bg-gradient-to-r from-gray-800/80 to-gray-700/80 backdrop-blur-sm rounded-2xl p-5 cursor-pointer border border-gray-600/30 hover:border-gray-500/50 transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-black/20 transform hover:-translate-y-1 group"
+                      className="relative bg-gradient-to-r from-gray-700/80 to-gray-600/80 backdrop-blur-sm rounded-2xl p-5 cursor-pointer border border-gray-500/30 hover:border-gray-400/50 transition-all duration-300 ease-in-out hover:shadow-xl hover:shadow-black/20 transform hover:-translate-y-1 group"
                     >
                       {/* Imagen de fondo borrosa */}
                       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-purple-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -343,7 +343,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
 
                         {/* Tags del tipo */}
                         <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-700/50 text-gray-300 border border-gray-600/30">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-600/50 text-gray-300 border border-gray-500/30">
                             {filteredIncidents[0].type || 'Sin tipo'}
                           </span>
                           <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -358,10 +358,10 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                   {filteredIncidents.length > 1 && (
                     <div className="relative my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-700/50"></div>
+                        <div className="w-full border-t border-gray-600/50"></div>
                       </div>
                       <div className="relative flex justify-center">
-                        <span className="bg-gray-900 px-3 text-xs text-gray-500 font-medium">INCIDENTES ANTERIORES</span>
+                        <span className="bg-gray-800 px-3 text-xs text-gray-500 font-medium">INCIDENTES ANTERIORES</span>
                       </div>
                     </div>
                   )}
@@ -374,7 +374,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 + (index + 1) * 0.05 }}
                       onClick={() => onIncidentClick(incident)}
-                      className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 cursor-pointer border border-gray-700/30 hover:border-gray-600/50 transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-black/10 transform hover:-translate-y-0.5 group"
+                      className="bg-gray-700/50 backdrop-blur-sm rounded-xl p-4 cursor-pointer border border-gray-600/30 hover:border-gray-500/50 transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-black/10 transform hover:-translate-y-0.5 group"
                     >
                       <div className="flex items-start space-x-3">
                         <div className={`p-1.5 rounded-lg ${getIncidentTypeColor(incident.type)} text-white flex-shrink-0 mt-0.5`}>
@@ -396,7 +396,7 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
                           </p>
 
                           <div className="flex items-center justify-between">
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-700/50 text-gray-300">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-600/50 text-gray-300">
                               {incident.type || 'Sin tipo'}
                             </span>
                             {getStatusBadge(incident.status)}

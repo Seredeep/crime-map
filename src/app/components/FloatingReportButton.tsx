@@ -42,9 +42,9 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
         animate={{
           borderRadius: ['20%', '30%', '24%'],
           boxShadow: [
-            '0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.1)',
-            '0 0 30px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)',
-            '0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.1)'
+            '0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(220, 38, 38, 0.1)',
+            '0 0 30px rgba(220, 38, 38, 0.4), 0 0 60px rgba(220, 38, 38, 0.2)',
+            '0 0 20px rgba(220, 38, 38, 0.3), 0 0 40px rgba(220, 38, 38, 0.1)'
           ]
         }}
         transition={{ duration: 2, repeat: Infinity, repeatType: 'mirror' }}
@@ -53,20 +53,20 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
           onClick={onClick}
           whileHover={{
             scale: 1.05,
-            boxShadow: '0 0 40px rgba(239, 68, 68, 0.5), 0 0 80px rgba(239, 68, 68, 0.3)'
+            boxShadow: '0 0 40px rgba(220, 38, 38, 0.5), 0 0 80px rgba(220, 38, 38, 0.3)'
           }}
           className="relative w-24 h-24 p-1 text-gray-800 flex items-center justify-center transition-all duration-300 group overflow-hidden"
           style={{
             background: `
-              radial-gradient(circle at 30% 30%, rgba(239, 68, 68, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at 30% 30%, rgba(220, 38, 38, 0.15) 0%, transparent 50%),
               linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
               rgba(20, 20, 20, 0.8)
             `,
             backdropFilter: 'blur(20px)',
-            border: '2px solid rgba(239, 68, 68, 0.3)',
+            border: '2px solid rgba(220, 38, 38, 0.3)',
             boxShadow: `
-              inset 0 0 20px rgba(239, 68, 68, 0.1),
-              0 0 30px rgba(239, 68, 68, 0.3),
+              inset 0 0 20px rgba(220, 38, 38, 0.1),
+              0 0 30px rgba(220, 38, 38, 0.3),
               0 8px 32px rgba(0, 0, 0, 0.3),
               0 4px 16px rgba(0, 0, 0, 0.2)
             `,
@@ -75,7 +75,7 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
         >
           {/* Efecto de pulso de fondo */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-600/20 rounded-[28px]"
+            className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-red-700/20 rounded-[28px]"
             animate={{
               opacity: [0.3, 0.6, 0.3],
               scale: [1, 1.02, 1]
@@ -158,7 +158,7 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
             transition={{ delay: 0.5, duration: 0.3 }}
             className="absolute bottom-2 font-manrope text-sm font-bold text-red-300 drop-shadow-lg"
             style={{
-              textShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+              textShadow: '0 0 10px rgba(220, 38, 38, 0.5)'
             }}
           >
             Reportar
@@ -166,12 +166,12 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
 
           {/* Borde animado */}
           <motion.div
-            className="absolute inset-0 rounded-[28px] border-2 border-red-400/50"
+            className="absolute inset-0 rounded-[28px] border-2 border-red-600/50"
             animate={{
               borderColor: [
-                'rgba(239, 68, 68, 0.3)',
-                'rgba(239, 68, 68, 0.6)',
-                'rgba(239, 68, 68, 0.3)'
+                'rgba(220, 38, 38, 0.3)',
+                'rgba(220, 38, 38, 0.6)',
+                'rgba(220, 38, 38, 0.3)'
               ]
             }}
             transition={{
@@ -194,9 +194,9 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
           style={{
             background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            border: '1px solid rgba(220, 38, 38, 0.3)',
             boxShadow: `
-              inset 0 0 10px rgba(239, 68, 68, 0.1),
+              inset 0 0 10px rgba(220, 38, 38, 0.1),
               0 0 25px rgba(0, 0, 0, 0.5),
               0 8px 30px rgba(0, 0, 0, 0.3),
               0 4px 15px rgba(0, 0, 0, 0.2)
@@ -208,7 +208,7 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
             className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-3 h-3 rotate-45"
             style={{
               background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
+              border: '1px solid rgba(220, 38, 38, 0.3)',
               borderLeft: 'none',
               borderTop: 'none'
             }}

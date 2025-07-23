@@ -111,7 +111,7 @@ const MobileSlidePanel = ({
             </div>
 
             {/* Footer con acciones */}
-            <div className="sticky bottom-0 bg-gray-900/95 backdrop-blur-sm border-t border-gray-700/50 p-4">
+            <div className="sticky bottom-0 bg-gray-800/95 backdrop-blur-sm border-t border-gray-600/50 p-4">
               <div className="flex space-x-3">
                 <button
                   onClick={() => {
@@ -121,7 +121,7 @@ const MobileSlidePanel = ({
                       tags: []
                     });
                   }}
-                  className="flex-1 px-4 py-2.5 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white rounded-lg transition-all duration-200 font-medium"
+                  className="flex-1 px-4 py-2.5 bg-gray-600/50 hover:bg-gray-500/50 text-gray-300 hover:text-white rounded-lg transition-all duration-200 font-medium"
                 >
                   Limpiar
                 </button>

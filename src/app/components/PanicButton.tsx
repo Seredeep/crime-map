@@ -1,9 +1,9 @@
 'use client';
 
+import { formatAddress, reverseGeocode } from '@/lib/services/geo/geocoding';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { formatAddress, reverseGeocode } from '@/lib/services/geo/geocoding';
 
 interface PanicButtonProps {
   isVisible?: boolean;
@@ -205,7 +205,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
       case 'alerting':
         return 'text-red-500';
       case 'success':
-        return 'text-green-500';
+        return 'text-emerald-500';
       default:
         return 'text-orange-500';
     }
@@ -239,16 +239,16 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
           animate={{
             borderRadius: ['20%', '30%', '24%'],
             boxShadow: [
-              '0 0 25px rgba(251, 146, 60, 0.4), 0 0 50px rgba(251, 146, 60, 0.2)',
-              '0 0 35px rgba(251, 146, 60, 0.6), 0 0 70px rgba(251, 146, 60, 0.3)',
-              '0 0 25px rgba(251, 146, 60, 0.4), 0 0 50px rgba(251, 146, 60, 0.2)'
+              '0 0 25px rgba(234, 88, 12, 0.4), 0 0 50px rgba(234, 88, 12, 0.2)',
+              '0 0 35px rgba(234, 88, 12, 0.6), 0 0 70px rgba(234, 88, 12, 0.3)',
+              '0 0 25px rgba(234, 88, 12, 0.4), 0 0 50px rgba(234, 88, 12, 0.2)'
             ],
             ...(panicState === 'alerting' && {
               scale: [1, 1.1, 1],
               boxShadow: [
-                '0 0 40px rgba(239, 68, 68, 0.6), 0 0 80px rgba(239, 68, 68, 0.4)',
-                '0 0 60px rgba(239, 68, 68, 0.8), 0 0 120px rgba(239, 68, 68, 0.6)',
-                '0 0 40px rgba(239, 68, 68, 0.6), 0 0 80px rgba(239, 68, 68, 0.4)'
+                '0 0 40px rgba(220, 38, 38, 0.6), 0 0 80px rgba(220, 38, 38, 0.4)',
+                '0 0 60px rgba(220, 38, 38, 0.8), 0 0 120px rgba(220, 38, 38, 0.6)',
+                '0 0 40px rgba(220, 38, 38, 0.6), 0 0 80px rgba(220, 38, 38, 0.4)'
               ],
               transition: { duration: 0.8, repeat: Infinity }
             })
@@ -260,8 +260,8 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             whileHover={{
               scale: 1.05,
               boxShadow: panicState === 'alerting'
-                ? '0 0 60px rgba(239, 68, 68, 0.8), 0 0 120px rgba(239, 68, 68, 0.6)'
-                : '0 0 40px rgba(251, 146, 60, 0.6), 0 0 80px rgba(251, 146, 60, 0.4)'
+                ? '0 0 60px rgba(220, 38, 38, 0.8), 0 0 120px rgba(220, 38, 38, 0.6)'
+                : '0 0 40px rgba(234, 88, 12, 0.6), 0 0 80px rgba(234, 88, 12, 0.4)'
             }}
             className={`relative w-24 h-24 text-gray-800 flex items-center justify-center transition-all duration-300 group overflow-hidden ${
               panicState === 'alerting' ? 'animate-pulse' : ''
@@ -269,29 +269,29 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             style={{
               background: panicState === 'alerting'
                 ? `
-                  radial-gradient(circle at 30% 30%, rgba(239, 68, 68, 0.3) 0%, transparent 50%),
+                  radial-gradient(circle at 30% 30%, rgba(220, 38, 38, 0.3) 0%, transparent 50%),
                   linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
                   rgba(20, 20, 20, 0.9)
                 `
                 : `
-                  radial-gradient(circle at 30% 30%, rgba(251, 146, 60, 0.2) 0%, transparent 50%),
+                  radial-gradient(circle at 30% 30%, rgba(234, 88, 12, 0.2) 0%, transparent 50%),
                   linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
                   rgba(20, 20, 20, 0.8)
                 `,
               backdropFilter: 'blur(20px)',
               border: panicState === 'alerting'
-                ? '2px solid rgba(239, 68, 68, 0.5)'
-                : '2px solid rgba(251, 146, 60, 0.4)',
+                ? '2px solid rgba(220, 38, 38, 0.5)'
+                : '2px solid rgba(234, 88, 12, 0.4)',
               boxShadow: panicState === 'alerting'
                 ? `
-                  inset 0 0 20px rgba(239, 68, 68, 0.2),
-                  0 0 40px rgba(239, 68, 68, 0.4),
+                  inset 0 0 20px rgba(220, 38, 38, 0.2),
+                  0 0 40px rgba(220, 38, 38, 0.4),
                   0 8px 32px rgba(0, 0, 0, 0.3),
                   0 4px 16px rgba(0, 0, 0, 0.2)
                 `
                 : `
-                  inset 0 0 20px rgba(251, 146, 60, 0.15),
-                  0 0 30px rgba(251, 146, 60, 0.3),
+                  inset 0 0 20px rgba(234, 88, 12, 0.15),
+                  0 0 30px rgba(234, 88, 12, 0.3),
                   0 8px 32px rgba(0, 0, 0, 0.3),
                   0 4px 16px rgba(0, 0, 0, 0.2)
                 `,
@@ -302,8 +302,8 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             <motion.div
               className={`absolute inset-0 rounded-[28px] ${
                 panicState === 'alerting'
-                  ? 'bg-gradient-to-r from-red-500/30 to-red-600/30'
-                  : 'bg-gradient-to-r from-orange-500/20 to-orange-600/20'
+                  ? 'bg-gradient-to-r from-red-600/30 to-red-700/30'
+                  : 'bg-gradient-to-r from-orange-600/20 to-orange-700/20'
               }`}
               animate={{
                 opacity: panicState === 'alerting' ? [0.4, 0.8, 0.4] : [0.3, 0.6, 0.3],
@@ -339,8 +339,8 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                   className="absolute inset-0 blur-sm"
                   style={{
                     background: panicState === 'alerting'
-                      ? 'radial-gradient(circle, rgba(239, 68, 68, 0.6) 0%, transparent 70%)'
-                      : 'radial-gradient(circle, rgba(251, 146, 60, 0.4) 0%, transparent 70%)'
+                      ? 'radial-gradient(circle, rgba(220, 38, 38, 0.6) 0%, transparent 70%)'
+                      : 'radial-gradient(circle, rgba(234, 88, 12, 0.4) 0%, transparent 70%)'
                   }}
                 />
               </div>
@@ -352,7 +352,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                 {[...Array(3)].map((_, i) => (
                   <motion.div
                     key={i}
-                    className="absolute inset-0 border-2 border-red-400/30 rounded-full"
+                    className="absolute inset-0 border-2 border-red-600/30 rounded-full"
                     initial={{ scale: 0.8, opacity: 0.8 }}
                     animate={{
                       scale: [0.8, 2.5],
@@ -380,7 +380,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                 {[...Array(8)].map((_, i) => (
                   <motion.div
                     key={i}
-                    className="absolute w-1 h-1 bg-orange-400 rounded-full"
+                    className="absolute w-1 h-1 bg-orange-500 rounded-full"
                     style={{
                       left: `${15 + (i * 8)}%`,
                       top: `${15 + (i * 7)}%`,
@@ -429,8 +429,8 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               }`}
               style={{
                 textShadow: panicState === 'alerting'
-                  ? '0 0 15px rgba(239, 68, 68, 0.8)'
-                  : '0 0 10px rgba(251, 146, 60, 0.6)'
+                  ? '0 0 15px rgba(220, 38, 38, 0.8)'
+                  : '0 0 10px rgba(234, 88, 12, 0.6)'
               }}
             >
               {panicState === 'alerting' ? '¡ALERTA!' : 'Pánico'}
@@ -439,17 +439,17 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             {/* Borde animado */}
             <motion.div
               className={`absolute inset-0 rounded-[28px] border-2 ${
-                panicState === 'alerting' ? 'border-red-400/60' : 'border-orange-400/50'
+                panicState === 'alerting' ? 'border-red-600/60' : 'border-orange-600/50'
               }`}
               animate={{
                 borderColor: panicState === 'alerting' ? [
-                  'rgba(239, 68, 68, 0.4)',
-                  'rgba(239, 68, 68, 0.8)',
-                  'rgba(239, 68, 68, 0.4)'
+                  'rgba(220, 38, 38, 0.4)',
+                  'rgba(220, 38, 38, 0.8)',
+                  'rgba(220, 38, 38, 0.4)'
                 ] : [
-                  'rgba(251, 146, 60, 0.3)',
-                  'rgba(251, 146, 60, 0.6)',
-                  'rgba(251, 146, 60, 0.3)'
+                  'rgba(234, 88, 12, 0.3)',
+                  'rgba(234, 88, 12, 0.6)',
+                  'rgba(234, 88, 12, 0.3)'
                 ]
               }}
               transition={{
@@ -472,9 +472,9 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             style={{
               background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
               backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(251, 146, 60, 0.4)',
+              border: '1px solid rgba(234, 88, 12, 0.4)',
               boxShadow: `
-                inset 0 0 10px rgba(251, 146, 60, 0.1),
+                inset 0 0 10px rgba(234, 88, 12, 0.1),
                 0 0 25px rgba(0, 0, 0, 0.5),
                 0 8px 30px rgba(0, 0, 0, 0.3),
                 0 4px 15px rgba(0, 0, 0, 0.2)
@@ -486,7 +486,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-3 h-3 rotate-45"
               style={{
                 background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
-                border: '1px solid rgba(251, 146, 60, 0.4)',
+                border: '1px solid rgba(234, 88, 12, 0.4)',
                 borderLeft: 'none',
                 borderTop: 'none'
               }}
@@ -514,9 +514,9 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               style={{
                 background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
                 backdropFilter: 'blur(20px)',
-                border: '2px solid rgba(251, 146, 60, 0.3)',
+                border: '2px solid rgba(234, 88, 12, 0.3)',
                 boxShadow: `
-                  inset 0 0 20px rgba(251, 146, 60, 0.1),
+                  inset 0 0 20px rgba(234, 88, 12, 0.1),
                   0 0 40px rgba(0, 0, 0, 0.5),
                   0 8px 50px rgba(0, 0, 0, 0.4)
                 `
@@ -524,16 +524,16 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               onClick={(e) => e.stopPropagation()}
             >
               {/* Efecto de brillo de fondo */}
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-transparent opacity-50" />
 
               <div className="relative text-center">
                 <motion.div
-                  className="w-20 h-20 bg-gradient-to-br from-orange-500/30 to-orange-600/30 rounded-full flex items-center justify-center mx-auto mb-4 relative overflow-hidden"
+                  className="w-20 h-20 bg-gradient-to-br from-orange-600/30 to-orange-700/30 rounded-full flex items-center justify-center mx-auto mb-4 relative overflow-hidden"
                   animate={{
                     boxShadow: [
-                      '0 0 20px rgba(251, 146, 60, 0.3)',
-                      '0 0 40px rgba(251, 146, 60, 0.5)',
-                      '0 0 20px rgba(251, 146, 60, 0.3)'
+                      '0 0 20px rgba(234, 88, 12, 0.3)',
+                      '0 0 40px rgba(234, 88, 12, 0.5)',
+                      '0 0 20px rgba(234, 88, 12, 0.3)'
                     ]
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -563,8 +563,8 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                     whileTap={{ scale: 0.98 }}
                     className="flex-1 px-4 py-3 text-white rounded-xl font-bold transition-all duration-200 relative overflow-hidden"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)',
-                      boxShadow: '0 0 20px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+                      background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.9) 0%, rgba(185, 28, 28, 0.9) 100%)',
+                      boxShadow: '0 0 20px rgba(220, 38, 38, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1)'
                     }}
                   >
                     <span className="relative z-10">🚨 Sí, alertar</span>

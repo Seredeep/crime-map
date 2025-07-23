@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 import {
@@ -83,16 +83,16 @@ const MobileBottomTabs = ({
       <div
         className="absolute inset-0 border-t"
         style={{
-          background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%)',
+          background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%)',
           backdropFilter: 'blur(20px)',
-          borderColor: 'rgba(139, 181, 255, 0.15)'
+          borderColor: 'rgba(255, 255, 255, 0.1)'
         }}
       />
 
       {/* Tab container */}
       <div className="relative px-3 py-3 h-full flex items-center">
         <div className="flex items-center justify-around w-full">
-          {visibleTabs.map((tab) => {
+          {visibleTabs.map((tab, index) => {
             const isActive = activeTab === tab.id;
 
             return (
@@ -101,41 +101,35 @@ const MobileBottomTabs = ({
                 onClick={() => handleTabClick(tab.id)}
                 className="relative flex flex-col items-center justify-center p-2 min-w-[65px] transition-all duration-300"
               >
-                {/* Active indicator mejorado */}
-                <AnimatePresence>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute -top-1 left-1/2 w-10 h-1 rounded-full"
-                      style={{
-                        background: 'linear-gradient(90deg, #8BB5FF 0%, #B5CCF4 100%)',
-                        boxShadow: '0 0 8px rgba(139, 181, 255, 0.6)',
-                        x: '-50%'
-                      }}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                        duration: 0.3
-                      }}
-                    />
-                  )}
-                </AnimatePresence>
+                {/* Active indicator mejorado con layoutId único */}
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="absolute -top-1 left-1/2 w-10 h-1 rounded-full"
+                  style={{
+                    background: isActive ? 'linear-gradient(90deg, #FFFFFF 0%, #F3F4F6 100%)' : 'transparent',
+                    boxShadow: isActive ? '0 0 8px rgba(255, 255, 255, 0.4)' : 'none',
+                    x: '-50%'
+                  }}
+                  initial={false}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 30,
+                    duration: 0.3
+                  }}
+                />
 
                 {/* Icon container mejorado */}
                 <motion.div
                   className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 relative overflow-hidden ${
                     isActive
-                      ? 'text-[#B5CCF4]'
+                      ? 'text-white'
                       : 'text-gray-400 hover:text-gray-300'
                   }`}
                   style={isActive ? {
-                    background: 'linear-gradient(135deg, rgba(139, 181, 255, 0.15) 0%, rgba(181, 204, 244, 0.1) 100%)',
-                    border: '1px solid rgba(139, 181, 255, 0.3)',
-                    boxShadow: '0 4px 12px rgba(139, 181, 255, 0.1)'
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(243, 244, 246, 0.1) 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 4px 12px rgba(255, 255, 255, 0.1)'
                   } : {
                     background: 'rgba(255, 255, 255, 0.03)',
                     border: '1px solid rgba(255, 255, 255, 0.05)'
@@ -165,11 +159,11 @@ const MobileBottomTabs = ({
                 <motion.span
                   className={`text-xs font-medium mt-1.5 transition-all duration-300 ${
                     isActive
-                      ? 'text-[#B5CCF4] font-semibold'
+                      ? 'text-white font-semibold'
                       : 'text-gray-500'
                   }`}
                   style={isActive ? {
-                    textShadow: '0 0 4px rgba(181, 204, 244, 0.3)'
+                    textShadow: '0 0 4px rgba(255, 255, 255, 0.3)'
                   } : {}}
                   animate={{
                     opacity: isActive ? 1 : 0.8,
@@ -184,7 +178,7 @@ const MobileBottomTabs = ({
                 <motion.div
                   className="absolute inset-0 rounded-xl"
                   style={{
-                    background: 'radial-gradient(circle, rgba(139, 181, 255, 0.2) 0%, transparent 70%)'
+                    background: 'radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)'
                   }}
                   initial={{ scale: 0, opacity: 0 }}
                   whileTap={{
@@ -203,7 +197,7 @@ const MobileBottomTabs = ({
       <div
         className="h-safe-area-inset-bottom"
         style={{
-          background: 'rgba(30, 41, 59, 0.98)'
+          background: 'rgba(0, 0, 0, 0.98)'
         }}
       />
     </div>

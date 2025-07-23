@@ -274,7 +274,7 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
   return (
     <div className={`w-full h-full bg-gray-900 ${className}`}>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 p-4">
+      <div className="sticky top-0 z-10 bg-gray-800/95 backdrop-blur-sm border-b border-gray-600/50 p-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-white">Estadísticas</h1>
           <PanicButton isVisible={!!session?.user} className="relative" />
@@ -289,7 +289,7 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                 selectedPeriod === period.id
                   ? 'bg-blue-500 text-white shadow-lg'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
               {period.label}
