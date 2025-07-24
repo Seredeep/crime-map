@@ -35,7 +35,7 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
         damping: 20,
         delay: 0.2
       }}
-      className={`fixed bottom-52 right-4 z-[120] md:hidden ${className}`}
+      className={`fixed bottom-52 right-4 z-[100] md:hidden ${className}`}
     >
       <motion.div
         whileTap={{ scale: 0.95 }}

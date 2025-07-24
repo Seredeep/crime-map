@@ -4,11 +4,11 @@ import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 import {
-    FiActivity,
-    FiCheckCircle,
-    FiCompass,
-    FiSettings,
-    FiUsers
+  FiActivity,
+  FiCheckCircle,
+  FiCompass,
+  FiSettings,
+  FiUsers
 } from 'react-icons/fi';
 interface MobileBottomTabsProps {
   activeTab: string;
@@ -79,13 +79,11 @@ const MobileBottomTabs = ({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] md:hidden h-20">
-      {/* Backdrop blur effect mejorado */}
       <div
-        className="absolute inset-0 border-t"
+        className="absolute inset-0"
         style={{
-          background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%)',
-          backdropFilter: 'blur(20px)',
-          borderColor: 'rgba(255, 255, 255, 0.1)'
+          background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
+          boxShadow: '0 1px 20px rgba(0, 0, 0, 0.5)'
         }}
       />
 

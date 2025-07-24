@@ -193,6 +193,13 @@ export default function Home() {
 
   return (
     <div className="flex flex-col w-screen bg-black dark:bg-black">
+      {/* Navbar unificado */}
+      <Navbar
+        activeTab={activeTab}
+        onFiltersClick={handleFiltersClick}
+        onSettingsClick={handleSettingsClick}
+      />
+
       {/* Main content area - Below navbar */}
       <div className="flex flex-1 relative h-[calc(100vh-4rem)] ">
         {/* Desktop Layout */}
@@ -237,13 +244,6 @@ export default function Home() {
 
         {/* Mobile Layout */}
         <div className="md:hidden w-full relative">
-          {/* Nueva navbar dinámica para móvil */}
-          <Navbar
-            activeTab={activeTab}
-            onFiltersClick={handleFiltersClick}
-            onSettingsClick={handleSettingsClick}
-          />
-
           {/* Contenido principal con altura ajustada */}
           <div className="h-[calc(100vh-4rem)] pt-16">
             {/* Tab content with animation */}

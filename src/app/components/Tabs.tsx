@@ -47,10 +47,8 @@ export default function Tabs({ tabs, defaultTab, showTitle = false }: TabProps) 
       <div
         className="flex justify-center items-center space-x-1 px-2 py-2 rounded-2xl mb-8 w-fit mx-auto"
         style={{
-          background: 'rgba(0, 0, 0, 0.8)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
+          background: 'linear-gradient(180deg, rgba(20, 20, 20, 0.95) 0%, rgba(15, 15, 15, 0.98) 100%)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
         }}
       >
         <nav className="flex space-x-2" aria-label="Tabs">

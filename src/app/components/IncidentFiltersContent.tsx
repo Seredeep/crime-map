@@ -4,13 +4,14 @@ import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
 import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Calendar,
-  CheckCircle,
-  Clock,
-  Clock3,
-  MapPin,
-  Tags,
-  Trash2
+    Calendar,
+    CheckCircle,
+    Clock,
+    Clock3,
+    MapPin,
+    Tags,
+    Trash2,
+    X
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -19,6 +20,7 @@ interface IncidentFiltersContentProps {
   filters: FiltersType;
   onFiltersChangeAction: (filters: FiltersType) => void;
   onNeighborhoodSelect?: (neighborhood: Neighborhood | null) => void;
+  onClose?: () => void;
 }
 
 // Common tags for quick filtering
@@ -26,7 +28,12 @@ const COMMON_TAGS = [
   'robo', 'hurto', 'asalto', 'vandalismo', 'drogas', 'ruido', 'violencia', 'accidente'
 ];
 
-export default function IncidentFiltersContent({ filters, onFiltersChangeAction, onNeighborhoodSelect }: IncidentFiltersContentProps) {
+export default function IncidentFiltersContent({
+  filters,
+  onFiltersChangeAction,
+  onNeighborhoodSelect,
+  onClose
+}: IncidentFiltersContentProps) {
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,25 +190,47 @@ export default function IncidentFiltersContent({ filters, onFiltersChangeAction,
   }, [onFiltersChangeAction, onNeighborhoodSelect]);
 
   return (
-    <div className="space-y-1">
-      {/* Clear filters button */}
+    <div className="w-full max-w-sm mx-auto">
+      {/* Header con estilo Claridad */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
+            <Tags className="w-5 h-5 text-white" />
+          </div>
+          <h3 className="text-lg font-semibold text-white font-manrope">Filtros</h3>
+        </div>
+        {onClose && (
+          <motion.button
+            onClick={onClose}
+            whileTap={{ scale: 0.95 }}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200 backdrop-blur-sm border border-white/20"
+          >
+            <X className="w-4 h-4" />
+          </motion.button>
+        )}
+      </div>
+
+      {/* Botón limpiar filtros */}
       <AnimatePresence>
         {activeFiltersCount > 0 && (
           <motion.button
-            initial={{ opacity: 0, scale: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            onClick={(e) => {
-              e.preventDefault();
-              handleClearFilters();
+            exit={{ opacity: 0, scale: 0.9 }}
+            onClick={handleClearFilters}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm rounded-xl transition-all duration-300 mb-6 font-medium"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#FFFFFF'
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg transition-all duration-300 mb-2 w-full justify-center"
-            style={{ color: '#bd89ff' }}
             whileHover={{
-              backgroundColor: 'rgba(56, 45, 71, 0.836)',
-              transform: 'translate(1px, -1px)'
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              transform: 'translateY(-1px)'
             }}
-            whileTap={{ scale: 0.99 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Trash2 className="h-4 w-4" />
             Limpiar filtros
@@ -209,218 +238,255 @@ export default function IncidentFiltersContent({ filters, onFiltersChangeAction,
         )}
       </AnimatePresence>
 
-      {/* Neighborhood Filter */}
-      <motion.div
-        className="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-300 cursor-pointer"
-        style={{ color: '#7e8590' }}
-        whileHover={{
-          backgroundColor: '#5353ff',
-          color: '#ffffff',
-          transform: 'translate(1px, -1px)'
-        }}
-        whileTap={{ scale: 0.99 }}
-      >
-        <MapPin className="h-5 w-5" />
-        <div className="flex-1">
-          <p className="font-semibold text-sm">Barrio</p>
+      {/* Filtros con estilo Claridad */}
+      <div className="space-y-4">
+        {/* Neighborhood Filter */}
+        <motion.div
+          className="p-4 rounded-xl transition-all duration-300"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+          whileHover={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            transform: 'translateY(-1px)'
+          }}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <MapPin className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold text-white text-sm">Barrio</span>
+          </div>
           <select
-            className="w-full bg-transparent border-none outline-none text-sm appearance-none cursor-pointer"
+            className="w-full bg-transparent border-none outline-none text-white text-sm appearance-none cursor-pointer"
             value={filters.neighborhoodId || ''}
             onChange={handleNeighborhoodChange}
             disabled={loading}
-            onClick={(e) => e.stopPropagation()}
+            style={{ color: '#FFFFFF' }}
           >
-            <option value="">Todos los barrios</option>
+            <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>Todos los barrios</option>
             {error ? (
-              <option disabled>Error al cargar barrios</option>
+              <option disabled style={{ background: '#1F2937', color: '#FFFFFF' }}>Error al cargar barrios</option>
             ) : loading ? (
-              <option disabled>Cargando barrios...</option>
+              <option disabled style={{ background: '#1F2937', color: '#FFFFFF' }}>Cargando barrios...</option>
             ) : (
               neighborhoods.map((neighborhood) => (
-                <option key={neighborhood._id} value={neighborhood.properties.id.toString()}>
+                <option
+                  key={neighborhood._id}
+                  value={neighborhood.properties.id.toString()}
+                  style={{ background: '#1F2937', color: '#FFFFFF' }}
+                >
                   {neighborhood.properties.soc_fomen}
                 </option>
               ))
             )}
           </select>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Status Filter - solo visible para editores y administradores */}
-      {isEditorOrAdmin && (
-        <motion.div
-          className="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-300 cursor-pointer"
-          style={{ color: '#7e8590' }}
-          whileHover={{
-            backgroundColor: '#5353ff',
-            color: '#ffffff',
-            transform: 'translate(1px, -1px)'
-          }}
-          whileTap={{ scale: 0.99 }}
-        >
-          <CheckCircle className="h-5 w-5" />
-          <div className="flex-1">
-            <p className="font-semibold text-sm">Estado</p>
+        {/* Status Filter - solo visible para editores y administradores */}
+        {isEditorOrAdmin && (
+          <motion.div
+            className="p-4 rounded-xl transition-all duration-300"
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}
+            whileHover={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              transform: 'translateY(-1px)'
+            }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-white/10 rounded-lg">
+                <CheckCircle className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-semibold text-white text-sm">Estado</span>
+            </div>
             <select
-              className="w-full bg-transparent border-none outline-none text-sm appearance-none cursor-pointer"
+              className="w-full bg-transparent border-none outline-none text-white text-sm appearance-none cursor-pointer"
               value={filters.status || ''}
               onChange={handleStatusChange}
-              onClick={(e) => e.stopPropagation()}
+              style={{ color: '#FFFFFF' }}
             >
-              <option value="">Todos los estados</option>
-              <option value="pending">Pendiente</option>
-              <option value="verified">Verificado</option>
-              <option value="resolved">Resuelto</option>
+              <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>Todos los estados</option>
+              <option value="pending" style={{ background: '#1F2937', color: '#FFFFFF' }}>Pendiente</option>
+              <option value="verified" style={{ background: '#1F2937', color: '#FFFFFF' }}>Verificado</option>
+              <option value="resolved" style={{ background: '#1F2937', color: '#FFFFFF' }}>Resuelto</option>
             </select>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
 
-      {/* Date Range Filter */}
-      <motion.div
-        className="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-300 cursor-pointer"
-        style={{ color: '#7e8590' }}
-        whileHover={{
-          backgroundColor: '#5353ff',
-          color: '#ffffff',
-          transform: 'translate(1px, -1px)'
-        }}
-        whileTap={{ scale: 0.99 }}
-      >
-        <Calendar className="h-5 w-5" />
-        <div className="flex-1">
-          <p className="font-semibold text-sm">Fechas</p>
+        {/* Date Range Filter */}
+        <motion.div
+          className="p-4 rounded-xl transition-all duration-300"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+          whileHover={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            transform: 'translateY(-1px)'
+          }}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <Calendar className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold text-white text-sm">Fechas</span>
+          </div>
           <div className="flex gap-2 text-xs">
             <input
               type="date"
-              className="flex-1 bg-transparent border-none outline-none cursor-pointer"
+              className="flex-1 bg-transparent border-none outline-none cursor-pointer text-white"
               value={filters.dateFrom || ''}
               onChange={handleDateFromChange}
-              onClick={(e) => e.stopPropagation()}
+              style={{ color: '#FFFFFF' }}
             />
-            <span>-</span>
+            <span className="text-white/60">-</span>
             <input
               type="date"
-              className="flex-1 bg-transparent border-none outline-none cursor-pointer"
+              className="flex-1 bg-transparent border-none outline-none cursor-pointer text-white"
               value={filters.dateTo || ''}
               onChange={handleDateToChange}
-              onClick={(e) => e.stopPropagation()}
+              style={{ color: '#FFFFFF' }}
             />
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Time Range Filter */}
-      <motion.div
-        className="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-300 cursor-pointer"
-        style={{ color: '#7e8590' }}
-        whileHover={{
-          backgroundColor: '#5353ff',
-          color: '#ffffff',
-          transform: 'translate(1px, -1px)'
-        }}
-        whileTap={{ scale: 0.99 }}
-      >
-        <Clock className="h-5 w-5" />
-        <div className="flex-1">
-          <p className="font-semibold text-sm">Horas</p>
+        {/* Time Range Filter */}
+        <motion.div
+          className="p-4 rounded-xl transition-all duration-300"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+          whileHover={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            transform: 'translateY(-1px)'
+          }}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <Clock className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold text-white text-sm">Horas</span>
+          </div>
           <div className="flex gap-2 text-xs">
             <input
               type="time"
-              className="flex-1 bg-transparent border-none outline-none cursor-pointer"
+              className="flex-1 bg-transparent border-none outline-none cursor-pointer text-white"
               value={filters.timeFrom || ''}
               onChange={handleTimeFromChange}
-              onClick={(e) => e.stopPropagation()}
+              style={{ color: '#FFFFFF' }}
             />
-            <span>-</span>
+            <span className="text-white/60">-</span>
             <input
               type="time"
-              className="flex-1 bg-transparent border-none outline-none cursor-pointer"
+              className="flex-1 bg-transparent border-none outline-none cursor-pointer text-white"
               value={filters.timeTo || ''}
               onChange={handleTimeToChange}
-              onClick={(e) => e.stopPropagation()}
+              style={{ color: '#FFFFFF' }}
             />
           </div>
-        </div>
-      </motion.div>
-
-      {/* Time Period Filter */}
-      <motion.div
-        className="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-300 cursor-pointer"
-        style={{ color: '#7e8590' }}
-        whileHover={{
-          backgroundColor: '#5353ff',
-          color: '#ffffff',
-          transform: 'translate(1px, -1px)'
-        }}
-        whileTap={{ scale: 0.99 }}
-      >
-        <Clock3 className="h-5 w-5" />
-        <div className="flex-1">
-          <p className="font-semibold text-sm">Período</p>
-          <select
-            className="w-full bg-transparent border-none outline-none text-sm appearance-none cursor-pointer"
-            value={filters.time || ''}
-            onChange={handleTimePeriodChange}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <option value="">Cualquier hora</option>
-            <option value="morning">Mañana (6:00 - 12:00)</option>
-            <option value="afternoon">Tarde (12:00 - 18:00)</option>
-            <option value="evening">Noche (18:00 - 00:00)</option>
-            <option value="night">Madrugada (00:00 - 6:00)</option>
-          </select>
-        </div>
-      </motion.div>
-
-      {/* Separator */}
-      <div style={{ borderTop: '1.5px solid #42434a', margin: '8px 0' }}></div>
-
-      {/* Tags Section */}
-      <div>
-        <motion.div
-          className="flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-300"
-          style={{ color: '#bd89ff' }}
-          whileHover={{
-            backgroundColor: 'rgba(56, 45, 71, 0.836)',
-            transform: 'translate(1px, -1px)'
-          }}
-          whileTap={{ scale: 0.99 }}
-        >
-          <Tags className="h-5 w-5" />
-          <p className="font-semibold text-sm">Etiquetas</p>
         </motion.div>
 
-        <div className="px-2 pt-2">
+        {/* Time Period Filter */}
+        <motion.div
+          className="p-4 rounded-xl transition-all duration-300"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+          whileHover={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            transform: 'translateY(-1px)'
+          }}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <Clock3 className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold text-white text-sm">Período</span>
+          </div>
+          <select
+            className="w-full bg-transparent border-none outline-none text-white text-sm appearance-none cursor-pointer"
+            value={filters.time || ''}
+            onChange={handleTimePeriodChange}
+            style={{ color: '#FFFFFF' }}
+          >
+            <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>Cualquier hora</option>
+            <option value="morning" style={{ background: '#1F2937', color: '#FFFFFF' }}>Mañana (6:00 - 12:00)</option>
+            <option value="afternoon" style={{ background: '#1F2937', color: '#FFFFFF' }}>Tarde (12:00 - 18:00)</option>
+            <option value="evening" style={{ background: '#1F2937', color: '#FFFFFF' }}>Noche (18:00 - 00:00)</option>
+            <option value="night" style={{ background: '#1F2937', color: '#FFFFFF' }}>Madrugada (00:00 - 6:00)</option>
+          </select>
+        </motion.div>
+
+        {/* Tags Section */}
+        <motion.div
+          className="p-4 rounded-xl transition-all duration-300"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+          whileHover={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            transform: 'translateY(-1px)'
+          }}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <Tags className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold text-white text-sm">Etiquetas</span>
+          </div>
+
           <div className="flex flex-wrap gap-2">
             {COMMON_TAGS.map((tag, index) => (
               <motion.button
                 key={tag}
-                initial={{ opacity: 0, scale: 0 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
                 onClick={() => handleTagToggle(tag)}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-all duration-300 font-medium ${
+                className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium ${
                   selectedTags.includes(tag)
-                    ? 'text-white shadow-lg shadow-blue-500/20'
-                    : 'hover:text-white'
+                    ? 'text-white shadow-lg'
+                    : 'text-white/70 hover:text-white'
                 }`}
                 style={{
-                  backgroundColor: selectedTags.includes(tag) ? '#5353ff' : 'rgba(126, 133, 144, 0.1)',
-                  color: selectedTags.includes(tag) ? '#ffffff' : '#7e8590'
+                  background: selectedTags.includes(tag)
+                    ? 'rgba(255, 255, 255, 0.2)'
+                    : 'rgba(255, 255, 255, 0.05)',
+                  border: selectedTags.includes(tag)
+                    ? '1px solid rgba(255, 255, 255, 0.3)'
+                    : '1px solid rgba(255, 255, 255, 0.1)'
                 }}
                 whileHover={!selectedTags.includes(tag) ? {
-                  backgroundColor: '#5353ff',
-                  color: '#ffffff',
-                  transform: 'translate(1px, -1px)'
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  transform: 'translateY(-1px)'
                 } : {}}
-                whileTap={{ scale: 0.99 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {tag}
               </motion.button>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

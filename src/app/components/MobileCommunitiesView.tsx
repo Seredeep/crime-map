@@ -72,7 +72,7 @@ const ChatCard = ({
     >
       {/* Header mejorado */}
       <div className="flex items-center space-x-4">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
           {/* Mostrar inicial del barrio en lugar de la imagen del remitente */}
           <span className="text-white font-bold text-lg">
             {getNeighborhoodInitial(chatInfo?.neighborhood || '')}
@@ -278,7 +278,7 @@ const MobileCommunitiesView = () => {
                   onClick={() => handleTabChange('chat')}
                   className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeTab === 'chat'
-                      ? 'bg-blue-600 text-white shadow-lg'
+                      ? 'bg-gray-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }`}
                 >
@@ -289,7 +289,7 @@ const MobileCommunitiesView = () => {
                   onClick={() => handleTabChange('explore')}
                   className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeTab === 'explore'
-                      ? 'bg-blue-600 text-white shadow-lg'
+                      ? 'bg-gray-600 text-white shadow-lg'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }`}
                 >

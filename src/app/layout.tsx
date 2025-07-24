@@ -7,7 +7,6 @@ import AppWrapper from "./components/AppWrapper";
 import CapacitorProvider from "./components/CapacitorProvider";
 import GlobalPanicButton from "./components/GlobalPanicButton";
 import ImageModal from "./components/ImageModal";
-import Navbar from "./components/Navbar";
 import SessionProvider from "./components/SessionProvider";
 import SessionRefresh from "./components/SessionRefresh";
 import "./globals.css";
@@ -149,7 +148,6 @@ export default function RootLayout({
           <ImageModalProvider>
             {/* App Wrapper with Loading Screen */}
             <AppWrapper
-              navbar={<Navbar />}
               globalComponents={
                 <>
                   <ImageModal />

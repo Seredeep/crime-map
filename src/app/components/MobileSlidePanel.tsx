@@ -5,7 +5,7 @@ import { IncidentFilters } from '@/lib/types/global';
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { FiFilter, FiX } from 'react-icons/fi';
-import IncidentFiltersComponent from './IncidentFilters';
+import IncidentFiltersContent from './IncidentFiltersContent';
 
 interface MobileSlidePanelProps {
   isOpen: boolean;
@@ -58,7 +58,7 @@ const MobileSlidePanel = ({
             onClick={onClose}
           />
 
-          {/* Panel deslizante */}
+          {/* Panel deslizante con estilo Claridad */}
           <motion.div
             initial={{ x: '-100%', scale: 0.95 }}
             animate={{ x: 0, scale: 1 }}
@@ -73,21 +73,35 @@ const MobileSlidePanel = ({
             dragConstraints={{ left: -50, right: 0 }}
             dragElastic={0.05}
             onDragEnd={handleDragEnd}
-            className="fixed left-0 top-0 h-full w-[85%] max-w-sm bg-gray-900/98 backdrop-blur-xl border-r border-gray-700/50 z-[301] md:hidden shadow-2xl"
-            style={{ x: dragX }}
+            className="fixed left-0 top-0 h-full w-[85%] max-w-sm z-[301] md:hidden shadow-2xl"
+            style={{
+              x: dragX,
+              background: 'rgba(0, 0, 0, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: `
+                -10px 0 50px rgba(0, 0, 0, 0.3),
+                -5px 0 25px rgba(0, 0, 0, 0.2),
+                inset 1px 0 0 rgba(255, 255, 255, 0.1)
+              `
+            }}
           >
-            {/* Header del panel */}
-            <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 z-10">
+            {/* Header del panel con estilo Claridad */}
+            <div className="sticky top-0 z-10" style={{
+              background: 'rgba(0, 0, 0, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-500/20 rounded-lg">
-                    <FiFilter className="w-5 h-5 text-blue-400" />
+                  <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
+                    <FiFilter className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-lg font-semibold text-white">Filtros</h2>
+                  <h2 className="text-lg font-semibold text-white font-manrope">Filtros</h2>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 hover:text-white transition-all duration-200"
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200 backdrop-blur-sm border border-white/20"
                 >
                   <FiX className="w-5 h-5" />
                 </button>
@@ -95,25 +109,27 @@ const MobileSlidePanel = ({
 
               {/* Indicador de deslizar */}
               <div className="flex justify-center pb-2">
-                <div className="w-8 h-1 bg-gray-600 rounded-full" />
+                <div className="w-8 h-1 bg-white/30 rounded-full" />
               </div>
             </div>
 
             {/* Contenido del panel */}
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-4">
-                <IncidentFiltersComponent
-                  filters={filters}
-                  onFiltersChangeAction={onFiltersChange}
-                  onNeighborhoodSelect={onNeighborhoodSelect}
-                />
-              </div>
+              <IncidentFiltersContent
+                filters={filters}
+                onFiltersChangeAction={onFiltersChange}
+                onNeighborhoodSelect={onNeighborhoodSelect}
+              />
             </div>
 
             {/* Footer con acciones */}
-            <div className="sticky bottom-0 bg-gray-800/95 backdrop-blur-sm border-t border-gray-600/50 p-4">
+            <div className="sticky bottom-0 p-4" style={{
+              background: 'rgba(0, 0, 0, 0.95)',
+              backdropFilter: 'blur(20px)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
               <div className="flex space-x-3">
-                <button
+                <motion.button
                   onClick={() => {
                     // Resetear filtros
                     onFiltersChange({
@@ -121,16 +137,38 @@ const MobileSlidePanel = ({
                       tags: []
                     });
                   }}
-                  className="flex-1 px-4 py-2.5 bg-gray-600/50 hover:bg-gray-500/50 text-gray-300 hover:text-white rounded-lg transition-all duration-200 font-medium"
+                  className="flex-1 px-4 py-2.5 rounded-xl transition-all duration-200 font-medium"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFFFFF'
+                  }}
+                  whileHover={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    transform: 'translateY(-1px)'
+                  }}
                 >
                   Limpiar
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={onClose}
-                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-medium"
+                  className="flex-1 px-4 py-2.5 rounded-xl transition-all duration-200 font-medium"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    color: '#000000'
+                  }}
+                  whileHover={{
+                    background: 'rgba(255, 255, 255, 0.3)',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    transform: 'translateY(-1px)'
+                  }}
                 >
                   Aplicar
-                </button>
+                </motion.button>
               </div>
             </div>
           </motion.div>

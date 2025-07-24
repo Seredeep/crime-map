@@ -1,12 +1,20 @@
-'use client';
-import { motion } from 'framer-motion';
-import { signOut, useSession } from 'next-auth/react';
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { FiAlertTriangle, FiLogIn, FiLogOut, FiMap, FiMessageCircle, FiMoon, FiSettings, FiSun, FiUser } from 'react-icons/fi';
-import ClaridadLogo from './ClaridadLogo';
+'use client'
+import { motion } from 'framer-motion'
+import { signOut, useSession } from 'next-auth/react'
+import { useTheme } from 'next-themes'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import {
+  FiLogIn,
+  FiLogOut,
+  FiMap,
+  FiMessageCircle,
+  FiMoon,
+  FiSettings,
+  FiSun
+} from 'react-icons/fi'
+import ClaridadLogo from './ClaridadLogo'
 
 // NavLink component for desktop navigation
 const NavLink = ({
@@ -14,13 +22,13 @@ const NavLink = ({
   icon,
   children,
   active = false,
-  className = ''
+  className = '',
 }: {
-  href: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  active?: boolean;
-  className?: string;
+  href: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  active?: boolean
+  className?: string
 }) => (
   <Link
     href={href}
@@ -33,7 +41,7 @@ const NavLink = ({
     <span className="mr-2 text-white">{icon}</span>
     {children}
   </Link>
-);
+)
 
 // MobileNavLink component for mobile navigation
 const MobileNavLink = ({
@@ -41,13 +49,13 @@ const MobileNavLink = ({
   icon,
   children,
   active = false,
-  className = ''
+  className = '',
 }: {
-  href: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  active?: boolean;
-  className?: string;
+  href: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  active?: boolean
+  className?: string
 }) => (
   <Link
     href={href}
@@ -60,41 +68,45 @@ const MobileNavLink = ({
     <span className="mr-3 text-white">{icon}</span>
     {children}
   </Link>
-);
+)
 
 interface NavbarProps {
-  activeTab?: string;
-  onFiltersClick?: () => void;
-  onSettingsClick?: () => void;
+  activeTab?: string
+  onFiltersClick?: () => void
+  onSettingsClick?: () => void
 }
 
-const Navbar = ({ activeTab, onFiltersClick, onSettingsClick }: NavbarProps = {}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const pathname = usePathname();
-  const { data: session, status } = useSession();
-  const { theme, setTheme } = useTheme();
+const Navbar = ({
+  activeTab,
+  onFiltersClick,
+  onSettingsClick,
+}: NavbarProps = {}) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
+  const { data: session, status } = useSession()
+  const { theme, setTheme } = useTheme()
 
   // Ensure component is mounted to avoid hydration mismatch
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
   // Close mobile menu when route changes
   useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+    setIsOpen(false)
+  }, [pathname])
 
-  const toggleMenu = () => setIsOpen(!isOpen);
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const toggleMenu = () => setIsOpen(!isOpen)
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
   // Función para abrir el chat del barrio
   const openNeighborhoodChat = () => {
     // Cambiar a la tab de comunidades y luego abrir el chat
-    window.dispatchEvent(new CustomEvent('openNeighborhoodChat'));
-  };
+    window.dispatchEvent(new CustomEvent('openNeighborhoodChat'))
+  }
 
-  if (!mounted) return null;
+  if (!mounted) return null
 
   // Configuración de la navbar según el tab activo (para mobile)
   const getNavbarConfig = () => {
@@ -103,47 +115,54 @@ const Navbar = ({ activeTab, onFiltersClick, onSettingsClick }: NavbarProps = {}
         return {
           title: 'Claridad',
           leftAction: null,
-          showThemeToggle: true
-        };
+          showThemeToggle: true,
+        }
       case 'stats':
         return {
           title: 'Claridad',
           leftAction: null,
-          showThemeToggle: true
-        };
+          showThemeToggle: true,
+        }
       case 'communities':
         return {
           title: 'Claridad',
           leftAction: null,
-          showThemeToggle: true
-        };
+          showThemeToggle: true,
+        }
       case 'report':
         return {
           title: 'Claridad',
           leftAction: null,
-          showThemeToggle: false
-        };
+          showThemeToggle: false,
+        }
       case 'queue':
         return {
           title: 'Claridad',
           leftAction: null,
-          showThemeToggle: true
-        };
+          showThemeToggle: true,
+        }
       default:
         return {
           title: 'Claridad',
           leftAction: null,
-          showThemeToggle: true
-        };
+          showThemeToggle: true,
+        }
     }
-  };
+  }
 
-  const config = getNavbarConfig();
+  const config = getNavbarConfig()
 
   return (
     <>
       {/* Desktop Navbar */}
-      <nav className="hidden md:block top-0 z-50 bg-black transition-colors duration-300 shadow-lg">
+      <nav
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
+          boxShadow: '0 1px 20px rgba(0, 0, 0, 0.5)',
+        }}
+        className="hidden md:block top-0 z-50 transition-colors duration-300 shadow-lg"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -176,7 +195,11 @@ const Navbar = ({ activeTab, onFiltersClick, onSettingsClick }: NavbarProps = {}
                   className="p-2 rounded-full text-white hover:bg-white/10 hover:text-white transition-all duration-200"
                   aria-label="Toggle theme"
                 >
-                  {theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+                  {theme === 'dark' ? (
+                    <FiSun className="w-5 h-5" />
+                  ) : (
+                    <FiMoon className="w-5 h-5" />
+                  )}
                 </button>
 
                 {status === 'authenticated' ? (
@@ -205,64 +228,18 @@ const Navbar = ({ activeTab, onFiltersClick, onSettingsClick }: NavbarProps = {}
             </div>
           </div>
         </div>
-
-        {/* Mobile menu */}
-        <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden bg-black shadow-lg ${isOpen ? 'max-h-96' : 'max-h-0'}`}>
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            <MobileNavLink href="/" icon={<FiMap />} active={pathname === '/'}>
-              Mapa
-            </MobileNavLink>
-            <MobileNavLink
-              href="/incidents"
-              icon={<FiAlertTriangle />}
-              active={pathname === '/incidents'}
-            >
-              Incidentes
-            </MobileNavLink>
-            {status === 'authenticated' ? (
-              <>
-                <MobileNavLink href="/profile" icon={<FiSettings />}>
-                  Configuración
-                </MobileNavLink>
-                <button
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  className="w-full flex items-center px-3 py-3 rounded-md text-base font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-all duration-200"
-                >
-                  <FiLogOut className="mr-3 text-white" />
-                  Cerrar sesión
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/auth/signin"
-                  className="flex items-center text-gray-300 hover:bg-white/5 hover:text-white px-3 py-3 rounded-md text-base font-medium transition-all duration-200"
-                >
-                  <FiLogIn className="mr-3 text-white" />
-                  Iniciar sesión
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="flex items-center bg-white hover:bg-gray-100 text-gray-900 px-3 py-3 rounded-md text-base font-medium transition-all duration-200 mt-2"
-                >
-                  <FiUser className="mr-3" />
-                  Registrarse
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
       </nav>
 
-      {/* Mobile Dynamic Navbar */}
+      {/* Mobile Navbar */}
       <motion.nav
         initial={{ y: -64 }}
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="fixed top-0 left-0 right-0 z-[130] md:hidden backdrop-blur-lg shadow-lg"
         style={{
-          background: 'linear-gradient(180deg, rgba(20, 20, 20, 0.95) 0%, rgba(15, 15, 15, 0.98) 100%)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+          background:
+            'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
+          boxShadow: '0 1px 20px rgba(0, 0, 0, 0.5)',
         }}
       >
         <div className="flex items-center justify-between h-16 px-4">
@@ -277,33 +254,10 @@ const Navbar = ({ activeTab, onFiltersClick, onSettingsClick }: NavbarProps = {}
               <ClaridadLogo size="md" showText={true} />
             </motion.div>
           </div>
-
-          {/* Lado derecho - Botones de acción */}
-          <div className="flex items-center space-x-2">
-            {config.showThemeToggle && (
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-full text-white hover:bg-white/10 hover:text-white transition-all duration-200"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
-              </button>
-            )}
-
-            {status === 'authenticated' && (
-              <button
-                onClick={onSettingsClick}
-                className="p-2 rounded-full text-white hover:bg-white/10 hover:text-white transition-all duration-200"
-                aria-label="Configuración"
-              >
-                <FiSettings className="w-5 h-5" />
-              </button>
-            )}
-          </div>
         </div>
       </motion.nav>
     </>
-  );
+  )
 }
 
-export default Navbar;
+export default Navbar

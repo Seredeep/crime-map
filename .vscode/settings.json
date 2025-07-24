@@ -20,7 +20,7 @@
   },
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
-  "files.autoSave": "onFocusChange",
+  "files.autoSave": "afterDelay",
   "terminal.integrated.env.windows": {
     "Path": "${env:Path};C:\\Users\\${env:USERNAME}\\AppData\\Roaming\\npm"
   },

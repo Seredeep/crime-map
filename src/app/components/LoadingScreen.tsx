@@ -69,7 +69,7 @@ export default function LoadingScreen({ isLoading, progress = 0, message = "Carg
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="absolute inset-0 w-48 h-48 bg-white/20 rounded-full blur-xl"
+              className="absolute inset-0 w-64 h-64 bg-white/20 rounded-full blur-xl"
             />
 
             {/* Logo central con efecto de brillo - MUCHO MÁS GRANDE */}
@@ -87,9 +87,9 @@ export default function LoadingScreen({ isLoading, progress = 0, message = "Carg
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="relative z-10 w-48 h-48 flex items-center justify-center"
+              className="relative z-10 w-64 h-64 flex items-center justify-center"
             >
-              <ClaridadLogo size="xl" showText={false} />
+              <ClaridadLogo size="3xl" showText={false} />
             </motion.div>
           </div>
         </motion.div>
