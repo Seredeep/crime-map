@@ -246,21 +246,53 @@ const customPopupStyle = `
   .leaflet-popup-improved .leaflet-popup-content-wrapper {
     padding: 0;
     overflow: hidden;
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
   .leaflet-popup-improved .leaflet-popup-content {
     margin: 0;
     width: auto !important;
+    color: white;
   }
   .leaflet-popup-improved .leaflet-popup-close-button {
-    color: #4b5563;
+    color: #9ca3af;
     font-size: 18px;
-    padding: 4px 4px 0 0;
+    padding: 8px 8px 0 0;
+    background: transparent;
+    border: none;
+    font-weight: bold;
+  }
+  .leaflet-popup-improved .leaflet-popup-close-button:hover {
+    color: #d1d5db;
   }
   .leaflet-popup-improved .leaflet-popup-tip {
-    background: white;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .leaflet-popup-improved .leaflet-popup-tip-container {
+    margin-top: -1px;
+  }
+
+  /* Estilos específicos para móvil */
+  @media (max-width: 768px) {
+    .leaflet-popup-improved .leaflet-popup-content-wrapper {
+      min-width: 280px;
+      max-width: 320px;
+    }
   }
 `;
+
+// Función para detectar si estamos en móvil
+const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= 768;
+};
 
 export default function MapComponent({
   markerPosition,
@@ -355,6 +387,11 @@ export default function MapComponent({
 
   // Handle incident marker click
   const handleIncidentMarkerClick = useCallback((incident: Incident) => {
+    // En móvil, no abrir modal, solo mostrar el popover
+    if (isMobile()) {
+      return;
+    }
+
     if (onIncidentSelect) {
       onIncidentSelect(incident);
     }
@@ -660,54 +697,81 @@ export default function MapComponent({
             draggable={isEditing}
           >
             <Popup className="leaflet-popup-improved">
-              <div className="rounded-lg overflow-hidden shadow-lg">
+              <div className="rounded-lg overflow-hidden">
                 <style>{customPopupStyle}</style>
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${incident.type === 'robbery' ? 'bg-red-100 text-red-800' :
-                      incident.type === 'assault' ? 'bg-orange-100 text-orange-800' :
-                        incident.type === 'theft' ? 'bg-yellow-100 text-yellow-800' :
-                          incident.type === 'vandalism' ? 'bg-green-100 text-green-800' :
-                            incident.type === 'suspicious' ? 'bg-cyan-100 text-cyan-800' :
-                              'bg-purple-100 text-purple-800'}`}>
+                <div className="p-3">
+                  {/* Header con badges */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      incident.type === 'robbery' ? 'bg-red-500/20 text-red-300 border border-red-400/30' :
+                      incident.type === 'assault' ? 'bg-orange-500/20 text-orange-300 border border-orange-400/30' :
+                      incident.type === 'theft' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30' :
+                      incident.type === 'vandalism' ? 'bg-green-500/20 text-green-300 border border-green-400/30' :
+                      incident.type === 'suspicious' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30' :
+                      'bg-purple-500/20 text-purple-300 border border-purple-400/30'
+                    }`}>
                       {incident.type || 'Sin clasificar'}
                     </span>
-                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${incident.status === 'verified' ? 'bg-blue-100 text-blue-800' :
-                      incident.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                        'bg-yellow-100 text-yellow-800'}`}>
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      incident.status === 'verified' ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' :
+                      incident.status === 'resolved' ? 'bg-green-500/20 text-green-300 border border-green-400/30' :
+                      'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30'
+                    }`}>
                       {incident.status === 'verified' ? 'Verificado' :
-                        incident.status === 'resolved' ? 'Resuelto' : 'Pendiente'}
+                       incident.status === 'resolved' ? 'Resuelto' : 'Pendiente'}
                     </span>
                   </div>
 
-                  <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{incident.description}</h3>
+                  {/* Descripción */}
+                  <h3 className="font-semibold text-white text-sm mb-2 line-clamp-2 leading-tight">
+                    {incident.description}
+                  </h3>
 
-                  <div className="text-sm text-gray-600 mb-3">
-                    <div className="flex items-center mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {/* Información de ubicación y fecha */}
+                  <div className="text-xs text-gray-300 space-y-1 mb-3">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                       <span className="truncate">{incident.address}</span>
                     </div>
                     <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       <span>{incident.date} {incident.time}</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center">
-                    <button
-                      onClick={() => handleIncidentMarkerClick(incident)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                    >
-                      Ver detalles
-                    </button>
+                  {/* Footer con acciones */}
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-700/30">
+                    {!isMobile() && (
+                      <button
+                        onClick={() => handleIncidentMarkerClick(incident)}
+                        className="text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Ver detalles
+                      </button>
+                    )}
                     {isEditing && (
-                      <div className="text-xs text-blue-500">
-                        {isEditing ? 'Arrastra para mover' : 'Click para editar'}
+                      <div className="text-xs text-blue-400 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                        Arrastra para mover
+                      </div>
+                    )}
+                    {isMobile() && !isEditing && (
+                      <div className="text-xs text-gray-400 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Toca para más info
                       </div>
                     )}
                   </div>

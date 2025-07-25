@@ -2,9 +2,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/auth.config";
 import { firestore } from "@/lib/config/db/firebase";
 import clientPromise from '@/lib/config/db/mongodb';
 import {
-  addParticipantToChatInFirestore,
-  chatExistsInFirestore,
-  createChatInFirestore
+    addParticipantToChatInFirestore,
+    chatExistsInFirestore,
+    createChatInFirestore
 } from '@/lib/services/chat/firestoreChatService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
@@ -47,9 +47,9 @@ export async function POST(request: NextRequest) {
     }
     const userIdString = mongoUser._id.toString();
 
-    // Generar chatId en base al barrio seleccionado
-    const normalizedNeighborhood = selectedNeighborhood.toLowerCase().replace(/ /g, '_');
-    const chatId = `chat_${normalizedNeighborhood}`;
+    // Generar chatId en base al barrio seleccionado usando validación
+    const { validateAndNormalizeChatId } = await import('@/lib/services/chat/chatValidation');
+    const chatId = validateAndNormalizeChatId(selectedNeighborhood);
 
     // Actualizar información del usuario en MongoDB
     await db.collection('users').updateOne(

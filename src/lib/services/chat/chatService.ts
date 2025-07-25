@@ -1,24 +1,30 @@
 import { firestore } from '../../config/db/firebase';
 import { User } from '../../types/global';
-import { ChatWithParticipants } from './types';
+import { validateAndNormalizeChatId } from './chatValidation';
 import { addParticipantToChatInFirestore, chatExistsInFirestore, createChatInFirestore, getChatParticipantsFromFirestore, getUserChatFromFirestore, updateUserChatIdInFirestore } from './firestoreChatService';
+import { ChatWithParticipants } from './types';
 
 /**
  * Asigna un neighborhood a un usuario y lo agrega al chat correspondiente
  */
 export async function assignUserToNeighborhood(userId: string, neighborhoodName: string): Promise<{ neighborhood: string; chatId: string }> {
   try {
-    // El chatId será el nombre del barrio normalizado
-    const chatId = `chat_${neighborhoodName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '')}`;
+    // Validar y normalizar el chatId usando la función de validación
+    const chatId = validateAndNormalizeChatId(neighborhoodName);
+
+    console.log(`🔧 Asignando usuario ${userId} al barrio: ${neighborhoodName}`);
+    console.log(`   ChatId generado: ${chatId}`);
 
     // Verificar si el chat existe en Firestore
     const chatExists = await chatExistsInFirestore(chatId);
     if (!chatExists) {
       // Si no existe, crearlo
       await createChatInFirestore(chatId, neighborhoodName, [userId]);
+      console.log(`✅ Nuevo chat creado: ${chatId}`);
     } else {
       // Si existe, agregar al participante si no está ya
       await addParticipantToChatInFirestore(chatId, userId);
+      console.log(`✅ Usuario agregado al chat existente: ${chatId}`);
     }
 
     // Actualizar usuario con neighborhood y chatId en Firestore

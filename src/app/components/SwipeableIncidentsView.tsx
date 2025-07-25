@@ -26,6 +26,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
   const [showFiltersPopover, setShowFiltersPopover] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +89,9 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
 
   // Handler para selección de incidentes
   const handleIncidentSelect = useCallback((incident: Incident) => {
+    // En móvil, actualizar el incidente seleccionado
+    setSelectedIncident(incident);
+
     // Navegar al incidente en el mapa
     if (incident.location?.coordinates) {
       onIncidentNavigate?.([incident.location.coordinates[1], incident.location.coordinates[0]], incident);
@@ -391,16 +395,22 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
               >
-                <svg className="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                {selectedIncident ? (
+                  <div className={`w-5 h-5 rounded-full ${getIncidentTypeColor(selectedIncident.type)} flex items-center justify-center`}>
+                    {getIncidentIcon(selectedIncident.type)}
+                  </div>
+                ) : (
+                  <svg className="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
               </motion.div>
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
                   <h3
                     className="font-manrope text-lg font-semibold text-white"
                   >
-                    Incidentes
+                    {selectedIncident ? selectedIncident.type || 'Incidente' : 'Incidentes'}
                   </h3>
                   <motion.div
                     className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-600/50 text-gray-300 border border-gray-500/30"
@@ -408,13 +418,17 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2 }}
                   >
-                    {incidents.length}
+                    {selectedIncident ? 'Seleccionado' : incidents.length}
                   </motion.div>
                 </div>
                 <p className="text-sm text-gray-400 mt-0.5">
-                  {incidents.length === 0 ? 'No hay incidentes' :
+                  {selectedIncident ? (
+                    <span className="truncate">{selectedIncident.address}</span>
+                  ) : (
+                    incidents.length === 0 ? 'No hay incidentes' :
                     incidents.length === 1 ? '1 incidente verificado' :
-                      `${incidents.length} incidentes verificados`}
+                      `${incidents.length} incidentes verificados`
+                  )}
                 </p>
               </div>
             </div>
@@ -428,6 +442,13 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
               whileHover={{
                 background: 'rgba(255, 255, 255, 0.1)',
                 borderColor: 'rgba(255, 255, 255, 0.2)'
+              }}
+              onClick={() => {
+                if (selectedIncident) {
+                  setSelectedIncident(null);
+                } else {
+                  togglePanel();
+                }
               }}
             >
               <motion.svg
@@ -460,109 +481,193 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
             </div>
           ) : (
             <div className="space-y-3 pb-4">
-              {(isExpanded ? incidents : incidents.slice(0, 3)).map((incident, index) => {
-                const isFirst = index === 0;
-
-                return (
-                  <div key={incident._id}>
+              {selectedIncident ? (
+                // Mostrar información detallada del incidente seleccionado
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="rounded-2xl border"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(55, 65, 81, 0.8) 0%, rgba(75, 85, 99, 0.6) 100%)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(156, 163, 175, 0.3)',
+                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                    padding: '20px'
+                  }}
+                >
+                  <div className="flex items-start space-x-4">
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="rounded-2xl border cursor-pointer transition-all duration-300 group"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(55, 65, 81, 0.6) 0%, rgba(75, 85, 99, 0.4) 100%)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(156, 163, 175, 0.2)',
-                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                        padding: '18px'
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                      whileHover={{
-                        boxShadow: '0 12px 40px rgba(156, 163, 175, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-                        borderColor: 'rgba(156, 163, 175, 0.4)',
-                        y: -2
-                      }}
-                      onClick={() => handleIncidentSelect(incident)}
+                      className={`p-4 rounded-xl ${getIncidentTypeColor(selectedIncident.type)} text-white shadow-lg relative overflow-hidden`}
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.2 }}
                     >
-                      <div className="flex items-start space-x-4">
-                        <motion.div
-                          className={`p-3 rounded-xl ${getIncidentTypeColor(incident.type)} text-white shadow-lg relative overflow-hidden`}
+                      <div className="w-8 h-8 relative z-10">
+                        {getIncidentIcon(selectedIncident.type)}
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-3">
+                        <h4 className="font-manrope font-bold text-white text-lg truncate pr-2">
+                          {selectedIncident.type || 'Incidente'}
+                        </h4>
+                        <span className="text-xs font-medium px-3 py-2 rounded-lg flex-shrink-0 bg-gray-600/50 text-gray-300 border border-gray-500/30">
+                          {formatDate(selectedIncident.date)}
+                        </span>
+                      </div>
+                      <p className="text-gray-200 text-base mb-4 leading-relaxed">
+                        {selectedIncident.description}
+                      </p>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm text-gray-300">{selectedIncident.address}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-sm text-gray-300">{selectedIncident.time}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-600/30">
+                        <motion.span
+                          className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)',
+                            border: '1px solid rgba(16, 185, 129, 0.4)',
+                            color: '#10B981'
+                          }}
                           whileHover={{ scale: 1.05 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <div className="w-6 h-6 relative z-10">
-                            {getIncidentIcon(incident.type)}
-                          </div>
-                          {/* Efecto de brillo */}
-                          <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        </motion.div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-3">
-                            <h4
-                              className="font-manrope font-semibold text-white text-base truncate pr-2"
-                            >
-                              {incident.type || 'Incidente'}
-                            </h4>
-                            <span
-                              className="text-xs font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 bg-gray-600/50 text-gray-300 border border-gray-500/30"
-                            >
-                              {formatDate(incident.date)}
-                            </span>
-                          </div>
-                          <p className="text-gray-300 text-sm mb-4 line-clamp-2 leading-relaxed">
-                            {incident.description}
-                          </p>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs text-gray-400 truncate flex items-center gap-2 max-w-[60%]">
-                              <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                              </svg>
-                              <span className="truncate">{incident.address}</span>
-                            </span>
-                            <motion.span
-                              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium flex-shrink-0"
-                              style={{
-                                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)',
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                color: '#10B981'
-                              }}
-                              whileHover={{ scale: 1.05 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                              VERIFICADO
-                            </motion.span>
-                          </div>
-                          <div
-                            className="pt-3 border-t border-gray-600/30"
+                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          VERIFICADO
+                        </motion.span>
+                        <button
+                          onClick={() => setSelectedIncident(null)}
+                          className="text-gray-400 hover:text-white text-sm font-medium transition-colors flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Cerrar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                // Mostrar lista normal de incidentes
+                (isExpanded ? incidents : incidents.slice(0, 3)).map((incident, index) => {
+                  const isFirst = index === 0;
+
+                  return (
+                    <div key={incident._id}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="rounded-2xl border cursor-pointer transition-all duration-300 group"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(55, 65, 81, 0.6) 0%, rgba(75, 85, 99, 0.4) 100%)',
+                          backdropFilter: 'blur(20px)',
+                          border: '1px solid rgba(156, 163, 175, 0.2)',
+                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                          padding: '18px'
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        whileHover={{
+                          boxShadow: '0 12px 40px rgba(156, 163, 175, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                          borderColor: 'rgba(156, 163, 175, 0.4)',
+                          y: -2
+                        }}
+                        onClick={() => handleIncidentSelect(incident)}
+                      >
+                        <div className="flex items-start space-x-4">
+                          <motion.div
+                            className={`p-3 rounded-xl ${getIncidentTypeColor(incident.type)} text-white shadow-lg relative overflow-hidden`}
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ duration: 0.2 }}
                           >
-                            <motion.p
-                              className="text-xs text-center font-medium text-gray-300"
-                              whileHover={{ scale: 1.02 }}
-                              transition={{ duration: 0.2 }}
+                            <div className="w-6 h-6 relative z-10">
+                              {getIncidentIcon(incident.type)}
+                            </div>
+                            {/* Efecto de brillo */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-3">
+                              <h4
+                                className="font-manrope font-semibold text-white text-base truncate pr-2"
+                              >
+                                {incident.type || 'Incidente'}
+                              </h4>
+                              <span
+                                className="text-xs font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 bg-gray-600/50 text-gray-300 border border-gray-500/30"
+                              >
+                                {formatDate(incident.date)}
+                              </span>
+                            </div>
+                            <p className="text-gray-300 text-sm mb-4 line-clamp-2 leading-relaxed">
+                              {incident.description}
+                            </p>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-xs text-gray-400 truncate flex items-center gap-2 max-w-[60%]">
+                                <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                </svg>
+                                <span className="truncate">{incident.address}</span>
+                              </span>
+                              <motion.span
+                                className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium flex-shrink-0"
+                                style={{
+                                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%)',
+                                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                                  color: '#10B981'
+                                }}
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                VERIFICADO
+                              </motion.span>
+                            </div>
+                            <div
+                              className="pt-3 border-t border-gray-600/30"
                             >
-                              Toca para ver en el mapa →
-                            </motion.p>
+                              <motion.p
+                                className="text-xs text-center font-medium text-gray-300"
+                                whileHover={{ scale: 1.02 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                Toca para ver en el mapa →
+                              </motion.p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
 
-                    {/* Línea separadora después del primer incidente */}
-                    {isFirst && incidents.length > 1 && (
-                      <div className="my-4 flex items-center">
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600/50 to-transparent"></div>
-                        <span className="px-3 text-xs text-gray-500">Otros incidentes</span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600/50 to-transparent"></div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {isExpanded && incidents.length > 3 && (
+                      {/* Línea separadora después del primer incidente */}
+                      {isFirst && incidents.length > 1 && (
+                        <div className="my-4 flex items-center">
+                          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600/50 to-transparent"></div>
+                          <span className="px-3 text-xs text-gray-500">Otros incidentes</span>
+                          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600/50 to-transparent"></div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+              {isExpanded && incidents.length > 3 && !selectedIncident && (
                 <div className="text-center py-2 text-gray-500 text-sm">
                   {incidents.length} incidentes en total
                 </div>

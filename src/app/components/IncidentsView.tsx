@@ -492,7 +492,21 @@ export default function IncidentsView({
     }
   }, [loadIncidents, isExternalMode]);
 
+  // Función para detectar si estamos en móvil
+  const isMobile = () => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 768;
+  };
+
   const handleIncidentSelected = (incident: Incident) => {
+    // En móvil, no abrir modal, solo actualizar el incidente seleccionado
+    if (isMobile()) {
+      setSelectedIncident(incident);
+      // Llamar al handler externo si existe
+      externalOnIncidentSelect?.(incident);
+      return;
+    }
+
     setSelectedIncident(incident);
     setShowDetailsModal(true);
     // Llamar al handler externo si existe
@@ -585,8 +599,8 @@ export default function IncidentsView({
         )}
       </div>
 
-      {/* Modal de detalles del incidente */}
-      {showDetailsModal && selectedIncident && (
+      {/* Modal de detalles del incidente - Solo en desktop */}
+      {showDetailsModal && selectedIncident && !isMobile() && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <div className="bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-700">
             <div className="flex items-center justify-between p-4 border-b border-gray-700">
