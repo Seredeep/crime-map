@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     androidScheme: 'http',
-    url: 'http://192.168.0.114:3000',
+    url: 'http://192.168.0.97:3000',
     cleartext: true
   },
   plugins: {
@@ -56,7 +56,13 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: true
+    webContentsDebuggingEnabled: true,
+    buildOptions: {
+      keystorePath: 'C:/Users/sanch/OneDrive/Escritorio/Development/crime-map/android/app/my-release-key.keystore',
+      keystorePassword: 'claridad123',
+      keystoreAlias: 'claridad-key',
+      keystoreAliasPassword: 'claridad123'
+    }
   },
   ios: {
     contentInset: "automatic",

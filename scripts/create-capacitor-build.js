@@ -85,7 +85,7 @@ const indexHtml = `<!DOCTYPE html>
             // Crear iframe para cargar el contenido
             setTimeout(() => {
                 const iframe = document.createElement('iframe');
-                iframe.src = 'http://192.168.0.114:3000';
+                iframe.src = 'http://192.168.0.97:3000';
                 iframe.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; background: white;';
 
                 // Ocultar la pantalla de carga

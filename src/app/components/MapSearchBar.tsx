@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiMapPin, FiSearch } from 'react-icons/fi';
 
 interface SearchResult {
@@ -10,6 +10,7 @@ interface SearchResult {
   title: string;
   subtitle: string;
   coordinates?: [number, number];
+  incident?: any; // Para incidentes completos
 }
 
 interface MapSearchBarProps {
@@ -23,6 +24,112 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Función para buscar direcciones
+  const searchAddresses = useCallback(async (query: string): Promise<SearchResult[]> => {
+    try {
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+      if (!response.ok) return [];
+
+      const data = await response.json();
+      return (data.features || []).slice(0, 5).map((feature: any) => ({
+        id: feature.properties.id || feature.properties.gid,
+        type: 'address' as const,
+        title: feature.properties.main_text || feature.properties.name || 'Dirección',
+        subtitle: feature.properties.secondary_text || feature.properties.label || 'Sin descripción',
+        coordinates: feature.geometry.coordinates
+      }));
+    } catch (error) {
+      console.error('Error searching addresses:', error);
+      return [];
+    }
+  }, []);
+
+  // Función para buscar incidentes
+  const searchIncidents = useCallback(async (query: string): Promise<SearchResult[]> => {
+    try {
+      const response = await fetch(`/api/incidents/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) return [];
+
+      const data = await response.json();
+      return data.incidents || [];
+    } catch (error) {
+      console.error('Error searching incidents:', error);
+      return [];
+    }
+  }, []);
+
+  // Función principal de búsqueda
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim() || query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Buscar direcciones e incidentes en paralelo
+      const [addressResults, incidentResults] = await Promise.all([
+        searchAddresses(query),
+        searchIncidents(query)
+      ]);
+
+      // Combinar y ordenar resultados
+      const combinedResults = [
+        ...addressResults.map(result => ({ ...result, priority: 1 })), // Direcciones primero
+        ...incidentResults.map(result => ({ ...result, priority: 2 })) // Incidentes después
+      ];
+
+      // Ordenar por prioridad y limitar a 10 resultados totales
+      const sortedResults = combinedResults
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 10)
+        .map(({ priority, ...result }) => result);
+
+      setResults(sortedResults);
+    } catch (error) {
+      console.error('Error performing search:', error);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchAddresses, searchIncidents]);
+
+  // Efecto para manejar la búsqueda con debounce
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchTerm.trim().length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(searchTerm);
+      }, 300); // Debounce de 300ms
+    } else {
+      setResults([]);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm, performSearch]);
+
+  // Manejar selección de resultado
+  const handleResultSelect = (result: SearchResult) => {
+    if (result.type === 'address' && result.coordinates && onLocationSelect) {
+      onLocationSelect(result.coordinates, result.title);
+    } else if (result.type === 'incident' && onIncidentSelect) {
+      onIncidentSelect(result.id);
+    }
+
+    // Limpiar búsqueda después de seleccionar
+    setSearchTerm('');
+    setResults([]);
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -119,7 +226,7 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      onClick={() => {}}
+                      onClick={() => handleResultSelect(result)}
                       className="w-full flex items-center space-x-4 p-4 hover:bg-white/10 transition-all duration-200 text-left border-b border-white/10 last:border-b-0 group"
                     >
                       <div className={`p-2.5 rounded-xl backdrop-blur-sm transition-all duration-200 group-hover:scale-105 ${result.type === 'address'
@@ -139,6 +246,11 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
                         <p className="text-sm text-gray-600 truncate">
                           {result.subtitle}
                         </p>
+                        {result.type === 'incident' && result.incident?.date && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(result.incident.date).toLocaleDateString('es-ES')}
+                          </p>
+                        )}
                       </div>
                     </motion.button>
                   ))}

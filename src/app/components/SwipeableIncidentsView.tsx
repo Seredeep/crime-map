@@ -248,10 +248,27 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
           <div className="flex-1">
             <MapSearchBar
               onLocationSelect={(coords, address) => {
-                // Handle location selection
+                // Navegar a la ubicación seleccionada
+                if (onIncidentNavigate) {
+                  // Crear un incidente temporal para la navegación
+                  const tempIncident = {
+                    _id: 'temp-location',
+                    location: { type: 'Point', coordinates: coords },
+                    address: address,
+                    type: 'Ubicación',
+                    description: `Ubicación: ${address}`,
+                    date: new Date().toISOString()
+                  } as Incident;
+                  onIncidentNavigate(coords, tempIncident);
+                }
               }}
               onIncidentSelect={(incidentId) => {
-                // Handle incident selection
+                // Buscar el incidente seleccionado y navegar a él
+                const selectedIncident = incidents.find(inc => inc._id === incidentId);
+                if (selectedIncident && selectedIncident.location?.coordinates && onIncidentNavigate) {
+                  const coords: [number, number] = selectedIncident.location.coordinates;
+                  onIncidentNavigate(coords, selectedIncident);
+                }
               }}
               className="w-full"
             />

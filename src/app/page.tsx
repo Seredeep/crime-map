@@ -276,7 +276,10 @@ export default function Home() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] md:hidden"
+                  className="fixed inset-0 backdrop-blur-sm z-[200] md:hidden"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.3)'
+                  }}
                   onClick={handleCloseReportForm}
                 />
 
@@ -300,9 +303,9 @@ export default function Home() {
                       handleCloseReportForm();
                     }
                   }}
-                  className="fixed top-0 right-0 bottom-0 w-full bg-black/95 backdrop-blur-lg border-l border-gray-700/50 shadow-2xl z-[210] md:hidden"
+                  className="fixed top-0 right-0 bottom-0 w-full backdrop-blur-lg border-l border-gray-700/50 shadow-2xl z-[210] md:hidden"
                   style={{
-                    background: 'rgba(0, 0, 0, 0.95)',
+                    background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
                     backdropFilter: 'blur(20px)',
                     boxShadow: `
                       -10px 0 50px rgba(0, 0, 0, 0.3),
@@ -315,7 +318,10 @@ export default function Home() {
                   <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-12 bg-gray-600 rounded-r-full cursor-grab active:cursor-grabbing" />
 
                   {/* Header del panel */}
-                  <div className="sticky top-0 bg-black/95 border-b border-gray-700/10 backdrop-blur-lg px-3 py-1 z-20">
+                  <div className="sticky top-0 backdrop-blur-lg px-3 py-1 z-20" style={{
+                    background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}>
                       <div className="flex items-center space-x-2">
                         <motion.button
                           onClick={handleCloseReportForm}

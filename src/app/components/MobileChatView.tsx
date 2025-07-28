@@ -1,6 +1,7 @@
 'use client';
 
 import { ChatWithParticipants } from '@/lib/services/chat/types';
+import { formatChatMessage } from '@/lib/utils/chatFormatting';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -229,7 +230,26 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
                         <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
                       </div>
                     ) : null}
-                    <p className="text-sm">{message.message}</p>
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      {message.message.includes('SISTEMA DE SEGURIDAD') ? (
+                        <div>
+                          <div className="text-xs text-gray-500 mb-2">
+                            DEBUG: Longitud del mensaje: {message.message.length} |
+                            Contiene \n: {message.message.includes('\n') ? 'SÍ' : 'NO'} |
+                            Primeros 100 chars: {JSON.stringify(message.message.substring(0, 100))}
+                          </div>
+                          <div className="whitespace-pre-wrap">
+                            {message.message.split('\n').map((line, index) => (
+                              <div key={index} className="mb-1">
+                                {line}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        formatChatMessage(message.message)
+                      )}
+                    </div>
                     {message.type === 'panic' && (
                       <p className="text-sm mt-1 text-red-200">
                         {message.metadata?.address || 'Ubicación GPS exacta no disponible'}

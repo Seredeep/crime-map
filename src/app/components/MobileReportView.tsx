@@ -331,7 +331,11 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  className="w-full p-2 text-sm bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500"
+                  className="w-full p-2 text-sm border border-gray-600/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500"
+                  style={{
+                    background: 'rgba(55, 65, 81, 0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}
                   required
                 />
               </div>
@@ -345,7 +349,11 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                   name="time"
                   value={formData.time}
                   onChange={handleInputChange}
-                  className="w-full p-2 text-sm bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500"
+                  className="w-full p-2 text-sm border border-gray-600/50 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500"
+                  style={{
+                    background: 'rgba(55, 65, 81, 0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}
                   required
                 />
               </div>
@@ -363,7 +371,11 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               value={formData.description}
               onChange={handleInputChange}
               placeholder="Describí lo que pasó..."
-              className="w-full h-60 p-2 text-sm bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 resize-none"
+              className="w-full h-60 p-2 text-sm border border-gray-600/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 resize-none"
+              style={{
+                background: 'rgba(55, 65, 81, 0.3)',
+                backdropFilter: 'blur(10px)'
+              }}
               required
             />
           </motion.div>
@@ -390,7 +402,11 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               <button
                 type="button"
                 onClick={() => setViewMode(prev => prev === 'carousel' ? 'grid' : 'carousel')}
-                className="p-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition-colors"
+                className="p-2 rounded-lg transition-colors"
+                style={{
+                  background: 'rgba(55, 65, 81, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}
                 title={viewMode === 'carousel' ? 'Ver en grilla' : 'Ver carrusel'}
               >
                 {viewMode === 'carousel' ?
@@ -462,7 +478,12 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
 
             <div className="flex gap-3 overflow-x-auto pb-2">
               {/* Botón de subir fotos */}
-              <label className="flex-shrink-0 flex flex-col items-center justify-center w-28 h-28 border border-dashed border-gray-600 rounded-lg cursor-pointer bg-gray-800/30 hover:bg-gray-800/50 transition-colors">
+              <label className="flex-shrink-0 flex flex-col items-center justify-center w-28 h-28 border border-dashed border-gray-600/50 rounded-lg cursor-pointer transition-colors"
+                style={{
+                  background: 'rgba(55, 65, 81, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
                 <div className="flex flex-col items-center justify-center">
                   {formData.evidence.length > 0 ? (
                     <div className="w-7 h-7 rounded-full bg-pink-500/20 border border-pink-500/40 flex items-center justify-center mb-1">
@@ -534,7 +555,12 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                 }
               />
 
-              <div className="w-full h-[500px] rounded-lg overflow-hidden border border-gray-600/50 bg-gray-900 shadow-lg">
+              <div className="w-full h-[500px] rounded-lg overflow-hidden border border-gray-600/50 shadow-lg"
+                style={{
+                  background: 'rgba(55, 65, 81, 0.3)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
                 <Map
                   markerPosition={
                     formData.location
@@ -710,7 +736,10 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
+              className="fixed inset-0 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
+              style={{
+                background: 'rgba(0, 0, 0, 0.3)'
+              }}
               onClick={() => setShowConfirmModal(false)}
             >
               <motion.div
@@ -718,7 +747,11 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full border border-gray-600/50 shadow-2xl"
+                className="rounded-2xl p-6 max-w-sm w-full border border-gray-600/50 shadow-2xl"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
+                  backdropFilter: 'blur(20px)'
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="text-center mb-6">
@@ -767,7 +800,10 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
+              className="fixed inset-0 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
+              style={{
+                background: 'rgba(0, 0, 0, 0.3)'
+              }}
               onClick={() => setShowDiscardModal(false)}
             >
               <motion.div
@@ -775,7 +811,11 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="bg-gray-800 rounded-2xl p-6 max-w-sm w-full border border-gray-600/50 shadow-2xl"
+                className="rounded-2xl p-6 max-w-sm w-full border border-gray-600/50 shadow-2xl"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
+                  backdropFilter: 'blur(20px)'
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="text-center mb-6">

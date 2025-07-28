@@ -92,18 +92,40 @@ src/
 ## 🛠️ Scripts Disponibles
 
 ```bash
-# Desarrollo
-bun dev                    # Servidor de desarrollo
+# Desarrollo Web
+bun dev                    # Servidor de desarrollo web
+npm run dev               # Alternativa con npm
+
+# Desarrollo Móvil (Capacitor)
+npm run dev:android:robust # Hot reload en Android (RECOMENDADO)
+npm run dev:android:simple # Hot reload simple
+npm run dev:android:advanced # Con instrucciones detalladas
+
+# Solución de Problemas
+npm run fix-gradle-issue   # Solución completa para errores de Gradle
+npm run clean:android      # Limpieza de Android
+npm run cap:restore        # Restaurar configuración
 
 # Producción
-bun build                  # Build de producción
-bun start                  # Servidor de producción
+bun build                  # Build de producción web
+npm run build:prod         # Build de producción móvil
 
 # Utilidades
 bun lint                   # Linter ESLint
 bun run load-neighborhoods # Cargar datos de barrios
 bun run import-incidents   # Importar incidentes (desarrollo)
 ```
+
+## 📱 Desarrollo Móvil
+
+Para desarrollo con hot reload en Android:
+
+1. **Iniciar:** `npm run dev:android:robust`
+2. **Seguir instrucciones** que aparecen en pantalla
+3. **Desarrollar** con hot reload automático
+4. **Finalizar:** `npm run cap:restore`
+
+📚 **Documentación completa:** [docs/CAPACITOR/README.md](docs/CAPACITOR/README.md)
 
 ## 🗃️ Base de Datos
 
