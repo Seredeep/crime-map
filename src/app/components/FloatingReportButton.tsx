@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { FiPlus } from 'react-icons/fi';
 
@@ -11,6 +12,7 @@ interface FloatingReportButtonProps {
 }
 
 const FloatingReportButton = ({ onClick, isVisible = true, className }: FloatingReportButtonProps) => {
+  const t = useTranslations('Forms');
   const [showTooltip, setShowTooltip] = useState(true);
 
   // Ocultar tooltip después de 3 segundos
@@ -161,7 +163,7 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
               textShadow: '0 0 10px rgba(220, 38, 38, 0.5)'
             }}
           >
-            Reportar
+            {t('report')}
           </motion.p>
 
           {/* Borde animado */}

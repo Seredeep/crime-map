@@ -1,0 +1,231 @@
+{
+  "HomePage": {
+    "title": "Claridad - Comunidad de Seguridad Vecinal",
+    "description": "Claridad es una aplicación de seguridad vecinal que te permite reportar delitos, activar alertas comunitarias en tiempo real y consultar un mapa de incidentes en tu zona. Pensado para fortalecer la red entre vecinos."
+  },
+  "Navigation": {
+    "dashboard": "Panel",
+    "incidents": "Incidentes",
+    "map": "Mapa",
+    "stats": "Estadísticas",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "communities": "Comunidades",
+    "report": "Reportar"
+  },
+  "Metadata": {
+    "title": "Claridad - Comunidad de Seguridad Vecinal",
+    "description": "Claridad es una aplicación de seguridad vecinal que te permite reportar delitos, activar alertas comunitarias en tiempo real y consultar un mapa de incidentes en tu zona. Pensado para fortalecer la red entre vecinos.",
+    "keywords": "seguridad vecinal, mapa de crimen, alertas de seguridad, botón de pánico, app de seguridad, reportes vecinales, claridad, incidentes en tiempo real, comunidad segura"
+  },
+  "Common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior"
+  },
+  "Auth": {
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "signUp": "Registrarse",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?"
+  },
+  "Loader": {
+    "loading": "cargando",
+    "words": ["datos", "mapas", "incidentes", "ubicaciones", "estadísticas"]
+  },
+  "Chat": {
+    "noActivity": "Sin actividad reciente",
+    "activeNow": "Activo ahora",
+    "minutesAgo": "Hace {minutes} min",
+    "hoursAgo": "Hace {hours}h",
+    "daysAgo": "Hace {days} días",
+    "inactive": "Inactivo",
+    "activeAlert": "Alerta activa",
+    "riskZone": "Zona de riesgo",
+    "highActivity": "Actividad elevada",
+    "safeZone": "Zona tranquila",
+    "normalActivity": "Actividad normal",
+    "attentionZone": "Zona de atención",
+    "noData": "Sin datos",
+    "oneUserActive": "1 vecino activo",
+    "usersActive": "{count} vecinos activos",
+    "noIncidents": "Sin incidentes",
+    "oneIncident": "1 incidente reciente",
+    "multipleIncidents": "{count} incidentes recientes"
+  },
+  "Incidents": {
+    "noIncidentsMatch": "No hay incidentes que coincidan con los filtros seleccionados",
+    "changeStatusTo": "Cambiar estado a {status}",
+    "reasonPlaceholder": "Razón del cambio de estado (opcional)",
+    "confirm": "Confirmar"
+  },
+  "Panic": {
+    "panic": "Pánico",
+    "alert": "¡ALERTA!",
+    "panicButton": "⚠️ Botón de pánico"
+  },
+    "Sidebar": {
+    "map": "Mapa",
+    "stats": "Estadísticas",
+    "communities": "Comunidades",
+    "report": "Reportar",
+    "queue": "Cola",
+    "neighborhoodChat": "Chat del Barrio",
+    "admin": "Admin",
+    "settings": "Configuración"
+  },
+  "Navbar": {
+    "map": "Mapa",
+    "neighborhoodChat": "Chat del Barrio",
+    "toggleTheme": "Cambiar tema"
+  },
+  "Forms": {
+    "descriptionPlaceholder": "Describe lo que ocurrió",
+    "locationPlaceholder": "Busca una dirección o lugar",
+    "reportPlaceholder": "Describí lo que pasó...",
+    "searchAddressPlaceholder": "Buscar dirección...",
+    "searchPlaceholder": "Buscar dirección o incidente...",
+    "uploadedFiles": "Archivos subidos:",
+    "removeFile": "Eliminar archivo",
+    "reportIncident": "Reportar Incidente",
+    "sending": "Enviando...",
+    "report": "REPORTAR",
+    "reportAnIncident": "Reportar un incidente",
+    "incidentType": "Tipo de incidente",
+    "confirmSendReport": "Sí, enviar reporte",
+    "discardReport": "¿Descartar reporte?",
+    "yesDiscardAndGoBack": "Sí, descartar y volver",
+    "discardWarning": "Si volvés atrás, se perderá toda la información que completaste.",
+    "minTwoCharacters": "Ingresa al menos 2 caracteres para buscar",
+    "number": "Número"
+  },
+  "States": {
+    "loading": "Cargando...",
+    "loadingChat": "Cargando chat...",
+    "errorLoading": "Error al cargar",
+    "loadingApp": "Cargando...",
+    "cancel": "Cancelar",
+    "sending": "Enviando..."
+  },
+  "Errors": {
+    "loadingError": "Error al cargar los datos del chat. Por favor, inténtalo de nuevo.",
+    "chatLoadError": "Error al cargar información del chat",
+    "messagesLoadError": "Error al cargar mensajes",
+    "sendMessageError": "Error enviando mensaje",
+    "panicMessageError": "Error enviando mensaje de pánico"
+  },
+  "Chat": {
+    "noActivity": "Sin actividad reciente",
+    "activeNow": "Activo ahora",
+    "minutesAgo": "Hace {minutes} min",
+    "hoursAgo": "Hace {hours}h",
+    "daysAgo": "Hace {days} días",
+    "inactive": "Inactivo",
+    "activeAlert": "Alerta activa",
+    "riskZone": "Zona de riesgo",
+    "highActivity": "Actividad elevada",
+    "safeZone": "Zona tranquila",
+    "normalActivity": "Actividad normal",
+    "attentionZone": "Zona de atención",
+    "noData": "Sin datos",
+    "oneUserActive": "1 vecino activo",
+    "usersActive": "{count} vecinos activos",
+    "noIncidents": "Sin incidentes",
+    "oneIncident": "1 incidente reciente",
+    "multipleIncidents": "{count} incidentes recientes"
+  },
+  "Map": {
+    "reportIncident": "Reportar un incidente",
+    "report": "REPORTAR"
+  },
+  "Statistics": {
+    "viewStats": "Ver estadísticas",
+    "movingAverage": "Promedio móvil (7 días)",
+    "title": "Estadísticas",
+    "today": "Hoy",
+    "week": "Semana",
+    "month": "Mes",
+    "year": "Año",
+    "securitySummary": "Resumen de Seguridad",
+    "period": "Período:",
+    "totalReports": "Total reportes:",
+    "totalIncidents": "Total Incidentes",
+    "pendingVerification": "pendientes de verificar",
+    "securityLevel": "Nivel de Seguridad",
+    "high": "Alto",
+    "basedOnReports": "Basado en {count} reportes",
+    "verified": "Verificados",
+    "confirmedByAuthorities": "Confirmados por autoridades",
+    "responseTime": "Tiempo Respuesta",
+    "averageOf": "Promedio de",
+    "analyzingIncidents": "Analizando incidentes...",
+    "frequentType": "Tipo Frecuente",
+    "averageResolution": "Promedio de resolución",
+    "basedOnActivity": "Basado en actividad reciente",
+    "pendingVerificationCount": "{count} pendientes de verificar",
+    "low": "Bajo",
+    "medium": "Medio",
+    "safetyLevels": {
+      "Alto": "Alto",
+      "Medio": "Medio",
+      "Bajo": "Bajo"
+    },
+    "varied": "Variado"
+  },
+  "Profile": {
+    "profile": "Perfil",
+    "queue": "Cola",
+    "publicProfile": "Perfil Público",
+    "verificationQueue": "Cola de Verificación",
+    "adminPanel": "Panel de Administración",
+    "adminStats": "Estadísticas de Administración",
+    "administrator": "Administrador",
+    "pending": "Pendientes",
+    "averageTime": "Tiempo promedio",
+    "notAssigned": "Barrio no asignado",
+    "totalUsers": "Total usuarios",
+    "verified": "Verificados",
+    "editor": "Editor",
+    "user": "Usuario"
+  },
+  "Actions": {
+    "cancelEdit": "Cancelar edición",
+    "clear": "Limpiar",
+    "apply": "Aplicar"
+  },
+  "Settings": {
+    "myProfile": "Mi Perfil",
+    "viewEditPersonalInfo": "Ver y editar información personal",
+    "settings": "Configuración",
+    "appPreferences": "Preferencias de la aplicación",
+    "about": "Acerca de",
+    "aboutCrimeMap": "Información sobre Crime Map",
+    "privacy": "Privacidad",
+    "privacyPolicy": "Política de privacidad",
+    "logout": "Cerrar Sesión"
+  },
+  "Communities": {
+    "communities": "Comunidades",
+    "myNeighborhood": "Mi Barrio",
+    "explore": "Explorar",
+    "completeProfileToJoin": "Completa tu perfil para unirte al chat de tu barrio y conectar con tus vecinos",
+    "participants": "participantes",
+    "noChatAssigned": "Sin chat asignado",
+    "tipAddAddress": "💡 Tip: Agrega tu dirección en configuración",
+    "searchCommunities": "Buscar comunidades...",
+    "noMessagesYet": "No hay mensajes aún. ¡Inicia la conversación!"
+  },
+  "LoadingScreen": {
+    "preparingExperience": "Preparando tu experiencia de seguridad vecinal"
+  }
+}

@@ -2,21 +2,22 @@
 
 import { motion } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    FiAlertTriangle,
-    FiCamera,
-    FiCheckCircle,
-    FiClock,
-    FiLogOut,
-    FiMapPin,
-    FiSettings,
-    FiShield,
-    FiUser,
-    FiUsers,
-    FiXCircle
+  FiAlertTriangle,
+  FiCamera,
+  FiCheckCircle,
+  FiClock,
+  FiLogOut,
+  FiMapPin,
+  FiSettings,
+  FiShield,
+  FiUser,
+  FiUsers,
+  FiXCircle
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -49,6 +50,7 @@ const Toast = ({ message, type, onHide }: { message: string; type: 'success' | '
 
 const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
   const { data: session, update } = useSession();
+  const t = useTranslations('Profile');
   const [activeSection, setActiveSection] = useState<'profile' | 'queue'>('profile');
 
   // Settings state
@@ -252,10 +254,10 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
 
   const getRoleName = (role: string) => {
     switch (role) {
-      case 'admin': return 'Administrador';
-      case 'editor': return 'Editor';
-      case 'user': return 'Usuario';
-      default: return 'Usuario';
+      case 'admin': return t('administrator');
+      case 'editor': return t('editor');
+      case 'user': return t('user');
+      default: return t('user');
     }
   };
 
@@ -297,7 +299,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
               }`}
             >
               <FiUser className="w-4 h-4 mx-auto mb-1" />
-              Perfil
+              {t('profile')}
             </button>
             <button
               onClick={() => setActiveSection('queue')}
@@ -308,7 +310,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
               }`}
             >
               <FiCheckCircle className="w-4 h-4 mx-auto mb-1" />
-              Cola
+              {t('queue')}
             </button>
           </div>
         )}
@@ -397,22 +399,22 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   <div className="bg-gray-700/30 rounded-lg p-3 text-center">
                     <FiAlertTriangle className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-white">12</div>
-                    <div className="text-xs text-gray-400">Pendientes</div>
+                    <div className="text-xs text-gray-400">{t('pending')}</div>
                   </div>
                   <div className="bg-gray-700/30 rounded-lg p-3 text-center">
                     <FiCheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-white">45</div>
-                    <div className="text-xs text-gray-400">Verificados</div>
+                    <div className="text-xs text-gray-400">{t('verified')}</div>
                   </div>
                   <div className="bg-gray-700/30 rounded-lg p-3 text-center">
                     <FiClock className="w-6 h-6 text-blue-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-white">2.3h</div>
-                    <div className="text-xs text-gray-400">Tiempo promedio</div>
+                    <div className="text-xs text-gray-400">{t('averageTime')}</div>
                   </div>
                   <div className="bg-gray-700/30 rounded-lg p-3 text-center">
                     <FiUsers className="w-6 h-6 text-purple-400 mx-auto mb-2" />
                     <div className="text-2xl font-bold text-white">156</div>
-                    <div className="text-xs text-gray-400">Total usuarios</div>
+                    <div className="text-xs text-gray-400">{t('totalUsers')}</div>
                   </div>
                 </div>
               </div>
@@ -436,7 +438,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   disabled={isSaving}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <span className="text-gray-300">Perfil Público</span>
+                  <span className="text-gray-300">{t('publicProfile')}</span>
                   <div className={`w-5 h-5 rounded-full ${privacyPublic ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
                 <button
@@ -466,7 +468,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <FiCheckCircle className="w-5 h-5 mr-2 text-blue-400" />
-                Cola de Verificación
+                {t('verificationQueue')}
               </h3>
               <IncidentQueue />
             </div>

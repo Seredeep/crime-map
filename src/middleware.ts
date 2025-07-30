@@ -1,10 +1,15 @@
 import { getToken } from 'next-auth/jwt';
+import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
+import { routing } from './i18n/routing';
+
+// Crear el middleware de i18n
+const intlMiddleware = createMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Definir rutas públicas ANTES de cualquier verificación
+  // Definir rutas públicas que no requieren autenticación
   const publicRoutes = [
     '/api/auth',
     '/api/register',
@@ -13,51 +18,74 @@ export async function middleware(request: NextRequest) {
     '/api/geocode'
   ];
 
-  const isPublicRoute = publicRoutes.some(route =>
+  // Verificar si es una ruta pública (API)
+  const isPublicApiRoute = publicRoutes.some(route =>
     pathname.startsWith(route) || pathname === route
   );
 
-  const isAuthPage = pathname.startsWith('/auth');
-  const isOnboardingPage = pathname === '/onboarding' || pathname === '/onboarding/';
-
-  // Permitir acceso a rutas públicas inmediatamente
-  if (isPublicRoute || isAuthPage || isOnboardingPage) {
+  // Si es una ruta de API pública, permitir acceso directo sin i18n
+  if (isPublicApiRoute) {
     return NextResponse.next();
   }
 
-  // Para todas las demás rutas, verificar autenticación
-  const token = await getToken({ req: request });
+  // Para rutas que no son API, aplicar primero el middleware de i18n
+  if (!pathname.startsWith('/api')) {
+    const intlResponse = intlMiddleware(request);
 
-  // Si es una ruta de API y no hay token
-  if (pathname.startsWith('/api') && !token) {
+    // Si el middleware de i18n retorna una respuesta (redirect), retornarla
+    if (intlResponse instanceof Response && intlResponse.status !== 200) {
+      return intlResponse;
+    }
+
+    // Actualizar el pathname para incluir el locale
+    const locale = request.nextUrl.pathname.split('/')[1];
+    const pathnameWithoutLocale = request.nextUrl.pathname.slice(locale.length + 1) || '/';
+
+    // Verificar rutas de autenticación con locale
+    const isAuthPage = pathnameWithoutLocale.startsWith('/auth');
+    const isOnboardingPage = pathnameWithoutLocale === '/onboarding' || pathnameWithoutLocale === '/onboarding/';
+
+    // Si es página de auth u onboarding, permitir acceso
+    if (isAuthPage || isOnboardingPage) {
+      return intlResponse || NextResponse.next();
+    }
+
+    // Verificar autenticación para páginas protegidas
+    const token = await getToken({ req: request });
+
+    // Si no hay token y no está en página de auth, redirigir a signin
+    if (!token && !isAuthPage) {
+      const url = new URL(`/${locale}/auth/signin`, request.url);
+      url.searchParams.set('callbackUrl', request.nextUrl.pathname);
+      return NextResponse.redirect(url);
+    }
+
+    // Si está autenticado pero no ha completado onboarding
+    if (token && token.onboarded === false && !isOnboardingPage && !isAuthPage) {
+      console.log('🔀 Redirigiendo al onboarding:', {
+        pathname: pathnameWithoutLocale,
+        onboarded: token.onboarded,
+        isOnboardingPage
+      });
+      return NextResponse.redirect(new URL(`/${locale}/onboarding`, request.url));
+    }
+
+    // Si ya completó onboarding y trata de acceder a onboarding
+    if (token && token.onboarded === true && isOnboardingPage) {
+      console.log('🔀 Redirigiendo a la página principal desde onboarding');
+      return NextResponse.redirect(new URL(`/${locale}/`, request.url));
+    }
+
+    return intlResponse || NextResponse.next();
+  }
+
+  // Para rutas de API no públicas, verificar autenticación
+  const token = await getToken({ req: request });
+  if (!token) {
     return NextResponse.json(
       { success: false, message: 'No autorizado' },
       { status: 401 }
     );
-  }
-
-  // Si el usuario no está autenticado y no está en una página de auth
-  if (!token && !isAuthPage) {
-    const url = new URL('/auth/signin', request.url);
-    url.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(url);
-  }
-
-  // Si el usuario está autenticado pero no ha completado el onboarding
-  // Solo redirigir si no está ya en la página de onboarding
-  if (token && token.onboarded === false && !isOnboardingPage && !isAuthPage) {
-    console.log('🔀 Redirigiendo al onboarding:', {
-      pathname,
-      onboarded: token.onboarded,
-      isOnboardingPage
-    });
-    return NextResponse.redirect(new URL('/onboarding', request.url));
-  }
-
-  // Si el usuario ya completó el onboarding y trata de acceder a la página de onboarding
-  if (token && token.onboarded === true && isOnboardingPage) {
-    console.log('🔀 Redirigiendo a la página principal desde onboarding');
-    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();
@@ -65,13 +93,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|icons/|claridad.png).*)',
-  ],
+    // Match all pathnames except for
+    // - … if they start with `/api`, `/_next` or `/_vercel`
+    // - … the ones containing a dot (e.g. `favicon.ico`)
+    '/((?!api|_next|_vercel|.*\\..*).*)'
+  ]
 };

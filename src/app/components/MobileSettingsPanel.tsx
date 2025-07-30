@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { FiInfo, FiLogIn, FiLogOut, FiSettings, FiShield, FiUser, FiX } from 'react-icons/fi';
@@ -13,6 +14,7 @@ interface MobileSettingsPanelProps {
 
 const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
   const { data: session, status } = useSession();
+  const t = useTranslations('Settings');
 
   // Prevenir scroll del body cuando el panel está abierto
   useEffect(() => {
@@ -32,30 +34,30 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
       ? [
           {
             icon: <FiUser className="w-5 h-5" />,
-            label: 'Mi Perfil',
+            label: t('myProfile'),
             href: '/profile',
-            description: 'Ver y editar información personal'
+            description: t('viewEditPersonalInfo')
           }
         ]
       : []
     ),
     {
       icon: <FiSettings className="w-5 h-5" />,
-      label: 'Configuración',
+      label: t('settings'),
       href: '/settings',
-      description: 'Preferencias de la aplicación'
+      description: t('appPreferences')
     },
     {
       icon: <FiInfo className="w-5 h-5" />,
-      label: 'Acerca de',
+      label: t('about'),
       href: '/about',
-      description: 'Información sobre Crime Map'
+      description: t('aboutCrimeMap')
     },
     {
       icon: <FiShield className="w-5 h-5" />,
-      label: 'Privacidad',
+      label: t('privacy'),
       href: '/privacy',
-      description: 'Política de privacidad'
+      description: t('privacyPolicy')
     }
   ];
 
@@ -171,7 +173,7 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
                   className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 hover:text-red-300 rounded-lg transition-all duration-200 border border-red-600/30"
                 >
                   <FiLogOut className="w-5 h-5" />
-                  <span className="font-medium">Cerrar Sesión</span>
+                  <span className="font-medium">{t('logout')}</span>
                 </button>
               ) : (
                 <div className="space-y-2">

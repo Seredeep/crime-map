@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiBarChart2, FiChevronLeft, FiList, FiLogOut, FiMap, FiMessageCircle, FiSettings, FiUser, FiUsers } from 'react-icons/fi';
@@ -75,6 +76,7 @@ const Sidebar = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { data: session } = useSession();
+  const t = useTranslations('Sidebar');
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Detectar si es mobile
@@ -90,17 +92,17 @@ const Sidebar = ({
   }, []);
 
   const menuItems: MenuItem[] = [
-    { id: 'incidents', label: 'Mapa', icon: <FiMap className="w-6 h-6 flex-shrink-0" /> },
-    { id: 'stats', label: 'Estadísticas', icon: <FiBarChart2 className="w-6 h-6 flex-shrink-0" /> },
-    { id: 'communities', label: 'Comunidades', icon: <FiUsers className="w-6 h-6 flex-shrink-0" /> },
-    { id: 'report', label: 'Reportar', icon: <FiAlertTriangle className="w-6 h-6 flex-shrink-0" /> },
-    { id: 'queue', label: 'Cola', icon: <FiList className="w-6 h-6 flex-shrink-0" /> },
+    { id: 'incidents', label: t('map'), icon: <FiMap className="w-6 h-6 flex-shrink-0" /> },
+    { id: 'stats', label: t('stats'), icon: <FiBarChart2 className="w-6 h-6 flex-shrink-0" /> },
+    { id: 'communities', label: t('communities'), icon: <FiUsers className="w-6 h-6 flex-shrink-0" /> },
+    { id: 'report', label: t('report'), icon: <FiAlertTriangle className="w-6 h-6 flex-shrink-0" /> },
+    { id: 'queue', label: t('queue'), icon: <FiList className="w-6 h-6 flex-shrink-0" /> },
   ];
 
   // Agregar botón de chat del barrio si el usuario está autenticado
   const chatMenuItem: MenuItem = {
     id: 'neighborhood-chat',
-    label: 'Chat del Barrio',
+    label: t('neighborhoodChat'),
     icon: <FiMessageCircle className="w-6 h-6 flex-shrink-0" />,
     action: () => {
       window.dispatchEvent(new CustomEvent('openNeighborhoodChat'));

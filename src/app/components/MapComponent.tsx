@@ -3,6 +3,7 @@
 // #region External Libraries
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
 // #endregion
@@ -323,6 +324,9 @@ export default function MapComponent({
   // State to track which incident marker is being hovered over
   const [hoveredIncidentId, setHoveredIncidentId] = useState<string | null>(null);
   const [showLegend, setShowLegend] = useState<boolean>(false);
+
+  // Translations
+  const tMap = useTranslations('Map');
 
   // Keep track of the previous position to prevent unnecessary rerenders
   const prevPositionRef = useRef<[number, number] | undefined>(position);
@@ -664,12 +668,12 @@ export default function MapComponent({
         <button
           onClick={() => window.location.href = '/report'}
           className="bg-blue-600 hover:bg-blue-500 text-white rounded-full w-20 h-20 flex flex-col items-center justify-center shadow-xl transition-all hover:shadow-2xl transform hover:scale-105 border-2 border-blue-400/30 animate-pulse"
-          title="Reportar un incidente"
+          title={tMap('reportIncident')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className="text-xs font-medium">REPORTAR</span>
+          <span className="text-xs font-medium">{tMap('report')}</span>
         </button>
       </div>
 

@@ -3,8 +3,8 @@
 import { IncidentFilters } from '@/lib/types/global';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
-import IncidentFiltersComponent from '../components/IncidentFilters';
-import IncidentStatistics from '../components/IncidentStatistics';
+import IncidentFiltersComponent from '../../components/IncidentFilters';
+import IncidentStatistics from '../../components/IncidentStatistics';
 
 export default function StatsPage() {
   const { data: session } = useSession();

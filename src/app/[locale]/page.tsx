@@ -5,16 +5,17 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiArrowLeft } from 'react-icons/fi';
-import FloatingReportButton from './components/FloatingReportButton';
-import MobileBottomTabs from './components/MobileBottomTabs';
-import MobileCommunitiesView from './components/MobileCommunitiesView';
-import MobileProfileView from './components/MobileProfileView';
-import MobileReportView from './components/MobileReportView';
-import MobileSettingsPanel from './components/MobileSettingsPanel';
-import MobileStatsView from './components/MobileStatsView';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import SwipeableIncidentsView from './components/SwipeableIncidentsView';
+import FloatingReportButton from '../components/FloatingReportButton';
+import LanguageSelector from '../components/LanguageSelector';
+import MobileBottomTabs from '../components/MobileBottomTabs';
+import MobileCommunitiesView from '../components/MobileCommunitiesView';
+import MobileProfileView from '../components/MobileProfileView';
+import MobileReportView from '../components/MobileReportView';
+import MobileSettingsPanel from '../components/MobileSettingsPanel';
+import MobileStatsView from '../components/MobileStatsView';
+import Navbar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
+import SwipeableIncidentsView from '../components/SwipeableIncidentsView';
 
 export default function Home() {
   // State to track sidebar collapse state
@@ -199,6 +200,11 @@ export default function Home() {
         onFiltersClick={handleFiltersClick}
         onSettingsClick={handleSettingsClick}
       />
+
+      {/* Language Selector - Fixed in top right corner */}
+      <div className="fixed top-4 right-4 z-50 md:top-6 md:right-6">
+        <LanguageSelector />
+      </div>
 
       {/* Main content area - Below navbar */}
       <div className="flex flex-1 relative h-[calc(100vh-4rem)] ">

@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import ClaridadLogo from './ClaridadLogo';
 
@@ -10,8 +11,11 @@ interface LoadingScreenProps {
   message?: string;
 }
 
-export default function LoadingScreen({ isLoading, progress = 0, message = "Cargando..." }: LoadingScreenProps) {
+export default function LoadingScreen({ isLoading, progress = 0, message }: LoadingScreenProps) {
+  const t = useTranslations('States');
+  const tLoading = useTranslations('LoadingScreen');
   const [displayProgress, setDisplayProgress] = useState(0);
+  const finalMessage = message || t('loadingApp');
 
   useEffect(() => {
     if (isLoading) {
@@ -134,13 +138,13 @@ export default function LoadingScreen({ isLoading, progress = 0, message = "Carg
           {/* Mensaje de carga */}
           <div className="flex items-center justify-between text-base">
             <motion.span
-              key={message}
+              key={finalMessage}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
               className="text-gray-400"
             >
-              {message}
+              {finalMessage}
             </motion.span>
             <span className="text-gray-500 font-mono text-lg">
               {displayProgress}%
@@ -180,7 +184,7 @@ export default function LoadingScreen({ isLoading, progress = 0, message = "Carg
           transition={{ duration: 0.8, delay: 0.8 }}
           className="text-gray-500 text-sm text-center max-w-md leading-relaxed"
         >
-          Preparando tu experiencia de seguridad vecinal
+          {tLoading('preparingExperience')}
         </motion.p>
       </div>
     </motion.div>

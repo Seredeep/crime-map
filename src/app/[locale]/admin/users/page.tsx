@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import ProtectedRoute from '../../components/ProtectedRoute';
+import ProtectedRoute from '../../../components/ProtectedRoute';
 import { Role, ROLES } from '@/lib/config/roles';
 
 interface User {
@@ -41,11 +41,11 @@ export default function AdminUsersPage() {
     try {
       setLoading(true);
       const response = await fetch('/api/admin/users');
-      
+
       if (!response.ok) {
         throw new Error('Error al cargar usuarios');
       }
-      
+
       const data = await response.json();
       setUsers(data.users);
     } catch (error) {
@@ -61,7 +61,7 @@ export default function AdminUsersPage() {
       setLoading(true);
       setSuccessMessage('');
       setError('');
-      
+
       const response = await fetch('/api/admin/users/status', {
         method: 'POST',
         headers: {
@@ -79,12 +79,12 @@ export default function AdminUsersPage() {
       }
 
       // Update local state
-      setUsers(users.map(user => 
-        user._id === userId 
-          ? { ...user, enabled: !currentStatus } 
+      setUsers(users.map(user =>
+        user._id === userId
+          ? { ...user, enabled: !currentStatus }
           : user
       ));
-      
+
       setSuccessMessage(`Usuario ${!currentStatus ? 'habilitado' : 'deshabilitado'} correctamente`);
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
       setLoading(true);
       setSuccessMessage('');
       setError('');
-      
+
       const response = await fetch('/api/admin/users/role', {
         method: 'POST',
         headers: {
@@ -120,12 +120,12 @@ export default function AdminUsersPage() {
       }
 
       // Update local state
-      setUsers(users.map(user => 
-        user._id === userId 
-          ? { ...user, role: newRole } 
+      setUsers(users.map(user =>
+        user._id === userId
+          ? { ...user, role: newRole }
           : user
       ));
-      
+
       setSuccessMessage(`Rol de usuario actualizado correctamente a ${newRole}`);
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -143,31 +143,31 @@ export default function AdminUsersPage() {
       <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-6">Administración de Usuarios</h1>
-          
+
           {error && (
             <div className="mb-4 p-3 bg-red-500 text-white rounded-md">
               {error}
             </div>
           )}
-          
+
           {successMessage && (
             <div className="mb-4 p-3 bg-green-500 text-white rounded-md">
               {successMessage}
             </div>
           )}
-          
+
           {loading && (
             <div className="flex justify-center my-8">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
             </div>
           )}
-          
+
           {!loading && users.length === 0 && (
             <div className="bg-gray-800 rounded-lg p-4">
               No hay usuarios registrados.
             </div>
           )}
-          
+
           {!loading && users.length > 0 && (
             <div className="overflow-x-auto">
               <table className="min-w-full bg-gray-800 rounded-lg overflow-hidden">
@@ -225,4 +225,4 @@ export default function AdminUsersPage() {
       </div>
     </ProtectedRoute>
   );
-} 
+}

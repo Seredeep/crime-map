@@ -4,6 +4,7 @@ import { COMMON_TAGS } from '@/lib/config';
 import { fetchIncidents } from '@/lib/services/incidents/incidentService';
 import { Incident } from '@/lib/types/global';
 import { formatDate, formatTime, timeAgo } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 interface IncidentQueueProps {
@@ -11,6 +12,8 @@ interface IncidentQueueProps {
 }
 
 export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) {
+  const t = useTranslations('Incidents');
+  const tCommon = useTranslations('Common');
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -186,7 +189,7 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
 
         {incidents.length === 0 && (
           <div className="text-center text-gray-400 py-8">
-            No hay incidentes que coincidan con los filtros seleccionados
+            {t('noIncidentsMatch')}
           </div>
         )}
       </div>
@@ -196,7 +199,7 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-medium text-gray-200 mb-4">
-              Cambiar estado a {pendingStatus}
+              {t('changeStatusTo', { status: pendingStatus })}
             </h3>
             <p className="text-sm text-gray-400 mb-4">
               {selectedIncident.description}
@@ -204,7 +207,7 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Razón del cambio de estado (opcional)"
+              placeholder={t('reasonPlaceholder')}
               className="w-full bg-gray-700/50 text-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
               rows={3}
             />
@@ -218,13 +221,13 @@ export default function IncidentQueue({ onIncidentSelect }: IncidentQueueProps) 
                 }}
                 className="px-4 py-2 text-gray-400 hover:text-gray-200"
               >
-                Cancelar
+                {tCommon('cancel')}
               </button>
               <button
                 onClick={confirmStatusChange}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
-                Confirmar
+                {t('confirm')}
               </button>
             </div>
           </div>

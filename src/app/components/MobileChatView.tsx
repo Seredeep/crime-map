@@ -3,6 +3,7 @@
 import { ChatWithParticipants } from '@/lib/services/chat/types';
 import { formatChatMessage } from '@/lib/utils/chatFormatting';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiMapPin, FiSend, FiUsers } from 'react-icons/fi';
@@ -27,6 +28,7 @@ interface MobileChatViewProps {
 }
 
 const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
+  const t = useTranslations('Chat');
   const [chat, setChat] = useState<ChatWithParticipants | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -176,7 +178,7 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
                 ¡Bienvenido al chat de {chat?.neighborhood}!
               </h3>
               <p className="text-gray-500 text-sm">
-                Sé el primero en enviar un mensaje a tus vecinos
+                {t('beFirstToSend')}
               </p>
             </div>
           </div>
@@ -274,7 +276,7 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Escribe un mensaje..."
+              placeholder={t('writeMessage')}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
