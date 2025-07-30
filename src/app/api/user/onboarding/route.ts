@@ -20,14 +20,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obtener datos del cuerpo de la petición: ahora esperamos 'neighborhood'
+        // Obtener datos del cuerpo de la petición: ahora esperamos country, city y neighborhood
     const body = await request.json();
-    const { name, surname, blockNumber, lotNumber, neighborhood: selectedNeighborhood } = body;
+    const {
+      name,
+      surname,
+      country,
+      city,
+      neighborhood: selectedNeighborhood
+    } = body;
 
-    // Validar que se haya proporcionado un barrio
-    if (!selectedNeighborhood || typeof selectedNeighborhood !== 'string') {
+    // Validar que se hayan proporcionado todos los campos de ubicación
+    if (!country || !city || !selectedNeighborhood) {
       return NextResponse.json(
-        { success: false, error: 'Debe proporcionar un barrio válido' },
+        { success: false, error: 'Debe proporcionar país, ciudad y barrio válidos' },
         { status: 400 }
       );
     }
@@ -58,8 +64,8 @@ export async function POST(request: NextRequest) {
         $set: {
           name,
           surname,
-          blockNumber: blockNumber || null,
-          lotNumber: lotNumber || null,
+          country,
+          city,
           neighborhood: selectedNeighborhood,
           onboarded: true,
           isOnboarded: true,
@@ -74,8 +80,8 @@ export async function POST(request: NextRequest) {
     await userDocRef.update({
       name,
       surname,
-      blockNumber: blockNumber || null,
-      lotNumber: lotNumber || null,
+      country,
+      city,
       neighborhood: selectedNeighborhood,
       onboarded: true,
       isOnboarded: true,
@@ -102,6 +108,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: {
+          country,
+          city,
           neighborhood: selectedNeighborhood,
           chatId,
           message: 'Onboarding completado exitosamente y chat asignado'
@@ -115,6 +123,8 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Error al asignar usuario al chat de barrio',
         data: {
+          country,
+          city,
           neighborhood: selectedNeighborhood,
           message: 'Onboarding completado pero hubo un error al asignar al chat de barrio.'
         }

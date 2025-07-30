@@ -11,13 +11,20 @@ export interface Neighborhood {
     coordinates: number[][][][]; // MultiPolygon coordinates
   };
   properties: {
-    cartodb_id: number;
-    gid: number;
-    id: number;
-    soc_fomen: string; // Neighborhood name
-    mapkey: string;
-    hectares: number;
-    colorb: string;
+    id?: number;
+    name?: string;
+    link?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    source?: string;
+    // Campos de Mar del Plata (comentados para San Francisco)
+    cartodb_id?: number;
+    gid?: number;
+    soc_fomen?: string; // Neighborhood name
+    mapkey?: string;
+    hectares?: number;
+    colorb?: string;
   };
 }
 
@@ -40,6 +47,26 @@ export async function fetchNeighborhoods(): Promise<Neighborhood[]> {
 }
 
 /**
+ * Fetch neighborhoods by city
+ */
+export async function fetchNeighborhoodsByCity(city: string): Promise<Neighborhood[]> {
+  try {
+    const neighborhoods = await fetchNeighborhoods();
+    return neighborhoods.filter(n => n.properties.city === city);
+  } catch (error) {
+    console.error(`Error fetching neighborhoods for city ${city}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch San Francisco neighborhoods
+ */
+export async function fetchSanFranciscoNeighborhoods(): Promise<Neighborhood[]> {
+  return fetchNeighborhoodsByCity('San Francisco');
+}
+
+/**
  * Fetch a single neighborhood by ID
  */
 export async function fetchNeighborhoodById(id: string): Promise<Neighborhood | null> {
@@ -49,5 +76,22 @@ export async function fetchNeighborhoodById(id: string): Promise<Neighborhood | 
   } catch (error) {
     console.error(`Error fetching neighborhood with ID ${id}:`, error);
     return null;
+  }
+}
+
+/**
+ * Search neighborhoods by name
+ */
+export async function searchNeighborhoodsByName(searchTerm: string): Promise<Neighborhood[]> {
+  try {
+    const neighborhoods = await fetchNeighborhoods();
+    const term = searchTerm.toLowerCase();
+    return neighborhoods.filter(n =>
+      n.properties.name?.toLowerCase().includes(term) ||
+      n.properties.soc_fomen?.toLowerCase().includes(term)
+    );
+  } catch (error) {
+    console.error(`Error searching neighborhoods with term ${searchTerm}:`, error);
+    throw error;
   }
 }

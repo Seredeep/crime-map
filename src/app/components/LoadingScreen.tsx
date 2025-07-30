@@ -87,7 +87,7 @@ export default function LoadingScreen({ isLoading, progress = 0, message = "Carg
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="relative z-10 w-64 h-64 flex items-center justify-center"
+              className="relative z-10 w-128 h-128 flex items-center justify-center"
             >
               <ClaridadLogo size="3xl" showText={false} />
             </motion.div>
