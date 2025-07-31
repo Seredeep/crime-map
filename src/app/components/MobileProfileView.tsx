@@ -7,34 +7,22 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  FiAlertTriangle,
-<<<<<<< HEAD
-  FiBell,
-  FiCamera,
-  FiCheckCircle,
-  FiChevronRight,
-  FiClock,
-  FiHelpCircle,
-=======
-  FiCamera,
-  FiCheckCircle,
-  FiClock,
->>>>>>> 0e5809f11c1420a4cd0fff53f4426a5c316a7d99
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-<<<<<<< HEAD
-  FiSmartphone,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-  FiZap
-=======
-  FiUser,
-  FiUsers,
-  FiXCircle
->>>>>>> 0e5809f11c1420a4cd0fff53f4426a5c316a7d99
+    FiAlertTriangle,
+    FiBell,
+    FiCamera,
+    FiCheckCircle,
+    FiChevronRight,
+    FiClock,
+    FiHelpCircle,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiSmartphone,
+    FiUser,
+    FiUsers,
+    FiXCircle,
+    FiZap
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -847,7 +835,6 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   )}
                 </motion.div>
               )}
-<<<<<<< HEAD
 
               {/* Estadísticas de administración - solo en menú principal */}
               {!activeConfigSection && canManageIncidents && (
@@ -856,49 +843,6 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-=======
-            </div>
-            {canManageIncidents && (
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <FiShield className="w-5 h-5 mr-2 text-blue-400" />
-                  Estadísticas de Administración
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiAlertTriangle className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">12</div>
-                    <div className="text-xs text-gray-400">{t('pending')}</div>
-                  </div>
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiCheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">45</div>
-                    <div className="text-xs text-gray-400">{t('verified')}</div>
-                  </div>
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiClock className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">2.3h</div>
-                    <div className="text-xs text-gray-400">{t('averageTime')}</div>
-                  </div>
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiUsers className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">156</div>
-                    <div className="text-xs text-gray-400">{t('totalUsers')}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <FiSettings className="w-5 h-5 mr-2 text-gray-400" />
-                Configuración
-              </h3>
-              <div className="bg-gray-700/20 p-4 rounded-lg space-y-3">
-                <button
-                  onClick={toggleNotifications}
-                  disabled={isSaving}
-                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
->>>>>>> 0e5809f11c1420a4cd0fff53f4426a5c316a7d99
                 >
                   <h3 className="text-lg font-bold text-white mb-6 flex items-center">
                     <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
@@ -1077,7 +1021,6 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-<<<<<<< HEAD
                   <motion.button
                     onClick={handleSignOut}
                     className="w-full flex items-center justify-center space-x-3 p-4 bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 border border-red-500/30 rounded-xl transition-all duration-300 backdrop-blur-sm"
@@ -1116,44 +1059,6 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
             </motion.div>
           )}
         </AnimatePresence>
-=======
-                  <span className="text-gray-300">{t('publicProfile')}</span>
-                  <div className={`w-5 h-5 rounded-full ${privacyPublic ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
-                </button>
-                <button
-                  onClick={toggleAutoLocation}
-                  disabled={isSaving}
-                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <span className="text-gray-300">Ubicación automática</span>
-                  <div className={`w-5 h-5 rounded-full ${autoLocationEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
-                </button>
-              </div>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center space-x-2 p-4 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl transition-colors"
-            >
-              <FiLogOut className="w-5 h-5 text-red-400" />
-              <span className="text-red-400 font-medium">Cerrar Sesión</span>
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <FiCheckCircle className="w-5 h-5 mr-2 text-blue-400" />
-                {t('verificationQueue')}
-              </h3>
-              <IncidentQueue />
-            </div>
-          </motion.div>
-        )}
->>>>>>> 0e5809f11c1420a4cd0fff53f4426a5c316a7d99
       </div>
     </div>
   );
