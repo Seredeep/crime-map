@@ -100,13 +100,13 @@ function SignInForm() {
             <div className="space-y-4">
               {/* Email */}
               <div className="group">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      email ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      email ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
@@ -117,7 +117,7 @@ function SignInForm() {
                     type="email"
                     autoComplete="username"
                     required
-                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
+                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600"
                     placeholder="tu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -128,13 +128,13 @@ function SignInForm() {
 
               {/* Contraseña */}
               <div className="group">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Contraseña
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      password ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      password ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -145,7 +145,7 @@ function SignInForm() {
                     type="password"
                     autoComplete="current-password"
                     required
-                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
+                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -160,7 +160,7 @@ function SignInForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-[#00e381] to-[#4fd691] hover:from-[#4fd691] hover:to-[#46c580] focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01]"
               >
                 {loading ? (
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -210,7 +210,7 @@ function SignInForm() {
         <div className="text-center mt-6">
           <p className="text-sm text-gray-400">
             ¿No tienes una cuenta?{' '}
-            <Link href="/auth/signup" className="font-medium text-orange-400 hover:text-orange-300 transition-colors duration-200">
+            <Link href="/auth/signup" className="font-medium text-[#00e381] hover:text-[#4fd691] transition-colors duration-200">
               Regístrate aquí
             </Link>
           </p>
@@ -241,7 +241,7 @@ export default function SignIn() {
                 Cargando...
               </h2>
               <div className="flex justify-center mt-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#00e381]"></div>
               </div>
             </div>
           </div>

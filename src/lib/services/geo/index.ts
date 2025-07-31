@@ -10,3 +10,4 @@ export * from './geocoding';
 
 // Exportar tipos
 export type { GeocodingResponse, GeocodingResult } from './geocoding';
+

@@ -1,22 +1,27 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    FiAlertTriangle,
-    FiCamera,
-    FiCheckCircle,
-    FiClock,
-    FiLogOut,
-    FiMapPin,
-    FiSettings,
-    FiShield,
-    FiUser,
-    FiUsers,
-    FiXCircle
+  FiAlertTriangle,
+  FiBell,
+  FiCamera,
+  FiCheckCircle,
+  FiChevronRight,
+  FiClock,
+  FiHelpCircle,
+  FiLogOut,
+  FiMapPin,
+  FiSettings,
+  FiShield,
+  FiSmartphone,
+  FiUser,
+  FiUsers,
+  FiXCircle,
+  FiZap
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -50,11 +55,22 @@ const Toast = ({ message, type, onHide }: { message: string; type: 'success' | '
 const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
   const { data: session, update } = useSession();
   const [activeSection, setActiveSection] = useState<'profile' | 'queue'>('profile');
+  const [activeConfigSection, setActiveConfigSection] = useState<string | null>(null);
 
   // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [privacyPublic, setPrivacyPublic] = useState(false);
   const [autoLocationEnabled, setAutoLocationEnabled] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [dataSharing, setDataSharing] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [highAccuracyLocation, setHighAccuracyLocation] = useState(false);
+  const [backgroundLocation, setBackgroundLocation] = useState(false);
 
   // UI State
   const [isSaving, setIsSaving] = useState(false);
@@ -268,6 +284,408 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
     }
   };
 
+  const configSections = [
+    {
+      id: 'profile',
+      title: 'Perfil',
+      icon: FiUser,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/20',
+      description: 'Información personal y avatar'
+    },
+    {
+      id: 'notifications',
+      title: 'Notificaciones',
+      icon: FiBell,
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-500/20',
+      description: 'Configuración de alertas y notificaciones'
+    },
+    {
+      id: 'privacy',
+      title: 'Privacidad',
+      icon: FiShield,
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/20',
+      description: 'Configuración de privacidad y datos'
+    },
+    {
+      id: 'location',
+      title: 'Ubicación',
+      icon: FiMapPin,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/20',
+      description: 'Configuración de geolocalización'
+    },
+    {
+      id: 'device',
+      title: 'Dispositivo',
+      icon: FiSmartphone,
+      color: 'text-orange-400',
+      bgColor: 'bg-orange-500/20',
+      description: 'Configuración del hardware'
+    },
+    {
+      id: 'permissions',
+      title: 'Permisos',
+      icon: FiZap,
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/20',
+      description: 'Gestión de permisos de la app'
+    },
+    {
+      id: 'app',
+      title: 'Aplicación',
+      icon: FiSettings,
+      color: 'text-gray-400',
+      bgColor: 'bg-gray-500/20',
+      description: 'Configuración general de la app'
+    },
+    {
+      id: 'support',
+      title: 'Soporte',
+      icon: FiHelpCircle,
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-500/20',
+      description: 'Ayuda y contacto'
+    }
+  ];
+
+  const renderConfigSection = (sectionId: string) => {
+    switch (sectionId) {
+      case 'profile':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Información Personal</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">Nombre</span>
+                  <span className="text-white">{session?.user?.name || 'No establecido'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">Email</span>
+                  <span className="text-white">{session?.user?.email}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">Rol</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor(session?.user?.role || 'user')}`}>
+                    {getRoleName(session?.user?.role || 'user')}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Avatar</h4>
+              <div className="flex items-center space-x-4">
+                <div
+                  className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center relative group overflow-hidden cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {profileImagePreview ? (
+                    <Image
+                      src={profileImagePreview}
+                      alt="Avatar"
+                      width={64}
+                      height={64}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <FiUser className="w-8 h-8 text-white" />
+                  )}
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <FiCamera className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-gray-300 text-sm">Toca para cambiar tu foto de perfil</p>
+                  {profileImageFile && (
+                    <button
+                      onClick={handleImageUpload}
+                      disabled={isSaving}
+                      className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors disabled:bg-gray-500"
+                    >
+                      {isSaving ? 'Subiendo...' : 'Guardar'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+          </div>
+        );
+
+      case 'notifications':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Tipos de Notificaciones</h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setPushNotifications(!pushNotifications)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Notificaciones Push</span>
+                  <div className={`w-5 h-5 rounded-full ${pushNotifications ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+                <button
+                  onClick={() => setEmailNotifications(!emailNotifications)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Notificaciones por Email</span>
+                  <div className={`w-5 h-5 rounded-full ${emailNotifications ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+                <button
+                  onClick={toggleNotifications}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <span className="text-gray-300">Notificaciones Generales</span>
+                  <div className={`w-5 h-5 rounded-full ${notificationsEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+              </div>
+            </div>
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Configuración de Sonido</h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Sonido</span>
+                  <div className={`w-5 h-5 rounded-full ${soundEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+                <button
+                  onClick={() => setVibrationEnabled(!vibrationEnabled)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Vibración</span>
+                  <div className={`w-5 h-5 rounded-full ${vibrationEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'privacy':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Visibilidad del Perfil</h4>
+              <div className="space-y-3">
+                <button
+                  onClick={togglePrivacy}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <span className="text-gray-300">Perfil Público</span>
+                  <div className={`w-5 h-5 rounded-full ${privacyPublic ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+              </div>
+            </div>
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Datos y Análisis</h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setDataSharing(!dataSharing)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Compartir Datos</span>
+                  <div className={`w-5 h-5 rounded-full ${dataSharing ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+                <button
+                  onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Analytics</span>
+                  <div className={`w-5 h-5 rounded-full ${analyticsEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'location':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Configuración de Ubicación</h4>
+              <div className="space-y-3">
+                <button
+                  onClick={toggleAutoLocation}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <span className="text-gray-300">Ubicación Automática</span>
+                  <div className={`w-5 h-5 rounded-full ${autoLocationEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+                <button
+                  onClick={() => setHighAccuracyLocation(!highAccuracyLocation)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Alta Precisión</span>
+                  <div className={`w-5 h-5 rounded-full ${highAccuracyLocation ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+                <button
+                  onClick={() => setBackgroundLocation(!backgroundLocation)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Ubicación en Segundo Plano</span>
+                  <div className={`w-5 h-5 rounded-full ${backgroundLocation ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'device':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Hardware</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
+                  <span className="text-gray-300">Sensores</span>
+                  <span className="text-green-400 text-sm">Disponible</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
+                  <span className="text-gray-300">Cámara</span>
+                  <span className="text-green-400 text-sm">Disponible</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
+                  <span className="text-gray-300">Micrófono</span>
+                  <span className="text-green-400 text-sm">Disponible</span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Configuración Avanzada</h4>
+              <p className="text-gray-400 text-sm">Esta sección está siendo desarrollada por el equipo de hardware.</p>
+            </div>
+          </div>
+        );
+
+      case 'permissions':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Permisos de la Aplicación</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
+                  <span className="text-gray-300">Ubicación</span>
+                  <span className="text-green-400 text-sm">Concedido</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
+                  <span className="text-gray-300">Cámara</span>
+                  <span className="text-green-400 text-sm">Concedido</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
+                  <span className="text-gray-300">Notificaciones</span>
+                  <span className="text-green-400 text-sm">Concedido</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
+                  <span className="text-gray-300">Almacenamiento</span>
+                  <span className="text-yellow-400 text-sm">Pendiente</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'app':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Apariencia</h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Modo Oscuro</span>
+                  <div className={`w-5 h-5 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+              </div>
+            </div>
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Rendimiento</h4>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setAutoRefresh(!autoRefresh)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
+                >
+                  <span className="text-gray-300">Actualización Automática</span>
+                  <div className={`w-5 h-5 rounded-full ${autoRefresh ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                </button>
+              </div>
+            </div>
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Información de la App</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Versión</span>
+                  <span className="text-white">1.0.0</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Build</span>
+                  <span className="text-white">2024.1.1</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Última Actualización</span>
+                  <span className="text-white">Hace 2 días</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'support':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Ayuda y Soporte</h4>
+              <div className="space-y-3">
+                <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
+                  <span className="text-gray-300">Centro de Ayuda</span>
+                  <FiHelpCircle className="w-4 h-4 text-gray-400" />
+                </button>
+                <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
+                  <span className="text-gray-300">Contactar Soporte</span>
+                  <FiHelpCircle className="w-4 h-4 text-gray-400" />
+                </button>
+                <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
+                  <span className="text-gray-300">Reportar un Problema</span>
+                  <FiHelpCircle className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            </div>
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">Legal</h4>
+              <div className="space-y-3">
+                <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
+                  <span className="text-gray-300">Términos de Servicio</span>
+                  <FiHelpCircle className="w-4 h-4 text-gray-400" />
+                </button>
+                <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
+                  <span className="text-gray-300">Política de Privacidad</span>
+                  <FiHelpCircle className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   if (!session?.user) {
     return (
       <div className={`w-full h-full bg-gray-900 flex items-center justify-center ${className}`}>
@@ -280,19 +698,29 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
   }
 
   return (
-    <div className={`w-full h-full bg-gray-900 ${className}`}>
+    <div className={`w-full min-h-screen bg-gray-900 ${className}`}>
       {toast && <Toast message={toast.message} type={toast.type} onHide={() => setToast(null)} />}
-      <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50 p-4">
-        <h1 className="text-2xl font-bold text-white mb-4">
-          {canManageIncidents ? 'Panel de Administración' : 'Configuración'}
-        </h1>
-        {canManageIncidents && (
-          <div className="flex bg-gray-800/50 rounded-xl p-1">
+
+      {/* Header mejorado */}
+      <div className="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/30 px-4 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-white">
+            {canManageIncidents ? 'Panel de Administración' : 'Mi Perfil'}
+          </h1>
+        </div>
+
+        {canManageIncidents && !activeConfigSection && (
+          <motion.div
+            className="flex bg-gray-800/30 rounded-xl p-1 backdrop-blur-sm"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
             <button
               onClick={() => setActiveSection('profile')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-300 ${
                 activeSection === 'profile'
-                  ? 'bg-blue-600 text-white shadow-lg'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                   : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
               }`}
             >
@@ -301,177 +729,334 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
             </button>
             <button
               onClick={() => setActiveSection('queue')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-300 ${
                 activeSection === 'queue'
-                  ? 'bg-blue-600 text-white shadow-lg'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
                   : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
               }`}
             >
               <FiCheckCircle className="w-4 h-4 mx-auto mb-1" />
               Cola
             </button>
-          </div>
+          </motion.div>
         )}
       </div>
-      <div className="p-4 pb-24">
-        {activeSection === 'profile' ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center space-x-4">
-                  <div
-                    className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center relative group overflow-hidden cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <div className="flex flex-col items-center">
-                      <div className="relative mb-4">
-                        <div className="w-24 h-24 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-gray-600 shadow-lg">
-                          {profileImagePreview ? (
-                            <Image
-                              src={profileImagePreview}
-                              alt="Vista previa"
-                              width={96}
-                              height={96}
-                              className="object-cover"
-                            />
-                          ) : (
-                            <FiUser className="w-12 h-12 text-gray-500" />
+
+      {/* Contenido principal con animaciones mejoradas */}
+      <div className="p-4 pb-32">
+        <AnimatePresence mode="wait">
+          {activeSection === 'profile' ? (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="space-y-6"
+            >
+              {/* Vista previa del perfil - solo en menú principal */}
+              {!activeConfigSection && (
+                <motion.div
+                  className="bg-gray-800/40 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 shadow-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-center space-x-4">
+                      <motion.div
+                        className="relative group cursor-pointer"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-0.5 shadow-lg">
+                          <div className="w-full h-full rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
+                            {profileImagePreview ? (
+                              <Image
+                                src={profileImagePreview}
+                                alt="Vista previa"
+                                width={80}
+                                height={80}
+                                className="object-cover"
+                              />
+                            ) : (
+                              <FiUser className="w-10 h-10 text-gray-400" />
+                            )}
+                          </div>
+                        </div>
+                                                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                           <FiCamera className="w-3 h-3 text-white" />
+                         </div>
+                       </motion.div>
+                       <input
+                         ref={fileInputRef}
+                         type="file"
+                         accept="image/*"
+                         onChange={handleImageChange}
+                         className="hidden"
+                       />
+
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-white mb-1">
+                          {session.user.name || 'Usuario'}
+                        </h2>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleColor(session.user.role || 'user')}`}>
+                            {getRoleName(session.user.role || 'user')}
+                          </span>
+                          {session.user.createdAt && (
+                            <span className="text-xs text-gray-400">
+                              Desde {new Date(session.user.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <FiCamera className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-xl font-semibold text-white">
-                      {session.user.name || 'Usuario'}
-                    </h2>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor(session.user.role || 'user')}`}>
-                        {getRoleName(session.user.role || 'user')}
-                      </span>
-                      {session.user.createdAt && (
-                        <span className="text-xs text-gray-400">
-                          Desde {new Date(session.user.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-300 bg-gray-700/30 rounded-full px-3 py-1">
-                  <FiMapPin className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs font-medium">{session.user.neighborhood || 'Barrio no asignado'}</span>
-                </div>
-              </div>
 
-              {profileImageFile && (
-                <button
-                  onClick={handleImageUpload}
-                  disabled={isSaving}
-                  className="w-full mb-4 p-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed"
-                >
-                  {isSaving ? 'Subiendo...' : 'Guardar Imagen'}
-                </button>
+                    <div className="flex items-center space-x-2 text-gray-300 bg-gray-700/40 rounded-full px-3 py-2 backdrop-blur-sm">
+                      <FiMapPin className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm font-medium">{session.user.neighborhood || 'Barrio no asignado'}</span>
+                    </div>
+                  </div>
+
+                  {profileImageFile && (
+                    <motion.button
+                      onClick={handleImageUpload}
+                      disabled={isSaving}
+                      className="w-full p-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {isSaving ? 'Subiendo...' : 'Guardar Imagen'}
+                    </motion.button>
+                  )}
+                </motion.div>
               )}
-            </div>
-            {canManageIncidents && (
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <FiShield className="w-5 h-5 mr-2 text-blue-400" />
-                  Estadísticas de Administración
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiAlertTriangle className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">12</div>
-                    <div className="text-xs text-gray-400">Pendientes</div>
-                  </div>
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiCheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">45</div>
-                    <div className="text-xs text-gray-400">Verificados</div>
-                  </div>
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiClock className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">2.3h</div>
-                    <div className="text-xs text-gray-400">Tiempo promedio</div>
-                  </div>
-                  <div className="bg-gray-700/30 rounded-lg p-3 text-center">
-                    <FiUsers className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">156</div>
-                    <div className="text-xs text-gray-400">Total usuarios</div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <FiSettings className="w-5 h-5 mr-2 text-gray-400" />
-                Configuración
-              </h3>
-              <div className="bg-gray-700/20 p-4 rounded-lg space-y-3">
-                <button
-                  onClick={toggleNotifications}
-                  disabled={isSaving}
-                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
+
+              {/* Estadísticas de administración - solo en menú principal */}
+              {!activeConfigSection && canManageIncidents && (
+                <motion.div
+                  className="bg-gray-800/40 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 shadow-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
                 >
-                  <span className="text-gray-300">Notificaciones</span>
-                  <div className={`w-5 h-5 rounded-full ${notificationsEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
-                </button>
-                <button
-                  onClick={togglePrivacy}
-                  disabled={isSaving}
-                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
+                  <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                    <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
+                      <FiShield className="w-4 h-4 text-blue-400" />
+                    </div>
+                    Estadísticas de Administración
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { icon: FiAlertTriangle, value: '12', label: 'Pendientes', color: 'yellow' },
+                      { icon: FiCheckCircle, value: '45', label: 'Verificados', color: 'green' },
+                      { icon: FiClock, value: '2.3h', label: 'Tiempo promedio', color: 'blue' },
+                      { icon: FiUsers, value: '156', label: 'Total usuarios', color: 'purple' }
+                    ].map((stat, index) => (
+                      <motion.div
+                        key={stat.label}
+                        className="bg-gray-700/30 rounded-xl p-4 text-center backdrop-blur-sm"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + index * 0.1 }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <stat.icon className={`w-6 h-6 text-${stat.color}-400 mx-auto mb-2`} />
+                        <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                        <div className="text-xs text-gray-400 font-medium">{stat.label}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Sección de configuración con animaciones tipo WhatsApp */}
+              <motion.div
+                className="bg-gray-800/40 backdrop-blur-sm rounded-2xl border border-gray-700/30 shadow-xl overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <AnimatePresence mode="wait">
+                  {activeConfigSection ? (
+                    <>
+                      {/* Overlay de fondo */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 backdrop-blur-sm z-[200]"
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.3)'
+                        }}
+                        onClick={() => setActiveConfigSection(null)}
+                      />
+
+                      {/* Panel deslizable */}
+                      <motion.div
+                        key={activeConfigSection}
+                        initial={{ x: '100%' }}
+                        animate={{ x: 0 }}
+                        exit={{ x: '100%' }}
+                        transition={{
+                          type: 'spring',
+                          damping: 25,
+                          stiffness: 200,
+                          duration: 0.5
+                        }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.1}
+                        onDragEnd={(_, info) => {
+                          // Si se arrastra más del 50% hacia la derecha, cerrar
+                          if (info.offset.x > 150) {
+                            setActiveConfigSection(null);
+                          }
+                        }}
+                        className="fixed top-0 right-0 bottom-0 w-full backdrop-blur-lg border-l border-gray-700/50 shadow-2xl z-[210]"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
+                          backdropFilter: 'blur(20px)',
+                          boxShadow: `
+                            -10px 0 50px rgba(0, 0, 0, 0.3),
+                            -5px 0 25px rgba(0, 0, 0, 0.2),
+                            inset 1px 0 0 rgba(255, 255, 255, 0.1)
+                          `
+                        }}
+                      >
+                        {/* Handle de arrastre */}
+                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-12 bg-gray-600 rounded-r-full cursor-grab active:cursor-grabbing" />
+
+                        {/* Contenido del panel */}
+                        <div className="h-full flex flex-col">
+                          {/* Header del panel */}
+                          <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+                            <motion.button
+                              onClick={() => setActiveConfigSection(null)}
+                              className="flex items-center text-gray-400 hover:text-white transition-colors"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <FiXCircle className="w-5 h-5 mr-2" />
+                              Volver
+                            </motion.button>
+                            <h3 className="text-lg font-bold text-white">
+                              {configSections.find(s => s.id === activeConfigSection)?.title}
+                            </h3>
+                          </div>
+
+                          {/* Contenido scrolleable */}
+                          <div className="flex-1 overflow-y-auto p-6">
+                            {renderConfigSection(activeConfigSection)}
+                          </div>
+                        </div>
+                      </motion.div>
+                    </>
+                  ) : (
+                    <motion.div
+                      key="config-menu"
+                      className="p-6"
+                      initial={{ x: 0, opacity: 1 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      exit={{ x: -400, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 30,
+                        mass: 0.8
+                      }}
+                    >
+                      <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                        <div className="w-8 h-8 bg-gray-500/20 rounded-lg flex items-center justify-center mr-3">
+                          <FiSettings className="w-4 h-4 text-gray-400" />
+                        </div>
+                        Configuración
+                      </h3>
+                      <div className="space-y-3">
+                        {configSections.map((section, index) => (
+                          <motion.button
+                            key={section.id}
+                            onClick={() => setActiveConfigSection(section.id)}
+                            className="w-full flex items-center justify-between p-4 bg-gray-700/30 hover:bg-gray-700/50 rounded-xl transition-all duration-300 backdrop-blur-sm border border-gray-600/20"
+                            whileHover={{
+                              scale: 1.02,
+                              backgroundColor: 'rgba(55, 65, 81, 0.5)'
+                            }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 17,
+                              delay: index * 0.05
+                            }}
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className={`w-12 h-12 ${section.bgColor} rounded-xl flex items-center justify-center shadow-lg`}>
+                                <section.icon className={`w-6 h-6 ${section.color}`} />
+                              </div>
+                              <div className="text-left">
+                                <h4 className="text-white font-semibold text-base">{section.title}</h4>
+                                <p className="text-gray-400 text-sm">{section.description}</p>
+                              </div>
+                            </div>
+                            <FiChevronRight className="w-5 h-5 text-gray-400" />
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Botón de cerrar sesión - solo en menú principal */}
+              {!activeConfigSection && (
+                <motion.div
+                  className="bg-gray-800/40 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 shadow-xl"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
                 >
-                  <span className="text-gray-300">Perfil Público</span>
-                  <div className={`w-5 h-5 rounded-full ${privacyPublic ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
-                </button>
-                <button
-                  onClick={toggleAutoLocation}
-                  disabled={isSaving}
-                  className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <span className="text-gray-300">Ubicación automática</span>
-                  <div className={`w-5 h-5 rounded-full ${autoLocationEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
-                </button>
-              </div>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center space-x-2 p-4 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl transition-colors"
+                  <motion.button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center justify-center space-x-3 p-4 bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 border border-red-500/30 rounded-xl transition-all duration-300 backdrop-blur-sm"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FiLogOut className="w-5 h-5 text-red-400" />
+                    <span className="text-red-400 font-semibold">Cerrar Sesión</span>
+                  </motion.button>
+                </motion.div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="queue"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="space-y-6"
             >
-              <FiLogOut className="w-5 h-5 text-red-400" />
-              <span className="text-red-400 font-medium">Cerrar Sesión</span>
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <FiCheckCircle className="w-5 h-5 mr-2 text-blue-400" />
-                Cola de Verificación
-              </h3>
-              <IncidentQueue />
-            </div>
-          </motion.div>
-        )}
+              <motion.div
+                className="bg-gray-800/40 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 shadow-xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <h3 className="text-lg font-bold text-white mb-6 flex items-center">
+                  <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
+                    <FiCheckCircle className="w-4 h-4 text-blue-400" />
+                  </div>
+                  Cola de Verificación
+                </h3>
+                <IncidentQueue />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

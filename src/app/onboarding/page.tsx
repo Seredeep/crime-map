@@ -69,19 +69,19 @@ function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
           </p>
           <div className="space-y-3 text-sm text-gray-400 mb-6">
             <div className="flex items-start">
-              <svg className="w-5 h-5 mr-3 mt-0.5 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-3 mt-0.5 text-[#00e381] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Tu información personal se mantiene segura y privada</span>
             </div>
             <div className="flex items-start">
-              <svg className="w-5 h-5 mr-3 mt-0.5 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-3 mt-0.5 text-[#00e381] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Podrás recibir alertas relevantes para tu zona</span>
             </div>
             <div className="flex items-start">
-              <svg className="w-5 h-5 mr-3 mt-0.5 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 mr-3 mt-0.5 text-[#00e381] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Conectarás con tu comunidad local</span>
@@ -89,7 +89,7 @@ function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            className="w-full bg-gradient-to-r from-[#00e381] to-[#4fd691] hover:from-[#4fd691] hover:to-[#46c580] text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01]"
           >
             Entendido, continuar
           </button>
@@ -349,13 +349,13 @@ export default function OnboardingPage() {
             <div className="space-y-4">
               {/* Nombre */}
               <div className="group">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Nombre
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      watch('name') ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      watch('name') ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -365,7 +365,7 @@ export default function OnboardingPage() {
                     type="text"
                     autoComplete="given-name"
                     {...register('name', { required: 'El nombre es requerido' })}
-                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
+                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600"
                     placeholder="Tu nombre"
                   />
                 </div>
@@ -376,13 +376,13 @@ export default function OnboardingPage() {
 
               {/* Apellido */}
               <div className="group">
-                <label htmlFor="surname" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="surname" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Apellido
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      watch('surname') ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      watch('surname') ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -392,7 +392,7 @@ export default function OnboardingPage() {
                     type="text"
                     autoComplete="family-name"
                     {...register('surname', { required: 'El apellido es requerido' })}
-                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
+                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600"
                     placeholder="Tu apellido"
                   />
                 </div>
@@ -403,24 +403,24 @@ export default function OnboardingPage() {
 
 
 
-              {/* Selección de País */}
+                            {/* Selección de País */}
               <div className="group">
-                <label htmlFor="country-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="country-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   País
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      watch('country') ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      watch('country') ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                                    <select
+                  <select
                     id="country-select"
                     autoComplete="country"
                     {...register('country', { required: 'El país es requerido' })}
-                    className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onChange={(e) => {
                       const countryValue = e.target.value;
 
@@ -458,7 +458,7 @@ export default function OnboardingPage() {
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     {isLoadingNeighborhoods ? (
-                      <svg className="animate-spin h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-5 w-5 text-[#00e381]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -476,14 +476,14 @@ export default function OnboardingPage() {
 
               {/* Selección de Ciudad */}
               <div className={`group transition-all duration-300 ${!isCountrySelected ? 'opacity-50' : 'opacity-100'}`}>
-                <label htmlFor="city-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="city-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Ciudad
                   {!isCountrySelected && <span className="text-gray-500 ml-1">(Selecciona un país primero)</span>}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      watch('city') ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      watch('city') ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -492,7 +492,7 @@ export default function OnboardingPage() {
                     id="city-select"
                     autoComplete="address-level2"
                     {...register('city', { required: 'La ciudad es requerida' })}
-                    className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!isCountrySelected || isLoadingCities}
                     onChange={(e) => {
                       const cityValue = e.target.value;
@@ -517,7 +517,7 @@ export default function OnboardingPage() {
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     {isLoadingCities ? (
-                      <svg className="animate-spin h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-5 w-5 text-[#00e381]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -535,14 +535,14 @@ export default function OnboardingPage() {
 
               {/* Selección de Barrio */}
               <div className={`group transition-all duration-300 ${!isCitySelected ? 'opacity-50' : 'opacity-100'}`}>
-                <label htmlFor="neighborhood-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="neighborhood-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Barrio
                   {!isCitySelected && <span className="text-gray-500 ml-1">(Selecciona una ciudad primero)</span>}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      watch('neighborhood') ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      watch('neighborhood') ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -552,7 +552,7 @@ export default function OnboardingPage() {
                     id="neighborhood-select"
                     autoComplete="address-level3"
                     {...register('neighborhood', { required: 'El barrio es requerido' })}
-                    className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!isCitySelected || isLoadingNeighborhoodsList}
                   >
                     <option value="">
@@ -575,7 +575,7 @@ export default function OnboardingPage() {
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     {isLoadingNeighborhoodsList ? (
-                      <svg className="animate-spin h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-5 w-5 text-[#00e381]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -597,7 +597,7 @@ export default function OnboardingPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-[#00e381] to-[#4fd691] hover:from-[#4fd691] hover:to-[#46c580] focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01]"
               >
                 {isSubmitting ? (
                   <>
@@ -670,7 +670,7 @@ export default function OnboardingPage() {
           </div>
 
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#00e381]"></div>
           </div>
         </div>
       </div>

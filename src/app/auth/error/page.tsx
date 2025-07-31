@@ -1,7 +1,7 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
 const errorMessages: Record<string, string> = {
@@ -38,7 +38,7 @@ function ErrorContent() {
           </Link>
           <Link
             href="/auth/signin"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#00e381] hover:bg-[#4fd691] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00e381]"
           >
             Iniciar Sesión
           </Link>
@@ -54,7 +54,7 @@ export default function ErrorPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-lg">
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00e381]"></div>
           </div>
           <h2 className="text-center text-xl font-bold text-white">Cargando...</h2>
         </div>
@@ -63,4 +63,4 @@ export default function ErrorPage() {
       <ErrorContent />
     </Suspense>
   );
-} 
+}

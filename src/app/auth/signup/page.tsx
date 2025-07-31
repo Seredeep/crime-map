@@ -135,7 +135,7 @@ export default function SignUp() {
                     <button
                       type="button"
                       onClick={() => router.push('/auth/signin')}
-                      className="text-xs text-orange-400 hover:text-orange-300 underline transition-colors"
+                      className="text-xs text-[#00e381] hover:text-[#4fd691] underline transition-colors"
                     >
                       Ir ahora
                     </button>
@@ -146,7 +146,7 @@ export default function SignUp() {
           )}
 
           {/* Aviso de aprobación */}
-          <div className="mb-4 p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 text-yellow-300 text-center rounded-xl">
+          <div className="mb-4 p-4 bg-gradient-to-r from-yellow-500/10 to-[#00e381]/10 border border-yellow-500/30 text-yellow-300 text-center rounded-xl">
             <div className="flex items-center justify-center">
               <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -162,13 +162,13 @@ export default function SignUp() {
             <div className="space-y-4">
               {/* Email */}
               <div className="group">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      email ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      email ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
@@ -179,7 +179,7 @@ export default function SignUp() {
                     type="email"
                     autoComplete="username"
                     required
-                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
+                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600"
                     placeholder="tu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -190,13 +190,13 @@ export default function SignUp() {
 
               {/* Contraseña */}
               <div className="group">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Contraseña
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      password ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      password ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -207,7 +207,7 @@ export default function SignUp() {
                     type="password"
                     autoComplete="new-password"
                     required
-                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
+                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600"
                     placeholder="Mínimo 8 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -218,13 +218,13 @@ export default function SignUp() {
 
               {/* Confirmar contraseña */}
               <div className="group">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-[#00e381] transition-colors">
                   Confirmar contraseña
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
-                      confirmPassword ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
+                      confirmPassword ? 'text-[#00e381] drop-shadow-[0_0_8px_rgba(0,227,129,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-[#00e381] group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -235,7 +235,7 @@ export default function SignUp() {
                     type="password"
                     autoComplete="new-password"
                     required
-                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
+                    className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:border-[#00e381] transition-all duration-300 sm:text-sm group-hover:border-gray-600"
                     placeholder="Repite tu contraseña"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -250,9 +250,9 @@ export default function SignUp() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-[#00e381] to-[#4fd691] hover:from-[#4fd691] hover:to-[#46c580] focus:outline-none focus:ring-2 focus:ring-[#00e381]/50 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-[1.01] active:scale-[0.98]"
                 style={{
-                  boxShadow: '0 0 20px rgba(234, 88, 12, 0.3)',
+                  boxShadow: '0 0 8px rgba(0, 227, 129, 0.2)',
                 }}
               >
                 {loading ? (
@@ -281,7 +281,7 @@ export default function SignUp() {
               ¿Ya tienes una cuenta?{' '}
               <Link
                 href="/auth/signin"
-                className="font-medium text-orange-400 hover:text-orange-300 transition-colors duration-200 hover:underline"
+                className="font-medium text-[#00e381] hover:text-[#4fd691] transition-colors duration-200 hover:underline"
               >
                 Inicia sesión aquí
               </Link>
