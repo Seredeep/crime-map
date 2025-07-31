@@ -259,7 +259,9 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                     address: address,
                     type: 'Ubicación',
                     description: `Ubicación: ${address}`,
-                    date: new Date().toISOString()
+                    date: new Date().toISOString(),
+                    time: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                    createdAt: new Date().toISOString()
                   } as Incident;
                   onIncidentNavigate(coords, tempIncident);
                 }

@@ -93,7 +93,7 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
     if (onNeighborhoodSelect) {
       if (value) {
         const selectedNeighborhood = neighborhoods.find(
-          n => n.properties.id.toString() === value
+          n => n.properties.id?.toString() === value
         );
         onNeighborhoodSelect(selectedNeighborhood || null);
       } else {
