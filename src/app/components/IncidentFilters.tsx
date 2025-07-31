@@ -4,9 +4,10 @@ import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
 import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-    List
+  List
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import IncidentFiltersContent from './IncidentFiltersContent';
 
@@ -22,6 +23,7 @@ const COMMON_TAGS = [
 ];
 
 export default function IncidentFilters({ filters, onFiltersChangeAction, onNeighborhoodSelect }: IncidentFiltersProps) {
+  const t = useTranslations('Filters');
   const [open, setOpen] = useState(false);
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
   const [loading, setLoading] = useState(false);
@@ -68,7 +70,7 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
         setNeighborhoods(sortedNeighborhoods);
       } catch (err) {
         console.error('Error loading neighborhoods:', err);
-        setError('No se pudieron cargar los barrios');
+        setError(t('errorLoadingNeighborhoods'));
       } finally {
         setLoading(false);
       }
@@ -206,7 +208,7 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
         onClick={() => setOpen(!open)}
         className="relative flex items-center justify-center p-2 text-gray-400 hover:text-white rounded-lg transition-all duration-300"
         whileTap={{ scale: 0.95 }}
-        aria-label="Filtros de incidentes"
+        aria-label={t('title')}
       >
         <List className="h-6 w-6" />
 

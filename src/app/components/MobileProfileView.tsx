@@ -7,22 +7,22 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    FiAlertTriangle,
-    FiBell,
-    FiCamera,
-    FiCheckCircle,
-    FiChevronRight,
-    FiClock,
-    FiHelpCircle,
-    FiLogOut,
-    FiMapPin,
-    FiSettings,
-    FiShield,
-    FiSmartphone,
-    FiUser,
-    FiUsers,
-    FiXCircle,
-    FiZap
+  FiAlertTriangle,
+  FiBell,
+  FiCamera,
+  FiCheckCircle,
+  FiChevronRight,
+  FiClock,
+  FiHelpCircle,
+  FiLogOut,
+  FiMapPin,
+  FiSettings,
+  FiShield,
+  FiSmartphone,
+  FiUser,
+  FiUsers,
+  FiXCircle,
+  FiZap
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -848,14 +848,14 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                     <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
                       <FiShield className="w-4 h-4 text-blue-400" />
                     </div>
-                    Estadísticas de Administración
+                    {t('adminStats')}
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { icon: FiAlertTriangle, value: '12', label: 'Pendientes', color: 'yellow' },
-                      { icon: FiCheckCircle, value: '45', label: 'Verificados', color: 'green' },
-                      { icon: FiClock, value: '2.3h', label: 'Tiempo promedio', color: 'blue' },
-                      { icon: FiUsers, value: '156', label: 'Total usuarios', color: 'purple' }
+                      { icon: FiAlertTriangle, value: '12', label: t('pending'), color: 'yellow' },
+                      { icon: FiCheckCircle, value: '45', label: t('verified'), color: 'green' },
+                      { icon: FiClock, value: '2.3h', label: t('averageTime'), color: 'blue' },
+                      { icon: FiUsers, value: '156', label: t('totalUsers'), color: 'purple' }
                     ].map((stat, index) => (
                       <motion.div
                         key={stat.label}
@@ -975,7 +975,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                         <div className="w-8 h-8 bg-gray-500/20 rounded-lg flex items-center justify-center mr-3">
                           <FiSettings className="w-4 h-4 text-gray-400" />
                         </div>
-                        Configuración
+                        {t('settings')}
                       </h3>
                       <div className="space-y-3">
                         {configSections.map((section, index) => (
@@ -1028,7 +1028,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                     whileTap={{ scale: 0.98 }}
                   >
                     <FiLogOut className="w-5 h-5 text-red-400" />
-                    <span className="text-red-400 font-semibold">Cerrar Sesión</span>
+                    <span className="text-red-400 font-semibold">{t('signOut')}</span>
                   </motion.button>
                 </motion.div>
               )}
@@ -1052,7 +1052,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
                     <FiCheckCircle className="w-4 h-4 text-blue-400" />
                   </div>
-                  Cola de Verificación
+                  {t('verificationQueue')}
                 </h3>
                 <IncidentQueue />
               </motion.div>

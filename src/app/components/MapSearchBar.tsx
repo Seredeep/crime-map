@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiMapPin, FiSearch } from 'react-icons/fi';
 
@@ -20,6 +21,7 @@ interface MapSearchBarProps {
 }
 
 const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: MapSearchBarProps) => {
+  const t = useTranslations('Search');
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,8 +38,8 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
       return (data.features || []).slice(0, 5).map((feature: any) => ({
         id: feature.properties.id || feature.properties.gid,
         type: 'address' as const,
-        title: feature.properties.main_text || feature.properties.name || 'Dirección',
-        subtitle: feature.properties.secondary_text || feature.properties.label || 'Sin descripción',
+        title: feature.properties.main_text || feature.properties.name || t('address'),
+        subtitle: feature.properties.secondary_text || feature.properties.label || t('location'),
         coordinates: feature.geometry.coordinates
       }));
     } catch (error) {
@@ -168,7 +170,7 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar dirección o incidente..."
+              placeholder={t('placeholder')}
               className="flex-1 py-2 px-3 focus:rounded-full bg-transparent text-gray-900 placeholder-gray-600 border-transparent focus:outline-none font-medium"
             />
 

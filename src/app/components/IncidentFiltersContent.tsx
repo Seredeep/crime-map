@@ -14,6 +14,7 @@ import {
     X
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface IncidentFiltersContentProps {
@@ -25,7 +26,7 @@ interface IncidentFiltersContentProps {
 
 // Common tags for quick filtering
 const COMMON_TAGS = [
-  'robo', 'hurto', 'asalto', 'vandalismo', 'drogas', 'ruido', 'violencia', 'accidente'
+  'robbery', 'theft', 'assault', 'vandalism', 'drugs', 'noise', 'violence', 'accident'
 ];
 
 export default function IncidentFiltersContent({
@@ -40,6 +41,7 @@ export default function IncidentFiltersContent({
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
 
   const { data: session } = useSession();
+  const t = useTranslations('Filters');
 
   // Check if user is editor or admin
   const isEditorOrAdmin = useMemo(() => {
@@ -77,7 +79,7 @@ export default function IncidentFiltersContent({
         setNeighborhoods(sortedNeighborhoods);
       } catch (err) {
         console.error('Error loading neighborhoods:', err);
-        setError('No se pudieron cargar los barrios');
+        setError(t('errorLoadingNeighborhoods'));
       } finally {
         setLoading(false);
       }
@@ -197,7 +199,7 @@ export default function IncidentFiltersContent({
           <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
             <Tags className="w-5 h-5 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-white font-manrope">Filtros</h3>
+          <h3 className="text-lg font-semibold text-white font-manrope">{t('title')}</h3>
         </div>
         {onClose && (
           <motion.button
@@ -233,7 +235,7 @@ export default function IncidentFiltersContent({
             whileTap={{ scale: 0.98 }}
           >
             <Trash2 className="h-4 w-4" />
-            Limpiar filtros
+            {t('clearFilters')}
           </motion.button>
         )}
       </AnimatePresence>
@@ -258,7 +260,7 @@ export default function IncidentFiltersContent({
             <div className="p-2 bg-white/10 rounded-lg">
               <MapPin className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-white text-sm">Barrio</span>
+            <span className="font-semibold text-white text-sm">{t('neighborhood')}</span>
           </div>
           <select
             className="w-full bg-transparent border-none outline-none text-white text-sm appearance-none cursor-pointer"
@@ -267,11 +269,11 @@ export default function IncidentFiltersContent({
             disabled={loading}
             style={{ color: '#FFFFFF' }}
           >
-            <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>Todos los barrios</option>
+            <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('allNeighborhoods')}</option>
             {error ? (
-              <option disabled style={{ background: '#1F2937', color: '#FFFFFF' }}>Error al cargar barrios</option>
+              <option disabled style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('errorLoadingNeighborhoods')}</option>
             ) : loading ? (
-              <option disabled style={{ background: '#1F2937', color: '#FFFFFF' }}>Cargando barrios...</option>
+              <option disabled style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('loadingNeighborhoods')}</option>
             ) : (
               neighborhoods.map((neighborhood) => (
                 <option
@@ -305,7 +307,7 @@ export default function IncidentFiltersContent({
               <div className="p-2 bg-white/10 rounded-lg">
                 <CheckCircle className="h-4 w-4 text-white" />
               </div>
-              <span className="font-semibold text-white text-sm">Estado</span>
+              <span className="font-semibold text-white text-sm">{t('status')}</span>
             </div>
             <select
               className="w-full bg-transparent border-none outline-none text-white text-sm appearance-none cursor-pointer"
@@ -313,10 +315,10 @@ export default function IncidentFiltersContent({
               onChange={handleStatusChange}
               style={{ color: '#FFFFFF' }}
             >
-              <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>Todos los estados</option>
-              <option value="pending" style={{ background: '#1F2937', color: '#FFFFFF' }}>Pendiente</option>
-              <option value="verified" style={{ background: '#1F2937', color: '#FFFFFF' }}>Verificado</option>
-              <option value="resolved" style={{ background: '#1F2937', color: '#FFFFFF' }}>Resuelto</option>
+              <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('allStatuses')}</option>
+              <option value="pending" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('pending')}</option>
+              <option value="verified" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('verified')}</option>
+              <option value="resolved" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('resolved')}</option>
             </select>
           </motion.div>
         )}
@@ -339,7 +341,7 @@ export default function IncidentFiltersContent({
             <div className="p-2 bg-white/10 rounded-lg">
               <Calendar className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-white text-sm">Fechas</span>
+            <span className="font-semibold text-white text-sm">{t('dates')}</span>
           </div>
           <div className="flex gap-2 text-xs">
             <input
@@ -378,7 +380,7 @@ export default function IncidentFiltersContent({
             <div className="p-2 bg-white/10 rounded-lg">
               <Clock className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-white text-sm">Horas</span>
+            <span className="font-semibold text-white text-sm">{t('hours')}</span>
           </div>
           <div className="flex gap-2 text-xs">
             <input
@@ -417,7 +419,7 @@ export default function IncidentFiltersContent({
             <div className="p-2 bg-white/10 rounded-lg">
               <Clock3 className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-white text-sm">Período</span>
+            <span className="font-semibold text-white text-sm">{t('period')}</span>
           </div>
           <select
             className="w-full bg-transparent border-none outline-none text-white text-sm appearance-none cursor-pointer"
@@ -425,11 +427,11 @@ export default function IncidentFiltersContent({
             onChange={handleTimePeriodChange}
             style={{ color: '#FFFFFF' }}
           >
-            <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>Cualquier hora</option>
-            <option value="morning" style={{ background: '#1F2937', color: '#FFFFFF' }}>Mañana (6:00 - 12:00)</option>
-            <option value="afternoon" style={{ background: '#1F2937', color: '#FFFFFF' }}>Tarde (12:00 - 18:00)</option>
-            <option value="evening" style={{ background: '#1F2937', color: '#FFFFFF' }}>Noche (18:00 - 00:00)</option>
-            <option value="night" style={{ background: '#1F2937', color: '#FFFFFF' }}>Madrugada (00:00 - 6:00)</option>
+            <option value="" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('anyTime')}</option>
+            <option value="morning" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('morning')}</option>
+            <option value="afternoon" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('afternoon')}</option>
+            <option value="evening" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('evening')}</option>
+            <option value="night" style={{ background: '#1F2937', color: '#FFFFFF' }}>{t('night')}</option>
           </select>
         </motion.div>
 
@@ -451,7 +453,7 @@ export default function IncidentFiltersContent({
             <div className="p-2 bg-white/10 rounded-lg">
               <Tags className="h-4 w-4 text-white" />
             </div>
-            <span className="font-semibold text-white text-sm">Etiquetas</span>
+            <span className="font-semibold text-white text-sm">{t('tags')}</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -482,7 +484,7 @@ export default function IncidentFiltersContent({
                 } : {}}
                 whileTap={{ scale: 0.95 }}
               >
-                {tag}
+                {t(`commonTags.${tag}`)}
               </motion.button>
             ))}
           </div>

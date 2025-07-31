@@ -196,7 +196,9 @@
     "totalUsers": "Total users",
     "verified": "Verified",
     "editor": "Editor",
-    "user": "User"
+    "user": "User",
+    "settings": "Settings",
+    "signOut": "Sign Out"
   },
   "Actions": {
     "cancelEdit": "Cancel edit",
@@ -266,5 +268,45 @@
     "countryRequired": "Country is required",
     "cityRequired": "City is required",
     "neighborhoodRequired": "Neighborhood is required"
+  },
+  "Filters": {
+    "title": "Filters",
+    "clearFilters": "Clear filters",
+    "neighborhood": "Neighborhood",
+    "allNeighborhoods": "All neighborhoods",
+    "loadingNeighborhoods": "Loading neighborhoods...",
+    "errorLoadingNeighborhoods": "Error loading neighborhoods",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "pending": "Pending",
+    "verified": "Verified",
+    "resolved": "Resolved",
+    "dates": "Dates",
+    "hours": "Hours",
+    "period": "Period",
+    "anyTime": "Any time",
+    "morning": "Morning (6:00 - 12:00)",
+    "afternoon": "Afternoon (12:00 - 18:00)",
+    "evening": "Evening (18:00 - 00:00)",
+    "night": "Night (00:00 - 6:00)",
+    "tags": "Tags",
+    "commonTags": {
+      "robbery": "robbery",
+      "theft": "theft",
+      "assault": "assault",
+      "vandalism": "vandalism",
+      "drugs": "drugs",
+      "noise": "noise",
+      "violence": "violence",
+      "accident": "accident"
+    }
+  },
+  "Search": {
+    "placeholder": "Search address or incident...",
+    "searching": "Searching...",
+    "noResults": "No results found",
+    "address": "Address",
+    "incident": "Incident",
+    "location": "Location"
   }
 }

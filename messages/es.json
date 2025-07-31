@@ -196,7 +196,9 @@
     "totalUsers": "Total usuarios",
     "verified": "Verificados",
     "editor": "Editor",
-    "user": "Usuario"
+    "user": "Usuario",
+    "settings": "Configuración",
+    "signOut": "Cerrar Sesión"
   },
   "Actions": {
     "cancelEdit": "Cancelar edición",
@@ -266,5 +268,45 @@
     "countryRequired": "El país es requerido",
     "cityRequired": "La ciudad es requerida",
     "neighborhoodRequired": "El barrio es requerido"
+  },
+  "Filters": {
+    "title": "Filtros",
+    "clearFilters": "Limpiar filtros",
+    "neighborhood": "Barrio",
+    "allNeighborhoods": "Todos los barrios",
+    "loadingNeighborhoods": "Cargando barrios...",
+    "errorLoadingNeighborhoods": "Error al cargar barrios",
+    "status": "Estado",
+    "allStatuses": "Todos los estados",
+    "pending": "Pendiente",
+    "verified": "Verificado",
+    "resolved": "Resuelto",
+    "dates": "Fechas",
+    "hours": "Horas",
+    "period": "Período",
+    "anyTime": "Cualquier hora",
+    "morning": "Mañana (6:00 - 12:00)",
+    "afternoon": "Tarde (12:00 - 18:00)",
+    "evening": "Noche (18:00 - 00:00)",
+    "night": "Madrugada (00:00 - 6:00)",
+    "tags": "Etiquetas",
+    "commonTags": {
+      "robbery": "robo",
+      "theft": "hurto",
+      "assault": "asalto",
+      "vandalism": "vandalismo",
+      "drugs": "drogas",
+      "noise": "ruido",
+      "violence": "violencia",
+      "accident": "accidente"
+    }
+  },
+  "Search": {
+    "placeholder": "Buscar dirección o incidente...",
+    "searching": "Buscando...",
+    "noResults": "No se encontraron resultados",
+    "address": "Dirección",
+    "incident": "Incidente",
+    "location": "Ubicación"
   }
 }
