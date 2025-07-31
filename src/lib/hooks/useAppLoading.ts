@@ -1,18 +1,20 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
-const loadingSteps = [
-  { progress: 10, message: 'Iniciando Claridad...' },
-  { progress: 25, message: 'Conectando con la comunidad...' },
-  { progress: 40, message: 'Cargando tus chats...' },
-  { progress: 55, message: 'Sincronizando mensajes...' },
-  { progress: 70, message: 'Verificando notificaciones...' },
-  { progress: 85, message: 'Preparando alertas de pánico...' },
-  { progress: 100, message: 'Listo para chatear con tus vecinos' },
-];
-
 export function useAppLoading() {
+  const t = useTranslations('AppLoading');
+  
+  const loadingSteps = [
+    { progress: 10, message: t('startingClaridad') },
+    { progress: 25, message: t('connectingCommunity') },
+    { progress: 40, message: t('loadingChats') },
+    { progress: 55, message: t('syncingMessages') },
+    { progress: 70, message: t('checkingNotifications') },
+    { progress: 85, message: t('preparingPanicAlerts') },
+    { progress: 100, message: t('readyToChat') },
+  ];
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState(loadingSteps[0].message);

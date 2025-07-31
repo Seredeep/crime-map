@@ -41,7 +41,25 @@
   },
   "Loader": {
     "loading": "loading",
-    "words": ["data", "maps", "incidents", "locations", "statistics"]
+    "words": ["data", "maps", "incidents", "locations", "statistics"],
+    "mapLoading": "loading",
+    "mapWords": ["map", "locations", "coordinates", "neighborhoods", "zones"],
+    "incidentsLoading": "getting",
+    "incidentsWords": ["incidents", "reports", "data", "statistics", "information"],
+    "statsLoading": "calculating",
+    "statsWords": ["statistics", "charts", "trends", "analysis", "metrics"],
+    "geocodeLoading": "searching",
+    "geocodeWords": ["address", "location", "coordinates", "place", "zone"],
+    "authLoading": "verifying",
+    "authWords": ["user", "session", "permissions", "access", "data"],
+    "formLoading": "saving",
+    "formWords": ["report", "data", "information", "incident", "form"],
+    "neighborhoodsLoading": "loading",
+    "neighborhoodsWords": ["neighborhoods", "communities", "zones", "sectors", "areas"],
+    "inlineWords": ["loading", "processing", "getting", "searching", "verifying"],
+    "fullScreenWords": ["application", "data", "resources", "content", "information"],
+    "incidentLoadingMessage": "Loading incidents...",
+    "mapLoadingMessage": "Loading map and area data..."
   },
   "Chat": {
     "noActivity": "No recent activity",
@@ -218,7 +236,8 @@
     "noMessagesYet": "No messages yet. Start the conversation!"
   },
   "LoadingScreen": {
-    "preparingExperience": "Preparing your neighborhood security experience"
+    "preparingExperience": "Preparing your neighborhood security experience",
+    "communitySecurity": "Community Security"
   },
   "Onboarding": {
     "title": "Complete your Profile",
@@ -398,5 +417,14 @@
     "unknownError": "Unknown error.",
     "couldNotSaveConfiguration": "Could not save configuration.",
     "couldNotUploadImage": "Could not upload image."
+  },
+  "AppLoading": {
+    "startingClaridad": "Starting Claridad...",
+    "connectingCommunity": "Connecting with the community...",
+    "loadingChats": "Loading your chats...",
+    "syncingMessages": "Syncing messages...",
+    "checkingNotifications": "Checking notifications...",
+    "preparingPanicAlerts": "Preparing panic alerts...",
+    "readyToChat": "Ready to chat with your neighbors"
   }
 }

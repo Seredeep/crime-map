@@ -16,7 +16,9 @@ const CustomLoader: React.FC<CustomLoaderProps> = ({
 
   // Usar traducciones como valores por defecto, pero permitir override con props
   const finalLoadingText = loadingText || t('loading');
-  const finalWords = words || t('words');
+  // Si no se pasan words, usar las palabras en inglés por defecto
+  const defaultWords = ['data', 'maps', 'incidents', 'locations', 'statistics'];
+  const finalWords = words || defaultWords;
   // Asegurar que tenemos al menos 5 palabras para la animación
   const animationWords = [...finalWords];
   while (animationWords.length < 5) {

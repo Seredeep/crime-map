@@ -111,7 +111,7 @@ export default function LoadingScreen({ isLoading, progress = 0, message }: Load
             </span>
           </h1>
           <p className="text-gray-400 text-lg font-medium">
-            Comunidad de seguridad
+            {tLoading('communitySecurity')}
           </p>
         </motion.div>
 
