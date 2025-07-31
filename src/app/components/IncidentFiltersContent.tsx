@@ -4,14 +4,14 @@ import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
 import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-    Calendar,
-    CheckCircle,
-    Clock,
-    Clock3,
-    MapPin,
-    Tags,
-    Trash2,
-    X
+  Calendar,
+  CheckCircle,
+  Clock,
+  Clock3,
+  MapPin,
+  Tags,
+  Trash2,
+  X
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -102,7 +102,7 @@ export default function IncidentFiltersContent({
     if (onNeighborhoodSelect) {
       if (value) {
         const selectedNeighborhood = neighborhoods.find(
-          n => n.properties.id.toString() === value
+          n => n.properties.id?.toString() === value
         );
         onNeighborhoodSelect(selectedNeighborhood || null);
       } else {
@@ -278,7 +278,7 @@ export default function IncidentFiltersContent({
               neighborhoods.map((neighborhood) => (
                 <option
                   key={neighborhood._id}
-                  value={neighborhood.properties.id.toString()}
+                  value={neighborhood.properties.id?.toString() || ''}
                   style={{ background: '#1F2937', color: '#FFFFFF' }}
                 >
                   {neighborhood.properties.soc_fomen}
