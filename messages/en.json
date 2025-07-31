@@ -308,5 +308,20 @@
     "address": "Address",
     "incident": "Incident",
     "location": "Location"
+  },
+  "IncidentList": {
+    "noIncidents": "No incidents",
+    "incidentsWillAppearHere": "Incidents will appear here",
+    "loadingIncidents": "Loading incidents and community reports...",
+    "selected": "Selected",
+    "incidents": "Incidents",
+    "incident": "Incident",
+    "oneIncidentVerified": "1 verified incident",
+    "multipleIncidentsVerified": "{count} verified incidents",
+    "verified": "VERIFIED",
+    "close": "Close",
+    "otherIncidents": "Other incidents",
+    "totalIncidents": "{count} incidents total",
+    "tapToViewOnMap": "Tap to view on map →"
   }
 }

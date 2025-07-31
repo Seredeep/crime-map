@@ -308,5 +308,20 @@
     "address": "Dirección",
     "incident": "Incidente",
     "location": "Ubicación"
+  },
+  "IncidentList": {
+    "noIncidents": "No hay incidentes",
+    "incidentsWillAppearHere": "Los incidentes aparecerán aquí",
+    "loadingIncidents": "Cargando incidentes y reportes de la comunidad...",
+    "selected": "Seleccionado",
+    "incidents": "Incidentes",
+    "incident": "Incidente",
+    "oneIncidentVerified": "1 incidente verificado",
+    "multipleIncidentsVerified": "{count} incidentes verificados",
+    "verified": "VERIFICADO",
+    "close": "Cerrar",
+    "otherIncidents": "Otros incidentes",
+    "totalIncidents": "{count} incidentes en total",
+    "tapToViewOnMap": "Toca para ver en el mapa →"
   }
 }

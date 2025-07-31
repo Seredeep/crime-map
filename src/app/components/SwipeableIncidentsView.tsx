@@ -6,6 +6,7 @@ import { Incident, IncidentFilters as IncidentFiltersType } from '@/lib/types/gl
 import { formatDate } from '@/lib/utils';
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiFilter } from 'react-icons/fi';
 import IncidentFiltersContent from './IncidentFiltersContent';
@@ -20,6 +21,7 @@ interface SwipeableIncidentsViewProps {
 
 const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: SwipeableIncidentsViewProps) => {
   const { data: session } = useSession();
+  const t = useTranslations('IncidentList');
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(85);
@@ -427,7 +429,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                   <h3
                     className="font-manrope text-lg font-semibold text-white"
                   >
-                    {selectedIncident ? selectedIncident.type || 'Incidente' : 'Incidentes'}
+                    {selectedIncident ? selectedIncident.type || t('incident') : t('incidents')}
                   </h3>
                   <motion.div
                     className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-600/50 text-gray-300 border border-gray-500/30"
@@ -435,16 +437,16 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2 }}
                   >
-                    {selectedIncident ? 'Seleccionado' : incidents.length}
+                    {selectedIncident ? t('selected') : incidents.length}
                   </motion.div>
                 </div>
                 <p className="text-sm text-gray-400 mt-0.5">
                   {selectedIncident ? (
                     <span className="truncate">{selectedIncident.address}</span>
                   ) : (
-                    incidents.length === 0 ? 'No hay incidentes' :
-                    incidents.length === 1 ? '1 incidente verificado' :
-                      `${incidents.length} incidentes verificados`
+                    incidents.length === 0 ? t('noIncidents') :
+                    incidents.length === 1 ? t('oneIncidentVerified') :
+                      t('multipleIncidentsVerified', { count: incidents.length })
                   )}
                 </p>
               </div>
@@ -485,7 +487,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
         {/* Lista de incidentes */}
         <div className="flex-1 overflow-y-auto px-4 py-3" style={{ maxHeight: isExpanded ? '600px' : 'auto' }}>
           {loading ? (
-            <IncidentLoader message="Cargando incidentes y reportes de la comunidad..." />
+            <IncidentLoader message={t('loadingIncidents')} />
           ) : incidents.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
@@ -493,8 +495,8 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
               </div>
-              <p className="text-white font-medium">No hay incidentes</p>
-              <p className="text-sm text-gray-500 mt-1">Los incidentes aparecerán aquí</p>
+              <p className="text-white font-medium">{t('noIncidents')}</p>
+              <p className="text-sm text-gray-500 mt-1">{t('incidentsWillAppearHere')}</p>
             </div>
           ) : (
             <div className="space-y-3 pb-4">
@@ -527,7 +529,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-3">
                         <h4 className="font-manrope font-bold text-white text-lg truncate pr-2">
-                          {selectedIncident.type || 'Incidente'}
+                          {selectedIncident.type || t('incident')}
                         </h4>
                         <span className="text-xs font-medium px-3 py-2 rounded-lg flex-shrink-0 bg-gray-600/50 text-gray-300 border border-gray-500/30">
                           {formatDate(selectedIncident.date)}
@@ -564,7 +566,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                           <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          VERIFICADO
+                          {t('verified')}
                         </motion.span>
                         <button
                           onClick={() => setSelectedIncident(null)}
@@ -573,7 +575,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                           <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
-                          Cerrar
+                          {t('close')}
                         </button>
                       </div>
                     </div>
@@ -623,7 +625,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                               <h4
                                 className="font-manrope font-semibold text-white text-base truncate pr-2"
                               >
-                                {incident.type || 'Incidente'}
+                                {incident.type || t('incident')}
                               </h4>
                               <span
                                 className="text-xs font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 bg-gray-600/50 text-gray-300 border border-gray-500/30"
@@ -654,7 +656,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                                 <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
-                                VERIFICADO
+                                {t('verified')}
                               </motion.span>
                             </div>
                             <div
@@ -665,7 +667,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                                 whileHover={{ scale: 1.02 }}
                                 transition={{ duration: 0.2 }}
                               >
-                                Toca para ver en el mapa →
+                                {t('tapToViewOnMap')}
                               </motion.p>
                             </div>
                           </div>
@@ -676,7 +678,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                       {isFirst && incidents.length > 1 && (
                         <div className="my-4 flex items-center">
                           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600/50 to-transparent"></div>
-                          <span className="px-3 text-xs text-gray-500">Otros incidentes</span>
+                          <span className="px-3 text-xs text-gray-500">{t('otherIncidents')}</span>
                           <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600/50 to-transparent"></div>
                         </div>
                       )}
@@ -686,7 +688,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
               )}
               {isExpanded && incidents.length > 3 && !selectedIncident && (
                 <div className="text-center py-2 text-gray-500 text-sm">
-                  {incidents.length} incidentes en total
+                  {t('totalIncidents', { count: incidents.length })}
                 </div>
               )}
             </div>
