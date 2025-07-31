@@ -1,6 +1,7 @@
 'use client';
 
 import { GeocodingResult } from '@/lib/services/geo';
+import { useTranslations } from 'next-intl';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FiSearch } from 'react-icons/fi';
 
@@ -14,11 +15,13 @@ interface GeocodeSearchProps {
 
 export default function GeocodeSearch({
   onLocationSelect,
-  placeholder = 'Buscar dirección o lugar...',
+  placeholder,
   className = '',
   selectedAddress,
   selectedCoordinates,
 }: GeocodeSearchProps) {
+  const t = useTranslations('Forms');
+  const finalPlaceholder = placeholder || t('searchPlaceholder');
   const [query, setQuery] = useState<string>('');
   const [results, setResults] = useState<GeocodingResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -44,7 +47,7 @@ export default function GeocodeSearch({
   // Manual search function - only called when button is clicked
   const handleSearch = useCallback(async () => {
     if (!query.trim() || query.trim().length < 2) {
-      setError('Ingresa al menos 2 caracteres para buscar');
+      setError(t('minTwoCharacters'));
       return;
     }
 
@@ -185,7 +188,7 @@ export default function GeocodeSearch({
           value={selectedAddress || query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={finalPlaceholder}
           className="flex-grow px-4 py-3 bg-gray-800 border-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-white placeholder-gray-400 transition-all"
         />
         <button
@@ -232,7 +235,7 @@ export default function GeocodeSearch({
                   </p>
                   {result.properties.housenumber && (
                     <p className="text-xs text-purple-300 mt-1">
-                      📍 Número {result.properties.housenumber}
+                      📍 {t('number')} {result.properties.housenumber}
                     </p>
                   )}
                 </div>

@@ -3,6 +3,7 @@
 import { formatAddress, reverseGeocode } from '@/lib/services/geo/geocoding';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 interface PanicButtonProps {
@@ -14,6 +15,7 @@ type PanicState = 'normal' | 'confirming' | 'alerting' | 'success';
 
 const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => {
   const [panicState, setPanicState] = useState<PanicState>('normal');
+  const t = useTranslations('Panic');
   const [showTooltip, setShowTooltip] = useState(true);
 
   // Ocultar tooltip después de 3 segundos
@@ -433,7 +435,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                   : '0 0 10px rgba(234, 88, 12, 0.6)'
               }}
             >
-              {panicState === 'alerting' ? '¡ALERTA!' : 'Pánico'}
+              {panicState === 'alerting' ? t('alert') : t('panic')}
             </motion.p>
 
             {/* Borde animado */}
@@ -481,7 +483,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               `
             }}
           >
-            <span className="text-orange-300 font-semibold">⚠️ Botón de pánico</span>
+            <span className="text-orange-300 font-semibold">{t('panicButton')}</span>
             <div
               className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-3 h-3 rotate-45"
               style={{

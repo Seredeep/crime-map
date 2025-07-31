@@ -4,6 +4,7 @@ import { fetchIncidents } from '@/lib/services/incidents/incidentService';
 import { Incident } from '@/lib/types/global';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { FiActivity, FiAlertTriangle, FiClock, FiEye, FiMapPin, FiShield, FiTrendingUp } from 'react-icons/fi';
 import PanicButton from './PanicButton';
@@ -25,6 +26,7 @@ interface MobileStatsViewProps {
 
 const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
   const { data: session } = useSession();
+  const t = useTranslations('Statistics');
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const [stats, setStats] = useState<StatCard[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -49,18 +51,18 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
 
     const mostCommonTag = tagCounts.size > 0
       ? Array.from(tagCounts.entries()).sort((a, b) => b[1] - a[1])[0][0]
-      : 'Variado';
+      : t('varied');
 
     // Calcular nivel de seguridad
     const incidentRate = current.length / (selectedPeriod === 'day' ? 1 : selectedPeriod === 'week' ? 7 : 30);
-    let safetyLevel = 'Alto';
+    let safetyLevelKey = 'high';
     let safetyColor = 'bg-green-500';
 
     if (incidentRate > 3) {
-      safetyLevel = 'Bajo';
+      safetyLevelKey = 'low';
       safetyColor = 'bg-red-500';
     } else if (incidentRate > 1) {
-      safetyLevel = 'Medio';
+      safetyLevelKey = 'medium';
       safetyColor = 'bg-yellow-500';
     }
 
@@ -74,47 +76,47 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
     const newStats: StatCard[] = [
       {
         id: 'total-incidents',
-        title: 'Total Incidentes',
+        title: t('totalIncidents'),
         value: current.length,
         change: current.length > all.length * 0.1 ? '+15%' : '-5%',
         changeType: current.length > all.length * 0.1 ? 'increase' : 'decrease',
         icon: <FiAlertTriangle className="w-5 h-5" />,
         color: 'bg-red-500',
-        description: `${pendingCount} pendientes de verificar`
+        description: t('pendingVerificationCount', { count: pendingCount })
       },
       {
         id: 'safety-level',
-        title: 'Nivel de Seguridad',
-        value: safetyLevel,
-        change: safetyLevel === 'Alto' ? '+8%' : safetyLevel === 'Medio' ? '0%' : '-12%',
-        changeType: safetyLevel === 'Alto' ? 'increase' : safetyLevel === 'Medio' ? 'neutral' : 'decrease',
+        title: t('securityLevel'),
+        value: t(safetyLevelKey),
+        change: safetyLevelKey === 'high' ? '+8%' : safetyLevelKey === 'medium' ? '0%' : '-12%',
+        changeType: safetyLevelKey === 'high' ? 'increase' : safetyLevelKey === 'medium' ? 'neutral' : 'decrease',
         icon: <FiShield className="w-5 h-5" />,
         color: safetyColor,
-        description: `Basado en ${current.length} reportes`
+        description: t('basedOnReports', { count: current.length })
       },
       {
         id: 'verified',
-        title: 'Verificados',
+        title: t('verified'),
         value: verifiedCount,
         change: verifiedCount > pendingCount ? '+25%' : '+10%',
         changeType: 'increase',
         icon: <FiEye className="w-5 h-5" />,
         color: 'bg-blue-500',
-        description: 'Confirmados por autoridades'
+        description: t('confirmedByAuthorities')
       },
       {
         id: 'response-time',
-        title: 'Tiempo Respuesta',
+        title: t('responseTime'),
         value: responseTime,
         change: resolutionRate > 0.5 ? '-20%' : '+5%',
         changeType: resolutionRate > 0.5 ? 'decrease' : 'increase',
         icon: <FiClock className="w-5 h-5" />,
         color: 'bg-teal-500',
-        description: 'Promedio de resolución'
+        description: t('averageResolution')
       },
       {
         id: 'most-common',
-        title: 'Tipo Frecuente',
+        title: t('frequentType'),
         value: mostCommonTag,
         change: '+12%',
         changeType: 'increase',
@@ -141,43 +143,43 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
     const fallbackStats: StatCard[] = [
       {
         id: 'total-incidents',
-        title: 'Total Incidentes',
+        title: t('totalIncidents'),
         value: 18,
         change: '+12%',
         changeType: 'increase',
         icon: <FiAlertTriangle className="w-5 h-5" />,
         color: 'bg-red-500',
-        description: '3 pendientes de verificar'
+        description: t('pendingVerificationCount', { count: 3 })
       },
       {
         id: 'safety-level',
-        title: 'Nivel de Seguridad',
-        value: 'Medio',
+        title: t('securityLevel'),
+        value: t('medium'),
         change: '+5%',
         changeType: 'increase',
         icon: <FiShield className="w-5 h-5" />,
         color: 'bg-yellow-500',
-        description: 'Basado en actividad reciente'
+        description: t('basedOnActivity')
       },
       {
         id: 'verified',
-        title: 'Verificados',
+        title: t('verified'),
         value: 15,
         change: '+22%',
         changeType: 'increase',
         icon: <FiEye className="w-5 h-5" />,
         color: 'bg-blue-500',
-        description: 'Confirmados por autoridades'
+        description: t('confirmedByAuthorities')
       },
       {
         id: 'response-time',
-        title: 'Tiempo Respuesta',
+        title: t('responseTime'),
         value: '2.1h',
         change: '-15%',
         changeType: 'decrease',
         icon: <FiClock className="w-5 h-5" />,
         color: 'bg-teal-500',
-        description: 'Promedio de resolución'
+        description: t('averageResolution')
       }
     ];
 
@@ -238,10 +240,10 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
   }, [selectedPeriod, generateStatCards, generateFallbackStats]);
 
   const periods = [
-    { id: 'day', label: 'Hoy' },
-    { id: 'week', label: 'Semana' },
-    { id: 'month', label: 'Mes' },
-    { id: 'year', label: 'Año' }
+    { id: 'day', label: t('today') },
+    { id: 'week', label: t('week') },
+    { id: 'month', label: t('month') },
+    { id: 'year', label: t('year') }
   ];
 
   const getChangeColor = (changeType: string) => {
@@ -265,7 +267,7 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
       <div className={`w-full h-full bg-gray-900 flex items-center justify-center ${className}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Analizando incidentes...</p>
+          <p className="text-gray-400">{t('analyzingIncidents')}</p>
         </div>
       </div>
     );
@@ -276,7 +278,7 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-gray-800/95 backdrop-blur-sm border-b border-gray-600/50 p-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-white">Estadísticas</h1>
+          <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
           <PanicButton isVisible={!!session?.user} className="relative" />
         </div>
 
@@ -308,15 +310,15 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
         >
           <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
             <FiMapPin className="w-5 h-5 mr-2 text-blue-400" />
-            Resumen de Seguridad
+                          {t('securitySummary')}
           </h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-gray-400">Período:</span>
+              <span className="text-gray-400">{t('period')}</span>
               <span className="text-white font-medium">{periods.find(p => p.id === selectedPeriod)?.label}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-400">Total reportes:</span>
+              <span className="text-gray-400">{t('totalReports')}</span>
               <span className="text-white font-medium">{incidents.length}</span>
             </div>
           </div>

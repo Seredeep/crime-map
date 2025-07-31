@@ -2,6 +2,7 @@
 
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiSend, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
@@ -43,6 +44,8 @@ interface Message {
 
 const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenChatViewProps) => {
   const { data: session } = useSession();
+  const t = useTranslations('States');
+  const tErrors = useTranslations('Errors');
   const [chat, setChat] = useState<ChatInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -75,7 +78,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       }
     } catch (error) {
       console.error('Error al cargar información del chat:', error);
-      setError('Error al cargar información del chat');
+      setError(tErrors('chatLoadError'));
     }
   }, [session]);
 
@@ -100,7 +103,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       }
     } catch (error) {
       console.error('Error al cargar mensajes:', error);
-      setError('Error al cargar mensajes');
+      setError(tErrors('messagesLoadError'));
       setIsConnected(false);
     }
   }, [session]);
@@ -292,7 +295,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       <div className={`fixed inset-0 bg-gray-900 z-[210] flex items-center justify-center ${className}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Cargando chat...</p>
+          <p className="text-gray-400">{t('loadingChat')}</p>
         </div>
       </div>
     );
@@ -347,7 +350,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           <FiArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex flex-col items-center flex-grow">
-          <h2 className="text-lg font-semibold text-white">{chat?.neighborhood || 'Cargando...'}</h2>
+          <h2 className="text-lg font-semibold text-white">{chat?.neighborhood || t('loading')}</h2>
           <p className="text-xs text-gray-400">{chat?.participants.length || 0} participantes</p>
         </div>
         <button

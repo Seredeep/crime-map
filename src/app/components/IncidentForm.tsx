@@ -2,6 +2,7 @@
 
 import { GeocodingResult } from '@/lib/services/geo';
 import { DateTime } from 'luxon';
+import { useTranslations } from 'next-intl';
 import { ChangeEvent, useEffect, useState } from 'react';
 import GeocodeSearch from './GeocodeSearch';
 import Map from './Map';
@@ -31,6 +32,8 @@ interface IncidentFormData {
 }
 
 export default function IncidentForm() {
+  const t = useTranslations('Forms');
+  const tStates = useTranslations('States');
   const [formData, setFormData] = useState<IncidentFormData>({
     description: '',
     address: '',
@@ -215,7 +218,7 @@ export default function IncidentForm() {
               onChange={handleInputChange}
               className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-white placeholder-gray-400"
               rows={3}
-              placeholder="Describe lo que ocurrió"
+              placeholder={t('descriptionPlaceholder')}
               required
             />
           </div>
@@ -226,7 +229,7 @@ export default function IncidentForm() {
             </label>
             <GeocodeSearch
               onLocationSelect={handleLocationSelect}
-              placeholder="Busca una dirección o lugar"
+              placeholder={t('locationPlaceholder')}
               className="w-full"
               selectedAddress={formData.address}
               selectedCoordinates={
@@ -320,7 +323,7 @@ export default function IncidentForm() {
 
             {formData.evidence.length > 0 && (
               <div className="mt-3">
-                <h4 className="text-sm font-medium mb-2">Archivos subidos:</h4>
+                <h4 className="text-sm font-medium mb-2">{t('uploadedFiles')}</h4>
                 <ul className="space-y-2">
                   {formData.evidence.map((file, index) => (
                     <li key={index} className="flex items-center justify-between bg-gray-700 p-2 rounded-md">
@@ -329,7 +332,7 @@ export default function IncidentForm() {
                         type="button"
                         onClick={() => removeFile(index)}
                         className="text-red-400 hover:text-red-300"
-                        aria-label="Eliminar archivo"
+                        aria-label={t('removeFile')}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -350,7 +353,7 @@ export default function IncidentForm() {
           disabled={isSubmitting}
           className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Enviando...' : 'Reportar Incidente'}
+          {isSubmitting ? tStates('sending') : t('reportIncident')}
         </button>
       </div>
     </form>

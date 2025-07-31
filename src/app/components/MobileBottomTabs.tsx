@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 import {
   FiActivity,
@@ -34,31 +35,33 @@ const MobileBottomTabs = ({
   availableTabs
 }: MobileBottomTabsProps) => {
   const { data: session } = useSession();
+  const t = useTranslations('Sidebar');
+  const tNavbar = useTranslations('Navbar');
 
   const allTabs: TabItem[] = useMemo(() => [
     {
       id: 'incidents',
-      label: 'Mapa',
+      label: t('map'),
       icon: <FiCompass className="w-5 h-5" />
     },
     {
       id: 'stats',
-      label: 'Estadísticas',
+      label: t('stats'),
       icon: <FiActivity className="w-5 h-5" />
     },
     {
       id: 'communities',
-      label: 'Comunidades',
+      label: t('communities'),
       icon: <FiUsers className="w-5 h-5" />
     },
     {
       id: 'profile',
-      label: session?.user?.role === 'admin' || session?.user?.role === 'editor' ? 'Admin' : 'Configuración',
+      label: session?.user?.role === 'admin' || session?.user?.role === 'editor' ? t('admin') : t('settings'),
       icon: session?.user?.role === 'admin' || session?.user?.role === 'editor' ?
         <FiCheckCircle className="w-5 h-5" /> : <FiSettings className="w-5 h-5" />,
       requiresAuth: true
     }
-  ], [session?.user?.role]);
+  ], [session?.user?.role, t]);
 
   // Filtrar tabs disponibles y verificar autenticación
   const visibleTabs = useMemo(() => {

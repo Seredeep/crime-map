@@ -4,6 +4,7 @@
 import { LastChatMessage } from '@/lib/services/chat/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
@@ -46,7 +47,8 @@ const ChatCard = ({
   chatInfo,
   onClick,
   formatTime,
-  profileImage
+  profileImage,
+  t
 }: {
   chatInfo: ChatInfo | null;
   lastMessage: LastChatMessage | null;
@@ -55,6 +57,7 @@ const ChatCard = ({
   onClick: () => void;
   formatTime: (dateString: string) => string;
   profileImage: string | null;
+  t: (key: string) => string;
 }) => {
   // Función para obtener la inicial del barrio
   const getNeighborhoodInitial = (neighborhood: string) => {
@@ -80,10 +83,10 @@ const ChatCard = ({
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-white font-semibold text-lg truncate">
-            {chatInfo?.neighborhood || 'Mi Barrio'}
+            {chatInfo?.neighborhood || t('myNeighborhood')}
           </h3>
           <p className="text-sm text-gray-400">
-            {chatInfo?.participantsCount || 0} participantes
+            {chatInfo?.participantsCount || 0} {t('participants')}
           </p>
         </div>
       </div>
@@ -115,7 +118,7 @@ const ChatCard = ({
             </p>
           ) : (
             <p className="text-gray-400 italic">
-              No hay mensajes aún. ¡Inicia la conversación!
+              {t('noMessagesYet')}
             </p>
           )}
         </div>
@@ -134,6 +137,7 @@ const ChatCard = ({
 // #region Lógica principal del componente
 const MobileCommunitiesView = () => {
   const { data: session } = useSession();
+  const t = useTranslations('Communities');
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null);
@@ -267,7 +271,7 @@ const MobileCommunitiesView = () => {
           >
             {/* #region Header */}
             <div className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 px-6 py-4">
-              <h1 className="text-2xl font-bold text-white">Comunidades</h1>
+                              <h1 className="text-2xl font-bold text-white">{t('communities')}</h1>
             </div>
             {/* #endregion */}
 
@@ -283,7 +287,7 @@ const MobileCommunitiesView = () => {
                   }`}
                 >
                   <FiHome className="w-4 h-4 mx-auto mb-1" />
-                  Mi Barrio
+                  {t('myNeighborhood')}
                 </button>
                 <button
                   onClick={() => handleTabChange('explore')}
@@ -294,7 +298,7 @@ const MobileCommunitiesView = () => {
                   }`}
                 >
                   <FiCompass className="w-4 h-4 mx-auto mb-1" />
-                  Explorar
+                  {t('explore')}
                 </button>
               </div>
             </div>
@@ -326,13 +330,13 @@ const MobileCommunitiesView = () => {
                         <FiUsers className="w-12 h-12 text-gray-500" />
                       </div>
                       <h3 className="text-2xl font-bold text-gray-200 mb-3">
-                        Sin chat asignado
+                        {t('noChatAssigned')}
                       </h3>
                       <p className="text-gray-400 text-base max-w-sm mx-auto leading-relaxed mb-6">
-                        Completa tu perfil para unirte al chat de tu barrio y conectar con tus vecinos
+                        {t('completeProfileToJoin')}
                       </p>
                       <div className="text-xs text-gray-500 bg-gray-700/30 rounded-lg px-4 py-2 inline-block">
-                        💡 Tip: Agrega tu dirección en configuración
+                        {t('tipAddAddress')}
                       </div>
                     </div>
                   ) : (
@@ -345,6 +349,7 @@ const MobileCommunitiesView = () => {
                       onClick={handleChatOpen}
                       formatTime={formatTime}
                       profileImage={getLastMessageSenderProfileImage()}
+                      t={t}
                     />
                   )}
                 </div>

@@ -3,6 +3,7 @@
 import { Neighborhood } from '@/lib/services/neighborhoods';
 import { IncidentFilters } from '@/lib/types/global';
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { FiFilter, FiX } from 'react-icons/fi';
 import IncidentFiltersContent from './IncidentFiltersContent';
@@ -22,6 +23,7 @@ const MobileSlidePanel = ({
   onFiltersChange,
   onNeighborhoodSelect
 }: MobileSlidePanelProps) => {
+  const t = useTranslations('Actions');
   const [dragX, setDragX] = useState(0);
 
   // Prevenir scroll del body cuando el panel está abierto
@@ -150,7 +152,7 @@ const MobileSlidePanel = ({
                     transform: 'translateY(-1px)'
                   }}
                 >
-                  Limpiar
+                  {t('clear')}
                 </motion.button>
                 <motion.button
                   onClick={onClose}
@@ -167,7 +169,7 @@ const MobileSlidePanel = ({
                     transform: 'translateY(-1px)'
                   }}
                 >
-                  Aplicar
+                  {t('apply')}
                 </motion.button>
               </div>
             </div>

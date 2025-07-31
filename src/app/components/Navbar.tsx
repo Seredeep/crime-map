@@ -1,6 +1,7 @@
 'use client'
 import { motion } from 'framer-motion'
 import { signOut, useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -86,6 +87,7 @@ const Navbar = ({
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const { theme, setTheme } = useTheme()
+  const t = useTranslations('Navbar')
 
   // Ensure component is mounted to avoid hydration mismatch
   useEffect(() => {
@@ -175,7 +177,7 @@ const Navbar = ({
             <div className="hidden md:block">
               <div className="ml-10 flex items-center space-x-1">
                 <NavLink href="/" icon={<FiMap />} active={pathname === '/'}>
-                  Mapa
+                  {t('map')}
                 </NavLink>
 
                 {/* Botón de chat del barrio - solo para usuarios autenticados */}
@@ -183,17 +185,17 @@ const Navbar = ({
                   <button
                     onClick={openNeighborhoodChat}
                     className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-all duration-200"
-                    title="Chat del barrio"
+                    title={t('neighborhoodChat')}
                   >
                     <FiMessageCircle className="mr-2 text-white" />
-                    Chat del Barrio
+                    {t('neighborhoodChat')}
                   </button>
                 )}
 
                 <button
                   onClick={toggleTheme}
                   className="p-2 rounded-full text-white hover:bg-white/10 hover:text-white transition-all duration-200"
-                  aria-label="Toggle theme"
+                  aria-label={t('toggleTheme')}
                 >
                   {theme === 'dark' ? (
                     <FiSun className="w-5 h-5" />

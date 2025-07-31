@@ -5,6 +5,7 @@ import { GeocodingResult } from '@/lib/services/geo';
 import { ACTIVE_INCIDENT_TYPES } from '@/lib/services/incidents';
 import { motion } from 'framer-motion';
 import { DateTime } from 'luxon';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { FiAlertCircle, FiCalendar, FiCamera, FiCheckCircle, FiChevronLeft, FiChevronRight, FiClock, FiGrid, FiList, FiMapPin, FiSend, FiTag, FiType, FiX } from 'react-icons/fi';
@@ -79,6 +80,8 @@ interface IncidentFormData {
 }
 
 const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => {
+  const t = useTranslations('Forms');
+  const tStates = useTranslations('States');
   const [formData, setFormData] = useState<IncidentFormData>({
     description: '',
     address: '',
@@ -370,7 +373,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              placeholder="Describí lo que pasó..."
+                              placeholder={t('reportPlaceholder')}
               className="w-full h-60 p-2 text-sm border border-gray-600/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 resize-none"
               style={{
                 background: 'rgba(55, 65, 81, 0.3)',
@@ -385,7 +388,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
             <div className="flex items-center justify-between my-4">
               <div className="flex items-center gap-2">
                 <FiTag className="w-4 h-4 text-blue-400" />
-                <h2 className="text-md font-medium text-gray-300">Tipo de incidente</h2>
+                <h2 className="text-md font-medium text-gray-300">{t('incidentType')}</h2>
                 {formData.tags.length > 0 && (
                   <button
                     type="button"
@@ -545,7 +548,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
             <div className="space-y-4">
               <GeocodeSearch
                 onLocationSelect={handleLocationSelect}
-                placeholder="Buscar dirección..."
+                placeholder={t('searchAddressPlaceholder')}
                 className="w-full"
                 selectedAddress={formData.address}
                 selectedCoordinates={
@@ -775,10 +778,10 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     {isSubmitting ? (
                       <div className="flex items-center justify-center gap-2">
                         <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                        <span>Enviando...</span>
+                        <span>{tStates('sending')}</span>
                       </div>
                     ) : (
-                      'Sí, enviar reporte'
+                      t('confirmSendReport')
                     )}
                   </button>
 
@@ -787,7 +790,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     disabled={isSubmitting}
                     className="w-full py-3 px-4 bg-gray-600 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50"
                   >
-                    Cancelar
+                    {tStates('cancel')}
                   </button>
                 </div>
               </motion.div>
@@ -823,10 +826,10 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     <FiAlertCircle className="w-8 h-8 text-yellow-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-2">
-                    ¿Descartar reporte?
+                    {t('discardReport')}
                   </h3>
                   <p className="text-gray-300 text-sm">
-                    Si volvés atrás, se perderá toda la información que completaste.
+                    {t('discardWarning')}
                   </p>
                 </div>
 
@@ -835,7 +838,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     onClick={handleDiscardAndBack}
                     className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
                   >
-                    Sí, descartar y volver
+                    {t('yesDiscardAndGoBack')}
                   </button>
 
                   <button

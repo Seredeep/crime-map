@@ -1,6 +1,7 @@
 'use client';
 
 import { PhotoIcon } from '@heroicons/react/24/outline';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import React, { useState } from 'react';
 
@@ -21,6 +22,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const t = useTranslations('States');
 
   const handleLoad = (result: any) => {
     setIsLoading(false);
@@ -37,7 +39,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
     <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 w-full h-full`}>
       <div className="flex flex-col items-center space-y-2 text-gray-400">
         <PhotoIcon className="h-8 w-8 animate-pulse" />
-        <span className="text-xs">Cargando...</span>
+        <span className="text-xs">{t('loading')}</span>
       </div>
     </div>
   );
@@ -46,7 +48,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
     <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 w-full h-full`}>
       <div className="flex flex-col items-center space-y-2 text-gray-400">
         <PhotoIcon className="h-8 w-8" />
-        <span className="text-xs">Error al cargar</span>
+        <span className="text-xs">{t('errorLoading')}</span>
       </div>
     </div>
   );

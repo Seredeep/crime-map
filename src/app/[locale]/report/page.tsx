@@ -1,7 +1,7 @@
 'use client';
 
-import IncidentForm from '../components/IncidentForm';
-import ProtectedRoute from '../components/ProtectedRoute';
+import IncidentForm from '../../components/IncidentForm';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 export default function ReportPage() {
   return (

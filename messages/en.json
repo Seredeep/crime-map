@@ -1,0 +1,231 @@
+{
+  "HomePage": {
+    "title": "Claridad - Neighborhood Safety Community",
+    "description": "Claridad is a neighborhood safety app that allows you to report crimes, activate real-time community alerts and check an incident map in your area. Designed to strengthen the network between neighbors."
+  },
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "incidents": "Incidents",
+    "map": "Map",
+    "stats": "Statistics",
+    "profile": "Profile",
+    "settings": "Settings",
+    "communities": "Communities",
+    "report": "Report"
+  },
+  "Metadata": {
+    "title": "Claridad - Neighborhood Safety Community",
+    "description": "Claridad is a neighborhood safety app that allows you to report crimes, activate real-time community alerts and check an incident map in your area. Designed to strengthen the network between neighbors.",
+    "keywords": "neighborhood safety, crime map, security alerts, panic button, safety app, neighborhood reports, claridad, real-time incidents, safe community"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "Auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?"
+  },
+  "Loader": {
+    "loading": "loading",
+    "words": ["data", "maps", "incidents", "locations", "statistics"]
+  },
+  "Chat": {
+    "noActivity": "No recent activity",
+    "activeNow": "Active now",
+    "minutesAgo": "{minutes} min ago",
+    "hoursAgo": "{hours}h ago",
+    "daysAgo": "{days} days ago",
+    "inactive": "Inactive",
+    "activeAlert": "Active alert",
+    "riskZone": "Risk zone",
+    "highActivity": "High activity",
+    "safeZone": "Safe zone",
+    "normalActivity": "Normal activity",
+    "attentionZone": "Attention zone",
+    "noData": "No data",
+    "oneUserActive": "1 neighbor active",
+    "usersActive": "{count} neighbors active",
+    "noIncidents": "No incidents",
+    "oneIncident": "1 recent incident",
+    "multipleIncidents": "{count} recent incidents"
+  },
+  "Incidents": {
+    "noIncidentsMatch": "No incidents match the selected filters",
+    "changeStatusTo": "Change status to {status}",
+    "reasonPlaceholder": "Reason for status change (optional)",
+    "confirm": "Confirm"
+  },
+  "Panic": {
+    "panic": "Panic",
+    "alert": "ALERT!",
+    "panicButton": "⚠️ Panic button"
+  },
+    "Sidebar": {
+    "map": "Map",
+    "stats": "Statistics",
+    "communities": "Communities",
+    "report": "Report",
+    "queue": "Queue",
+    "neighborhoodChat": "Neighborhood Chat",
+    "admin": "Admin",
+    "settings": "Settings"
+  },
+  "Navbar": {
+    "map": "Map",
+    "neighborhoodChat": "Neighborhood Chat",
+    "toggleTheme": "Toggle theme"
+  },
+  "Forms": {
+    "descriptionPlaceholder": "Describe what happened",
+    "locationPlaceholder": "Search for an address or place",
+    "reportPlaceholder": "Describe what happened...",
+    "searchAddressPlaceholder": "Search address...",
+    "searchPlaceholder": "Search address or incident...",
+    "uploadedFiles": "Uploaded files:",
+    "removeFile": "Remove file",
+    "reportIncident": "Report Incident",
+    "sending": "Sending...",
+    "report": "REPORT",
+    "reportAnIncident": "Report an incident",
+    "incidentType": "Incident type",
+    "confirmSendReport": "Yes, send report",
+    "discardReport": "Discard report?",
+    "yesDiscardAndGoBack": "Yes, discard and go back",
+    "discardWarning": "If you go back, all the information you entered will be lost.",
+    "minTwoCharacters": "Enter at least 2 characters to search",
+    "number": "Number"
+  },
+  "States": {
+    "loading": "Loading...",
+    "loadingChat": "Loading chat...",
+    "errorLoading": "Error loading",
+    "loadingApp": "Loading...",
+    "cancel": "Cancel",
+    "sending": "Sending..."
+  },
+  "Errors": {
+    "loadingError": "Error loading chat data. Please try again.",
+    "chatLoadError": "Error loading chat information",
+    "messagesLoadError": "Error loading messages",
+    "sendMessageError": "Error sending message",
+    "panicMessageError": "Error sending panic message"
+  },
+  "Chat": {
+    "noActivity": "No recent activity",
+    "activeNow": "Active now",
+    "minutesAgo": "{minutes} min ago",
+    "hoursAgo": "{hours}h ago",
+    "daysAgo": "{days} days ago",
+    "inactive": "Inactive",
+    "activeAlert": "Active alert",
+    "riskZone": "Risk zone",
+    "highActivity": "High activity",
+    "safeZone": "Safe zone",
+    "normalActivity": "Normal activity",
+    "attentionZone": "Attention zone",
+    "noData": "No data",
+    "oneUserActive": "1 neighbor active",
+    "usersActive": "{count} neighbors active",
+    "noIncidents": "No incidents",
+    "oneIncident": "1 recent incident",
+    "multipleIncidents": "{count} recent incidents"
+  },
+  "Map": {
+    "reportIncident": "Report an incident",
+    "report": "REPORT"
+  },
+  "Statistics": {
+    "viewStats": "View statistics",
+    "movingAverage": "Moving average (7 days)",
+    "title": "Statistics",
+    "today": "Today",
+    "week": "Week",
+    "month": "Month",
+    "year": "Year",
+    "securitySummary": "Security Summary",
+    "period": "Period:",
+    "totalReports": "Total reports:",
+    "totalIncidents": "Total Incidents",
+    "pendingVerification": "pending verification",
+    "securityLevel": "Security Level",
+    "high": "High",
+    "basedOnReports": "Based on {count} reports",
+    "verified": "Verified",
+    "confirmedByAuthorities": "Confirmed by authorities",
+    "responseTime": "Response Time",
+    "averageOf": "Average of",
+    "analyzingIncidents": "Analyzing incidents...",
+    "frequentType": "Frequent Type",
+    "averageResolution": "Average resolution",
+    "basedOnActivity": "Based on recent activity",
+    "pendingVerificationCount": "{count} pending verification",
+    "low": "Low",
+    "medium": "Medium",
+    "safetyLevels": {
+      "Alto": "High",
+      "Medio": "Medium",
+      "Bajo": "Low"
+    },
+    "varied": "Varied"
+  },
+  "Profile": {
+    "profile": "Profile",
+    "queue": "Queue",
+    "publicProfile": "Public Profile",
+    "verificationQueue": "Verification Queue",
+    "adminPanel": "Administration Panel",
+    "adminStats": "Administration Statistics",
+    "administrator": "Administrator",
+    "pending": "Pending",
+    "averageTime": "Average time",
+    "notAssigned": "Neighborhood not assigned",
+    "totalUsers": "Total users",
+    "verified": "Verified",
+    "editor": "Editor",
+    "user": "User"
+  },
+  "Actions": {
+    "cancelEdit": "Cancel edit",
+    "clear": "Clear",
+    "apply": "Apply"
+  },
+  "Settings": {
+    "myProfile": "My Profile",
+    "viewEditPersonalInfo": "View and edit personal information",
+    "settings": "Settings",
+    "appPreferences": "Application preferences",
+    "about": "About",
+    "aboutCrimeMap": "Information about Crime Map",
+    "privacy": "Privacy",
+    "privacyPolicy": "Privacy policy",
+    "logout": "Sign Out"
+  },
+  "Communities": {
+    "communities": "Communities",
+    "myNeighborhood": "My Neighborhood",
+    "explore": "Explore",
+    "completeProfileToJoin": "Complete your profile to join your neighborhood chat and connect with your neighbors",
+    "participants": "participants",
+    "noChatAssigned": "No chat assigned",
+    "tipAddAddress": "💡 Tip: Add your address in settings",
+    "searchCommunities": "Search communities...",
+    "noMessagesYet": "No messages yet. Start the conversation!"
+  },
+  "LoadingScreen": {
+    "preparingExperience": "Preparing your neighborhood security experience"
+  }
+}
