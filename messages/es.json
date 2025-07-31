@@ -124,26 +124,6 @@
     "sendMessageError": "Error enviando mensaje",
     "panicMessageError": "Error enviando mensaje de pánico"
   },
-  "Chat": {
-    "noActivity": "Sin actividad reciente",
-    "activeNow": "Activo ahora",
-    "minutesAgo": "Hace {minutes} min",
-    "hoursAgo": "Hace {hours}h",
-    "daysAgo": "Hace {days} días",
-    "inactive": "Inactivo",
-    "activeAlert": "Alerta activa",
-    "riskZone": "Zona de riesgo",
-    "highActivity": "Actividad elevada",
-    "safeZone": "Zona tranquila",
-    "normalActivity": "Actividad normal",
-    "attentionZone": "Zona de atención",
-    "noData": "Sin datos",
-    "oneUserActive": "1 vecino activo",
-    "usersActive": "{count} vecinos activos",
-    "noIncidents": "Sin incidentes",
-    "oneIncident": "1 incidente reciente",
-    "multipleIncidents": "{count} incidentes recientes"
-  },
   "Map": {
     "reportIncident": "Reportar un incidente",
     "report": "REPORTAR"
@@ -384,9 +364,6 @@
     "advancedSettings": "Configuración Avanzada",
     "hardwareTeamDevelopment": "Esta sección está siendo desarrollada por el equipo de hardware.",
     "appPermissions": "Permisos de la Aplicación",
-    "location": "Ubicación",
-    "camera": "Cámara",
-    "notifications": "Notificaciones",
     "storage": "Almacenamiento",
     "granted": "Concedido",
     "pending": "Pendiente",
