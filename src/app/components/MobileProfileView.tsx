@@ -56,6 +56,7 @@ const Toast = ({ message, type, onHide }: { message: string; type: 'success' | '
 const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
   const { data: session, update } = useSession();
   const t = useTranslations('Profile');
+  const configT = useTranslations('ConfigSections');
   const [activeSection, setActiveSection] = useState<'profile' | 'queue'>('profile');
   const [activeConfigSection, setActiveConfigSection] = useState<string | null>(null);
 
@@ -125,16 +126,16 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Error en la respuesta de la API de configuración:", errorData);
-        throw new Error(errorData.message || 'No se pudo guardar la configuración.');
+        throw new Error(errorData.message || configT('couldNotSaveConfiguration'));
       }
 
       console.log("Configuración guardada en la API. Actualizando sesión...");
       await update(fullSettings);
       console.log("Sesión actualizada.");
-      showToast('Configuración guardada.', 'success');
+      showToast(configT('configurationSaved'), 'success');
     } catch (error) {
       console.error('Error al guardar la configuración:', error);
-      showToast(error instanceof Error ? error.message : 'Error desconocido.', 'error');
+      showToast(error instanceof Error ? error.message : configT('unknownError'), 'error');
       if (session?.user) {
         setNotificationsEnabled(session.user.notificationsEnabled ?? true);
         setPrivacyPublic(session.user.privacyPublic ?? false);
@@ -173,19 +174,19 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         navigator.geolocation.getCurrentPosition(
           () => {
             console.log("Permiso de ubicación concedido.");
-            showToast('Ubicación activada.', 'success');
+            showToast(configT('locationActivated'), 'success');
             handleSettingChange({ autoLocationEnabled: true });
           },
           () => {
             console.log("Permiso de ubicación denegado.");
-            showToast('Permiso de ubicación denegado.', 'error');
+            showToast(configT('locationPermissionDenied'), 'error');
             setAutoLocationEnabled(false);
             handleSettingChange({ autoLocationEnabled: false });
           }
         );
       } else {
         console.log("Geolocalización no soportada.");
-        showToast('Geolocalización no soportada.', 'error');
+        showToast(configT('geolocationNotSupported'), 'error');
         setAutoLocationEnabled(false);
       }
     } else {
@@ -239,19 +240,19 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Error en la respuesta de la API de carga de imagen:", errorData);
-        throw new Error(errorData.message || 'Error al subir la imagen.');
+        throw new Error(errorData.message || configT('couldNotUploadImage'));
       }
 
       const result = await response.json();
       console.log("Imagen subida con éxito. Resultado:", result);
-      showToast('Imagen actualizada.', 'success');
+      showToast(configT('imageUpdated'), 'success');
       console.log("Actualizando sesión con nueva URL de imagen:", result.profileImageUrl);
       await update({ profileImage: result.profileImageUrl });
       console.log("Sesión actualizada con nueva URL de imagen.", session?.user?.profileImage);
       setProfileImageFile(null);
     } catch (error) {
       console.error('Error al subir la imagen:', error);
-      showToast(error instanceof Error ? error.message : 'Error desconocido.', 'error');
+      showToast(error instanceof Error ? error.message : configT('unknownError'), 'error');
       setProfileImagePreview(session?.user?.profileImage || null);
       console.log("Estado de previsualización de imagen revertido tras error.");
     } finally {
@@ -289,67 +290,67 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
   const configSections = [
     {
       id: 'profile',
-      title: 'Perfil',
+      title: configT('profile'),
       icon: FiUser,
       color: 'text-blue-400',
       bgColor: 'bg-blue-500/20',
-      description: 'Información personal y avatar'
+      description: configT('profileDescription')
     },
     {
       id: 'notifications',
-      title: 'Notificaciones',
+      title: configT('notifications'),
       icon: FiBell,
       color: 'text-yellow-400',
       bgColor: 'bg-yellow-500/20',
-      description: 'Configuración de alertas y notificaciones'
+      description: configT('notificationsDescription')
     },
     {
       id: 'privacy',
-      title: 'Privacidad',
+      title: configT('privacy'),
       icon: FiShield,
       color: 'text-green-400',
       bgColor: 'bg-green-500/20',
-      description: 'Configuración de privacidad y datos'
+      description: configT('privacyDescription')
     },
     {
       id: 'location',
-      title: 'Ubicación',
+      title: configT('location'),
       icon: FiMapPin,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/20',
-      description: 'Configuración de geolocalización'
+      description: configT('locationDescription')
     },
     {
       id: 'device',
-      title: 'Dispositivo',
+      title: configT('device'),
       icon: FiSmartphone,
       color: 'text-orange-400',
       bgColor: 'bg-orange-500/20',
-      description: 'Configuración del hardware'
+      description: configT('deviceDescription')
     },
     {
       id: 'permissions',
-      title: 'Permisos',
+      title: configT('permissions'),
       icon: FiZap,
       color: 'text-red-400',
       bgColor: 'bg-red-500/20',
-      description: 'Gestión de permisos de la app'
+      description: configT('permissionsDescription')
     },
     {
       id: 'app',
-      title: 'Aplicación',
+      title: configT('app'),
       icon: FiSettings,
       color: 'text-gray-400',
       bgColor: 'bg-gray-500/20',
-      description: 'Configuración general de la app'
+      description: configT('appDescription')
     },
     {
       id: 'support',
-      title: 'Soporte',
+      title: configT('support'),
       icon: FiHelpCircle,
       color: 'text-indigo-400',
       bgColor: 'bg-indigo-500/20',
-      description: 'Ayuda y contacto'
+      description: configT('supportDescription')
     }
   ];
 
@@ -359,18 +360,18 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Información Personal</h4>
+              <h4 className="text-white font-medium mb-3">{configT('personalInfo')}</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Nombre</span>
-                  <span className="text-white">{session?.user?.name || 'No establecido'}</span>
+                  <span className="text-gray-300">{configT('name')}</span>
+                  <span className="text-white">{session?.user?.name || configT('notSet')}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Email</span>
+                  <span className="text-gray-300">{configT('email')}</span>
                   <span className="text-white">{session?.user?.email}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Rol</span>
+                  <span className="text-gray-300">{configT('role')}</span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor(session?.user?.role || 'user')}`}>
                     {getRoleName(session?.user?.role || 'user')}
                   </span>
@@ -378,7 +379,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Avatar</h4>
+              <h4 className="text-white font-medium mb-3">{configT('avatar')}</h4>
               <div className="flex items-center space-x-4">
                 <div
                   className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center relative group overflow-hidden cursor-pointer"
@@ -400,14 +401,14 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   </div>
                 </div>
                 <div className="flex-1">
-                  <p className="text-gray-300 text-sm">Toca para cambiar tu foto de perfil</p>
+                  <p className="text-gray-300 text-sm">{configT('tapToChangePhoto')}</p>
                   {profileImageFile && (
                     <button
                       onClick={handleImageUpload}
                       disabled={isSaving}
                       className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors disabled:bg-gray-500"
                     >
-                      {isSaving ? 'Subiendo...' : 'Guardar'}
+                      {isSaving ? configT('uploading') : configT('save')}
                     </button>
                   )}
                 </div>
@@ -427,20 +428,20 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Tipos de Notificaciones</h4>
+              <h4 className="text-white font-medium mb-3">{configT('notificationTypes')}</h4>
               <div className="space-y-3">
                 <button
                   onClick={() => setPushNotifications(!pushNotifications)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Notificaciones Push</span>
+                  <span className="text-gray-300">{configT('pushNotifications')}</span>
                   <div className={`w-5 h-5 rounded-full ${pushNotifications ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
                 <button
                   onClick={() => setEmailNotifications(!emailNotifications)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Notificaciones por Email</span>
+                  <span className="text-gray-300">{configT('emailNotifications')}</span>
                   <div className={`w-5 h-5 rounded-full ${emailNotifications ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
                 <button
@@ -448,26 +449,26 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   disabled={isSaving}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <span className="text-gray-300">Notificaciones Generales</span>
+                  <span className="text-gray-300">{configT('generalNotifications')}</span>
                   <div className={`w-5 h-5 rounded-full ${notificationsEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Configuración de Sonido</h4>
+              <h4 className="text-white font-medium mb-3">{configT('soundSettings')}</h4>
               <div className="space-y-3">
                 <button
                   onClick={() => setSoundEnabled(!soundEnabled)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Sonido</span>
+                  <span className="text-gray-300">{configT('sound')}</span>
                   <div className={`w-5 h-5 rounded-full ${soundEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
                 <button
                   onClick={() => setVibrationEnabled(!vibrationEnabled)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Vibración</span>
+                  <span className="text-gray-300">{configT('vibration')}</span>
                   <div className={`w-5 h-5 rounded-full ${vibrationEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
               </div>
@@ -479,33 +480,33 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Visibilidad del Perfil</h4>
+              <h4 className="text-white font-medium mb-3">{configT('profileVisibility')}</h4>
               <div className="space-y-3">
                 <button
                   onClick={togglePrivacy}
                   disabled={isSaving}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <span className="text-gray-300">Perfil Público</span>
+                  <span className="text-gray-300">{configT('publicProfile')}</span>
                   <div className={`w-5 h-5 rounded-full ${privacyPublic ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Datos y Análisis</h4>
+              <h4 className="text-white font-medium mb-3">{configT('dataAndAnalytics')}</h4>
               <div className="space-y-3">
                 <button
                   onClick={() => setDataSharing(!dataSharing)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Compartir Datos</span>
+                  <span className="text-gray-300">{configT('shareData')}</span>
                   <div className={`w-5 h-5 rounded-full ${dataSharing ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
                 <button
                   onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Analytics</span>
+                  <span className="text-gray-300">{configT('analytics')}</span>
                   <div className={`w-5 h-5 rounded-full ${analyticsEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
               </div>
@@ -517,28 +518,28 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Configuración de Ubicación</h4>
+              <h4 className="text-white font-medium mb-3">{configT('locationSettings')}</h4>
               <div className="space-y-3">
                 <button
                   onClick={toggleAutoLocation}
                   disabled={isSaving}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <span className="text-gray-300">Ubicación Automática</span>
+                  <span className="text-gray-300">{configT('autoLocation')}</span>
                   <div className={`w-5 h-5 rounded-full ${autoLocationEnabled ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
                 <button
                   onClick={() => setHighAccuracyLocation(!highAccuracyLocation)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Alta Precisión</span>
+                  <span className="text-gray-300">{configT('highAccuracy')}</span>
                   <div className={`w-5 h-5 rounded-full ${highAccuracyLocation ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
                 <button
                   onClick={() => setBackgroundLocation(!backgroundLocation)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Ubicación en Segundo Plano</span>
+                  <span className="text-gray-300">{configT('backgroundLocation')}</span>
                   <div className={`w-5 h-5 rounded-full ${backgroundLocation ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
               </div>
@@ -550,25 +551,25 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Hardware</h4>
+              <h4 className="text-white font-medium mb-3">{configT('hardware')}</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
-                  <span className="text-gray-300">Sensores</span>
-                  <span className="text-green-400 text-sm">Disponible</span>
+                  <span className="text-gray-300">{configT('sensors')}</span>
+                  <span className="text-green-400 text-sm">{configT('available')}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
-                  <span className="text-gray-300">Cámara</span>
-                  <span className="text-green-400 text-sm">Disponible</span>
+                  <span className="text-gray-300">{configT('camera')}</span>
+                  <span className="text-green-400 text-sm">{configT('available')}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
-                  <span className="text-gray-300">Micrófono</span>
-                  <span className="text-green-400 text-sm">Disponible</span>
+                  <span className="text-gray-300">{configT('microphone')}</span>
+                  <span className="text-green-400 text-sm">{configT('available')}</span>
                 </div>
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Configuración Avanzada</h4>
-              <p className="text-gray-400 text-sm">Esta sección está siendo desarrollada por el equipo de hardware.</p>
+              <h4 className="text-white font-medium mb-3">{configT('advancedSettings')}</h4>
+              <p className="text-gray-400 text-sm">{configT('hardwareTeamDevelopment')}</p>
             </div>
           </div>
         );
@@ -577,23 +578,23 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Permisos de la Aplicación</h4>
+              <h4 className="text-white font-medium mb-3">{configT('appPermissions')}</h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
-                  <span className="text-gray-300">Ubicación</span>
-                  <span className="text-green-400 text-sm">Concedido</span>
+                  <span className="text-gray-300">{configT('location')}</span>
+                  <span className="text-green-400 text-sm">{configT('granted')}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
-                  <span className="text-gray-300">Cámara</span>
-                  <span className="text-green-400 text-sm">Concedido</span>
+                  <span className="text-gray-300">{configT('camera')}</span>
+                  <span className="text-green-400 text-sm">{configT('granted')}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
-                  <span className="text-gray-300">Notificaciones</span>
-                  <span className="text-green-400 text-sm">Concedido</span>
+                  <span className="text-gray-300">{configT('notifications')}</span>
+                  <span className="text-green-400 text-sm">{configT('granted')}</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-gray-600/30 rounded-lg">
-                  <span className="text-gray-300">Almacenamiento</span>
-                  <span className="text-yellow-400 text-sm">Pendiente</span>
+                  <span className="text-gray-300">{configT('storage')}</span>
+                  <span className="text-yellow-400 text-sm">{configT('pending')}</span>
                 </div>
               </div>
             </div>
@@ -604,43 +605,43 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Apariencia</h4>
+              <h4 className="text-white font-medium mb-3">{configT('appearance')}</h4>
               <div className="space-y-3">
                 <button
                   onClick={() => setDarkMode(!darkMode)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Modo Oscuro</span>
+                  <span className="text-gray-300">{configT('darkMode')}</span>
                   <div className={`w-5 h-5 rounded-full ${darkMode ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Rendimiento</h4>
+              <h4 className="text-white font-medium mb-3">{configT('performance')}</h4>
               <div className="space-y-3">
                 <button
                   onClick={() => setAutoRefresh(!autoRefresh)}
                   className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors"
                 >
-                  <span className="text-gray-300">Actualización Automática</span>
+                  <span className="text-gray-300">{configT('autoRefresh')}</span>
                   <div className={`w-5 h-5 rounded-full ${autoRefresh ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
                 </button>
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Información de la App</h4>
+              <h4 className="text-white font-medium mb-3">{configT('appInfo')}</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-300">Versión</span>
+                  <span className="text-gray-300">{configT('version')}</span>
                   <span className="text-white">1.0.0</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">Build</span>
+                  <span className="text-gray-300">{configT('build')}</span>
                   <span className="text-white">2024.1.1</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300">Última Actualización</span>
-                  <span className="text-white">Hace 2 días</span>
+                  <span className="text-gray-300">{configT('lastUpdate')}</span>
+                  <span className="text-white">Hace 2 {configT('daysAgo')}</span>
                 </div>
               </div>
             </div>
@@ -651,31 +652,31 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
         return (
           <div className="space-y-4">
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Ayuda y Soporte</h4>
+              <h4 className="text-white font-medium mb-3">{configT('helpAndSupport')}</h4>
               <div className="space-y-3">
                 <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
-                  <span className="text-gray-300">Centro de Ayuda</span>
+                  <span className="text-gray-300">{configT('helpCenter')}</span>
                   <FiHelpCircle className="w-4 h-4 text-gray-400" />
                 </button>
                 <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
-                  <span className="text-gray-300">Contactar Soporte</span>
+                  <span className="text-gray-300">{configT('contactSupport')}</span>
                   <FiHelpCircle className="w-4 h-4 text-gray-400" />
                 </button>
                 <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
-                  <span className="text-gray-300">Reportar un Problema</span>
+                  <span className="text-gray-300">{configT('reportProblem')}</span>
                   <FiHelpCircle className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
             </div>
             <div className="bg-gray-700/30 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Legal</h4>
+              <h4 className="text-white font-medium mb-3">{configT('legal')}</h4>
               <div className="space-y-3">
                 <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
-                  <span className="text-gray-300">Términos de Servicio</span>
+                  <span className="text-gray-300">{configT('termsOfService')}</span>
                   <FiHelpCircle className="w-4 h-4 text-gray-400" />
                 </button>
                 <button className="w-full flex items-center justify-between p-3 bg-gray-600/30 hover:bg-gray-600/50 rounded-lg transition-colors">
-                  <span className="text-gray-300">Política de Privacidad</span>
+                  <span className="text-gray-300">{configT('privacyPolicy')}</span>
                   <FiHelpCircle className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
@@ -693,7 +694,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
       <div className={`w-full h-full bg-gray-900 flex items-center justify-center ${className}`}>
         <div className="text-center text-gray-400">
           <FiUser className="w-12 h-12 mx-auto mb-4" />
-          <p>No hay sesión activa</p>
+          <p>{configT('noActiveSession')}</p>
         </div>
       </div>
     );
@@ -707,7 +708,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
       <div className="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/30 px-4 py-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-white">
-            {canManageIncidents ? 'Panel de Administración' : 'Mi Perfil'}
+            {canManageIncidents ? configT('administrationPanel') : configT('myProfile')}
           </h1>
         </div>
 
@@ -809,7 +810,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                           </span>
                           {session.user.createdAt && (
                             <span className="text-xs text-gray-400">
-                              Desde {new Date(session.user.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
+                              {configT('since')} {new Date(session.user.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
                             </span>
                           )}
                         </div>
@@ -818,7 +819,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
 
                     <div className="flex items-center space-x-2 text-gray-300 bg-gray-700/40 rounded-full px-3 py-2 backdrop-blur-sm">
                       <FiMapPin className="w-4 h-4 text-blue-400" />
-                      <span className="text-sm font-medium">{session.user.neighborhood || 'Barrio no asignado'}</span>
+                      <span className="text-sm font-medium">{session.user.neighborhood || configT('neighborhoodNotAssigned')}</span>
                     </div>
                   </div>
 
@@ -830,7 +831,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {isSaving ? 'Subiendo...' : 'Guardar Imagen'}
+                      {isSaving ? configT('uploading') : configT('saveImage')}
                     </motion.button>
                   )}
                 </motion.div>
@@ -943,7 +944,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                               whileTap={{ scale: 0.95 }}
                             >
                               <FiXCircle className="w-5 h-5 mr-2" />
-                              Volver
+                              {configT('back')}
                             </motion.button>
                             <h3 className="text-lg font-bold text-white">
                               {configSections.find(s => s.id === activeConfigSection)?.title}
