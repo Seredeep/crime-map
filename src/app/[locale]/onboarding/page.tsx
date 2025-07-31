@@ -284,7 +284,16 @@ export default function OnboardingPage() {
 
       // Redirigir después de 2 segundos para que el usuario vea el mensaje de éxito
       setTimeout(() => {
-        router.push('/');
+        // Usar la ruta completa con el locale para evitar problemas con el middleware
+        const locale = window.location.pathname.split('/')[1];
+        router.push(`/${locale}/`);
+
+        // Fallback: si después de 5 segundos no se redirigió, forzar la redirección
+        setTimeout(() => {
+          if (window.location.pathname.includes('/onboarding')) {
+            window.location.href = `/${locale}/`;
+          }
+        }, 5000);
       }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Hubo un error al guardar tu información. Por favor, intenta de nuevo.');

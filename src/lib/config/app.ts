@@ -13,12 +13,56 @@ export const APP_CONFIG = {
   description: 'Mapa de Incidentes de Seguridad Urbana',
   version: '1.0.0',
   author: 'Crime Map Team',
+  multiCountry: true,
+  defaultCountry: 'USA',
+  supportedCountries: ['USA', 'Argentina'],
   defaultLocation: {
-    lat: -38.0055,
-    lng: -57.5426,
-    city: 'Mar del Plata, Argentina'
+    lat: 37.7749,
+    lng: -122.4194,
+    city: 'San Francisco, USA'
   }
 } as const;
+// #endregion
+
+// #region Configuración por País
+export const COUNTRY_CONFIGS = {
+  'Argentina': {
+    name: 'Crime Map Argentina',
+    description: 'Mapa de Incidentes de Seguridad Urbana - Argentina',
+    defaultLocation: {
+      lat: -38.0055,
+      lng: -57.5426,
+      city: 'Mar del Plata, Argentina'
+    },
+    timezone: 'America/Argentina/Buenos_Aires',
+    currency: 'ARS',
+    language: 'es',
+    mapCenter: {
+      lat: -38.0055,
+      lng: -57.5426
+    },
+    mapZoom: 13
+  },
+  'USA': {
+    name: 'Crime Map USA',
+    description: 'Urban Security Incident Map - USA',
+    defaultLocation: {
+      lat: 37.7749,
+      lng: -122.4194,
+      city: 'San Francisco, USA'
+    },
+    timezone: 'America/Los_Angeles',
+    currency: 'USD',
+    language: 'en',
+    mapCenter: {
+      lat: 37.7749,
+      lng: -122.4194
+    },
+    mapZoom: 13
+  }
+} as const;
+
+export type CountryCode = keyof typeof COUNTRY_CONFIGS;
 // #endregion
 
 // #region Roles de Usuario
@@ -103,4 +147,21 @@ export const INCIDENT_SEVERITY = {
   CRITICAL: 4,
   URGENT: 5
 } as const;
+// #endregion
+
+// #region Utilidades para Multi-País
+export function getCountryConfig(country: CountryCode) {
+  return COUNTRY_CONFIGS[country] || COUNTRY_CONFIGS['USA'];
+}
+
+export function getUserCountry(user: any): CountryCode {
+  if (user?.country && COUNTRY_CONFIGS[user.country as CountryCode]) {
+    return user.country as CountryCode;
+  }
+  return 'USA';
+}
+
+export function getDefaultLocation(country: CountryCode) {
+  return getCountryConfig(country).defaultLocation;
+}
 // #endregion
