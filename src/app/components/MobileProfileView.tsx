@@ -7,22 +7,22 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    FiAlertTriangle,
-    FiBell,
-    FiCamera,
-    FiCheckCircle,
-    FiChevronRight,
-    FiClock,
-    FiHelpCircle,
-    FiLogOut,
-    FiMapPin,
-    FiSettings,
-    FiShield,
-    FiSmartphone,
-    FiUser,
-    FiUsers,
-    FiXCircle,
-    FiZap
+  FiAlertTriangle,
+  FiBell,
+  FiCamera,
+  FiCheckCircle,
+  FiChevronRight,
+  FiClock,
+  FiHelpCircle,
+  FiLogOut,
+  FiMapPin,
+  FiSettings,
+  FiShield,
+  FiSmartphone,
+  FiUser,
+  FiUsers,
+  FiXCircle,
+  FiZap
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -843,7 +843,6 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                >
                 >
                   <h3 className="text-lg font-bold text-white mb-6 flex items-center">
                     <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
