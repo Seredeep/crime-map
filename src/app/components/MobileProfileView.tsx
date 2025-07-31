@@ -707,7 +707,7 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
       <div className="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/30 px-4 py-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-white">
-            {canManageIncidents ? 'Panel de Administración' : 'Mi Perfil'}
+            {canManageIncidents ? 'Panel de Administración' : 'Configuración'}
           </h1>
         </div>
 
@@ -801,7 +801,11 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
 
                       <div className="flex-1">
                         <h2 className="text-xl font-bold text-white mb-1">
-                          {session.user.name || 'Usuario'}
+                          {(() => {
+                            console.log('Session user data:', session.user);
+                            console.log('Session user name:', session.user.name);
+                            return session.user.name || 'Usuario';
+                          })()}
                         </h2>
                         <div className="flex items-center space-x-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleColor(session.user.role || 'user')}`}>
@@ -971,12 +975,6 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
                         mass: 0.8
                       }}
                     >
-                      <h3 className="text-lg font-bold text-white mb-6 flex items-center">
-                        <div className="w-8 h-8 bg-gray-500/20 rounded-lg flex items-center justify-center mr-3">
-                          <FiSettings className="w-4 h-4 text-gray-400" />
-                        </div>
-                        Configuración
-                      </h3>
                       <div className="space-y-3">
                         {configSections.map((section, index) => (
                           <motion.button

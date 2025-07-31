@@ -1,5 +1,6 @@
 'use client';
 
+import { IncidentFilters } from '@/lib/types/global';
 import { useState } from 'react';
 import MapSearchBar from './MapSearchBar';
 
@@ -7,6 +8,12 @@ export default function MapSearchBarTest() {
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<IncidentFilters>({
+    dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 días atrás
+    dateTo: new Date().toISOString().split('T')[0], // Hoy
+    neighborhoodId: '83', // Barrio de ejemplo
+    status: 'verified'
+  });
 
   const handleLocationSelect = (coordinates: [number, number], address: string) => {
     setSelectedLocation(coordinates);
@@ -29,6 +36,10 @@ export default function MapSearchBarTest() {
     console.log('🚨 Incidente seleccionado:', incidentId);
   };
 
+  const updateFilters = (newFilters: Partial<IncidentFilters>) => {
+    setActiveFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-4xl mx-auto">
@@ -37,8 +48,55 @@ export default function MapSearchBarTest() {
             MapSearchBar - Prueba de Funcionalidad
           </h1>
           <p className="text-gray-600">
-            Prueba la búsqueda combinada de direcciones e incidentes
+            Prueba la búsqueda combinada de direcciones e incidentes con filtros
           </p>
+        </div>
+
+        {/* Filtros de ejemplo */}
+        <div className="mb-6 bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            🔧 Filtros Activos (Simulación)
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Rango de fechas
+              </label>
+              <div className="flex space-x-2">
+                <input
+                  type="date"
+                  value={activeFilters.dateFrom}
+                  onChange={(e) => updateFilters({ dateFrom: e.target.value })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <input
+                  type="date"
+                  value={activeFilters.dateTo}
+                  onChange={(e) => updateFilters({ dateTo: e.target.value })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Estado
+              </label>
+              <select
+                value={activeFilters.status}
+                onChange={(e) => updateFilters({ status: e.target.value as any })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="verified">Verificado</option>
+                <option value="pending">Pendiente</option>
+                <option value="resolved">Resuelto</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-700">
+              💡 Estos filtros se aplican automáticamente a la búsqueda de incidentes
+            </p>
+          </div>
         </div>
 
         {/* Barra de búsqueda */}
@@ -46,6 +104,7 @@ export default function MapSearchBarTest() {
           <MapSearchBar
             onLocationSelect={handleLocationSelect}
             onIncidentSelect={handleIncidentSelect}
+            activeFilters={activeFilters}
             className="w-full max-w-2xl mx-auto"
           />
         </div>
@@ -143,6 +202,7 @@ export default function MapSearchBarTest() {
                 <li>Incluye el número si lo conoces</li>
                 <li>Puedes buscar intersecciones</li>
                 <li>Ejemplo: "Avenida Luro 123"</li>
+                <li>La búsqueda se centra en tu barrio</li>
               </ul>
             </div>
             <div>
@@ -152,6 +212,8 @@ export default function MapSearchBarTest() {
                 <li>Busca por descripción</li>
                 <li>Usa palabras clave</li>
                 <li>Ejemplo: "robo", "accidente", "vandalismo"</li>
+                <li>Se aplican los filtros activos</li>
+                <li>Se ordenan por proximidad a tu barrio</li>
               </ul>
             </div>
           </div>

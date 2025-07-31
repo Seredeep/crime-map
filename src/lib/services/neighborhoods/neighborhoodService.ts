@@ -95,3 +95,76 @@ export async function searchNeighborhoodsByName(searchTerm: string): Promise<Nei
     throw error;
   }
 }
+
+/**
+ * Calcula el centro de un barrio basado en su geometría
+ */
+export function getNeighborhoodCenter(neighborhood: Neighborhood): [number, number] | null {
+  if (!neighborhood.geometry || !neighborhood.geometry.coordinates) {
+    return null;
+  }
+
+  try {
+    // Para MultiPolygon, tomamos el primer polígono
+    const firstPolygon = neighborhood.geometry.coordinates[0];
+    if (!firstPolygon || firstPolygon.length === 0) {
+      return null;
+    }
+
+    // Calculamos el centro del polígono
+    let sumLng = 0;
+    let sumLat = 0;
+    let pointCount = 0;
+
+    // Iteramos sobre todos los puntos del polígono
+    for (const ring of firstPolygon) {
+      for (const point of ring) {
+        if (point.length >= 2) {
+          sumLng += point[0];
+          sumLat += point[1];
+          pointCount++;
+        }
+      }
+    }
+
+    if (pointCount === 0) {
+      return null;
+    }
+
+    return [sumLng / pointCount, sumLat / pointCount];
+  } catch (error) {
+    console.error('Error calculating neighborhood center:', error);
+    return null;
+  }
+}
+
+/**
+ * Obtiene las coordenadas del barrio del usuario
+ */
+export async function getUserNeighborhoodCoordinates(userNeighborhoodName: string): Promise<[number, number] | null> {
+  try {
+    const response = await fetch('/api/neighborhoods');
+    if (!response.ok) {
+      throw new Error('Failed to fetch neighborhoods');
+    }
+
+    const data = await response.json();
+    const neighborhoods = data.neighborhoods || [];
+
+    // Buscar el barrio por nombre
+    const neighborhood = neighborhoods.find((n: Neighborhood) =>
+      n.properties?.soc_fomen === userNeighborhoodName ||
+      n.properties?.name === userNeighborhoodName
+    );
+
+    if (!neighborhood) {
+      console.warn(`Neighborhood not found: ${userNeighborhoodName}`);
+      return null;
+    }
+
+    return getNeighborhoodCenter(neighborhood);
+  } catch (error) {
+    console.error('Error getting user neighborhood coordinates:', error);
+    return null;
+  }
+}

@@ -1,5 +1,7 @@
 'use client';
 
+import { useUserLocation } from '@/lib/hooks/useUserLocation';
+import { IncidentFilters as IncidentFiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiMapPin, FiSearch } from 'react-icons/fi';
@@ -11,70 +13,149 @@ interface SearchResult {
   subtitle: string;
   coordinates?: [number, number];
   incident?: any; // Para incidentes completos
+  distance?: number; // Distancia desde la ubicación del usuario
 }
 
 interface MapSearchBarProps {
   onLocationSelect?: (coordinates: [number, number], address: string) => void;
   onIncidentSelect?: (incidentId: string) => void;
   className?: string;
+  activeFilters?: IncidentFiltersType; // Filtros activos para la búsqueda
 }
 
-const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: MapSearchBarProps) => {
+const MapSearchBar = ({
+  onLocationSelect,
+  onIncidentSelect,
+  className = '',
+  activeFilters
+}: MapSearchBarProps) => {
+  const { userLocation, isLoading: locationLoading, error: locationError, neighborhood } = useUserLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Función para buscar direcciones
+  // Función para buscar direcciones con filtros y ubicación del usuario
   const searchAddresses = useCallback(async (query: string): Promise<SearchResult[]> => {
     try {
-      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
-      if (!response.ok) return [];
+      console.log('🔍 Searching addresses for:', query);
+
+      // Construir parámetros de búsqueda
+      const params = new URLSearchParams();
+      params.append('q', query);
+
+      // Agregar coordenadas del usuario si están disponibles
+      if (userLocation) {
+        params.append('lat', userLocation[1].toString());
+        params.append('lng', userLocation[0].toString());
+      }
+
+      const url = `/api/geocode?${params.toString()}`;
+      console.log('🌍 Geocoding URL:', url);
+
+      const response = await fetch(url);
+      console.log('🌍 Geocoding response status:', response.status);
+
+      if (!response.ok) {
+        console.error('❌ Geocoding response not ok:', response.status, response.statusText);
+        return [];
+      }
 
       const data = await response.json();
-      return (data.features || []).slice(0, 5).map((feature: any) => ({
+      console.log('🌍 Geocoding data:', data);
+
+      const results = (data.features || []).slice(0, 5).map((feature: any) => ({
         id: feature.properties.id || feature.properties.gid,
         type: 'address' as const,
         title: feature.properties.main_text || feature.properties.name || 'Dirección',
         subtitle: feature.properties.secondary_text || feature.properties.label || 'Sin descripción',
         coordinates: feature.geometry.coordinates
       }));
+
+      console.log('🌍 Address results:', results);
+      return results;
     } catch (error) {
-      console.error('Error searching addresses:', error);
+      console.error('❌ Error searching addresses:', error);
       return [];
     }
-  }, []);
+  }, [userLocation]);
 
-  // Función para buscar incidentes
+  // Función para buscar incidentes con filtros
   const searchIncidents = useCallback(async (query: string): Promise<SearchResult[]> => {
     try {
-      const response = await fetch(`/api/incidents/search?q=${encodeURIComponent(query)}`);
-      if (!response.ok) return [];
+      console.log('🚨 Searching incidents for:', query);
+
+      // Construir parámetros de búsqueda con filtros
+      const params = new URLSearchParams();
+      params.append('q', query);
+
+      // Agregar filtros activos si están disponibles
+      if (activeFilters) {
+        if (activeFilters.dateFrom) params.append('dateFrom', activeFilters.dateFrom);
+        if (activeFilters.dateTo) params.append('dateTo', activeFilters.dateTo);
+        if (activeFilters.neighborhoodId) params.append('neighborhoodId', activeFilters.neighborhoodId);
+        if (activeFilters.status) params.append('status', activeFilters.status);
+        if (activeFilters.type) params.append('type', activeFilters.type);
+        if (activeFilters.tags && activeFilters.tags.length > 0) {
+          params.append('tags', activeFilters.tags.join(','));
+        }
+      }
+
+      // Agregar coordenadas del usuario para búsqueda por proximidad
+      if (userLocation) {
+        params.append('userLat', userLocation[1].toString());
+        params.append('userLng', userLocation[0].toString());
+      }
+
+      const url = `/api/incidents/search?${params.toString()}`;
+      console.log('🚨 Incidents search URL:', url);
+
+      const response = await fetch(url);
+      console.log('🚨 Incidents response status:', response.status);
+
+      if (!response.ok) {
+        console.error('❌ Incidents response not ok:', response.status, response.statusText);
+        return [];
+      }
 
       const data = await response.json();
-      return data.incidents || [];
+      console.log('🚨 Incidents data:', data);
+
+      const results = data.incidents || [];
+      console.log('🚨 Incident results:', results);
+      return results;
     } catch (error) {
-      console.error('Error searching incidents:', error);
+      console.error('❌ Error searching incidents:', error);
       return [];
     }
-  }, []);
+  }, [activeFilters, userLocation]);
 
   // Función principal de búsqueda
   const performSearch = useCallback(async (query: string) => {
+    console.log('🔍 Starting search for:', query);
+
     if (!query.trim() || query.trim().length < 2) {
+      console.log('❌ Query too short, clearing results');
       setResults([]);
       return;
     }
 
     setIsLoading(true);
+    console.log('⏳ Search loading started');
 
     try {
       // Buscar direcciones e incidentes en paralelo
+      console.log('🔄 Starting parallel search...');
       const [addressResults, incidentResults] = await Promise.all([
         searchAddresses(query),
         searchIncidents(query)
       ]);
+
+      console.log('📊 Search results:', {
+        addresses: addressResults.length,
+        incidents: incidentResults.length
+      });
 
       // Combinar y ordenar resultados
       const combinedResults = [
@@ -82,18 +163,22 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
         ...incidentResults.map(result => ({ ...result, priority: 2 })) // Incidentes después
       ];
 
+      console.log('🔗 Combined results:', combinedResults.length);
+
       // Ordenar por prioridad y limitar a 10 resultados totales
       const sortedResults = combinedResults
         .sort((a, b) => a.priority - b.priority)
         .slice(0, 10)
         .map(({ priority, ...result }) => result);
 
+      console.log('📋 Final sorted results:', sortedResults.length);
       setResults(sortedResults);
     } catch (error) {
-      console.error('Error performing search:', error);
+      console.error('❌ Error performing search:', error);
       setResults([]);
     } finally {
       setIsLoading(false);
+      console.log('✅ Search loading finished');
     }
   }, [searchAddresses, searchIncidents]);
 
@@ -129,6 +214,16 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
     // Limpiar búsqueda después de seleccionar
     setSearchTerm('');
     setResults([]);
+  };
+
+  // Función para formatear distancia
+  const formatDistance = (distance?: number) => {
+    if (!distance) return null;
+    if (distance < 1000) {
+      return `${Math.round(distance)}m`;
+    } else {
+      return `${(distance / 1000).toFixed(1)}km`;
+    }
   };
 
   return (
@@ -168,7 +263,11 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar dirección o incidente..."
+              placeholder={
+                locationLoading ? "Cargando ubicación..." :
+                userLocation ? `Buscar en ${neighborhood}...` :
+                "Buscar dirección o incidente..."
+              }
               className="flex-1 py-2 px-3 focus:rounded-full bg-transparent text-gray-900 placeholder-gray-600 border-transparent focus:outline-none font-medium"
             />
 
@@ -176,6 +275,20 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
             {isLoading && (
               <div className="px-3">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent" />
+              </div>
+            )}
+
+            {/* Indicador de ubicación del usuario */}
+            {userLocation && !locationLoading && (
+              <div className="px-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title={`Buscando cerca de ${neighborhood}`} />
+              </div>
+            )}
+
+            {/* Indicador de error de ubicación */}
+            {locationError && (
+              <div className="px-3">
+                <div className="w-2 h-2 bg-red-500 rounded-full" title={locationError} />
               </div>
             )}
 
@@ -249,6 +362,12 @@ const MapSearchBar = ({ onLocationSelect, onIncidentSelect, className = '' }: Ma
                         {result.type === 'incident' && result.incident?.date && (
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(result.incident.date).toLocaleDateString('es-ES')}
+                          </p>
+                        )}
+                        {/* Mostrar distancia si tenemos ubicación del usuario */}
+                        {userLocation && result.coordinates && (
+                          <p className="text-xs text-green-600 mt-1">
+                            📍 {result.distance ? formatDistance(result.distance) : 'Cerca de tu barrio'}
                           </p>
                         )}
                       </div>

@@ -270,6 +270,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                   onIncidentNavigate(coords, selectedIncident);
                 }
               }}
+              activeFilters={filters} // Pasar los filtros activos
               className="w-full"
             />
           </div>

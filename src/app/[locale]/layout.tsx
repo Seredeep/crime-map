@@ -104,28 +104,28 @@ export default async function RootLayout({
       >
         {/* i18n Provider */}
         <NextIntlClientProvider messages={messages}>
-          {/* Capacitor Provider - Inicializa plugins nativos */}
+          {/* Capacitor Provider - Inicializa plugins nativos (solo en cliente) */}
           <CapacitorProvider>
-          {/* Session Management */}
-          <SessionProvider>
-            <SessionRefresh />
+            {/* Session Management */}
+            <SessionProvider>
+              <SessionRefresh />
 
-            {/* #region Image Modal Context */}
-            <ImageModalProvider>
-              {/* App Wrapper with Loading Screen */}
-              <AppWrapper
-                globalComponents={
-                  <>
-                    <ImageModal />
-                    <GlobalPanicButton />
-                  </>
-                }
-              >
-                {children}
-              </AppWrapper>
-            </ImageModalProvider>
-            {/* #endregion */}
-          </SessionProvider>
+              {/* #region Image Modal Context */}
+              <ImageModalProvider>
+                {/* App Wrapper with Loading Screen */}
+                <AppWrapper
+                  globalComponents={
+                    <>
+                      <ImageModal />
+                      <GlobalPanicButton />
+                    </>
+                  }
+                >
+                  {children}
+                </AppWrapper>
+              </ImageModalProvider>
+              {/* #endregion */}
+            </SessionProvider>
           </CapacitorProvider>
         </NextIntlClientProvider>
 
