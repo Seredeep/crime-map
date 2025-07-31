@@ -1,7 +1,6 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -44,8 +43,6 @@ interface WelcomeModalProps {
 
 // Componente del modal de bienvenida
 function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
-  const t = useTranslations('Onboarding');
-
   if (!isOpen) return null;
 
   return (
@@ -63,36 +60,38 @@ function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
             />
           </div>
           <h2 className="text-2xl font-semibold text-gray-100 mb-4">
-            {t('welcomeTitle')}
+            ¡Bienvenido a Claridad!
           </h2>
           <p className="text-gray-300 mb-6 leading-relaxed">
-            {t('welcomeDescription')}
+            Para brindarte la mejor experiencia de seguridad comunitaria, necesitamos conocer tu ubicación.
+            Esta información nos permite conectar con tu comunidad local y mantenerte informado sobre incidentes
+            en tu área.
           </p>
           <div className="space-y-3 text-sm text-gray-400 mb-6">
             <div className="flex items-start">
               <svg className="w-5 h-5 mr-3 mt-0.5 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{t('privacyInfo')}</span>
+              <span>Tu información personal se mantiene segura y privada</span>
             </div>
             <div className="flex items-start">
               <svg className="w-5 h-5 mr-3 mt-0.5 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{t('alertsInfo')}</span>
+              <span>Podrás recibir alertas relevantes para tu zona</span>
             </div>
             <div className="flex items-start">
               <svg className="w-5 h-5 mr-3 mt-0.5 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{t('communityInfo')}</span>
+              <span>Conectarás con tu comunidad local</span>
             </div>
           </div>
           <button
             onClick={onClose}
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
           >
-            {t('understoodContinue')}
+            Entendido, continuar
           </button>
         </div>
       </div>
@@ -103,7 +102,6 @@ function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
 export default function OnboardingPage() {
   const { data: session, update } = useSession();
   const router = useRouter();
-  const t = useTranslations('Onboarding');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -256,11 +254,11 @@ export default function OnboardingPage() {
       setError('');
 
       if (!session?.user?.email) {
-        throw new Error(t('sessionError'));
+        throw new Error('No se encontró el email del usuario');
       }
 
       if (!data.country || !data.city || !data.neighborhood) {
-        throw new Error(t('locationError'));
+        throw new Error('Por favor, completa toda la información de ubicación.');
       }
 
       const response = await fetch('/api/user/onboarding', {
@@ -286,12 +284,21 @@ export default function OnboardingPage() {
 
       // Redirigir después de 2 segundos para que el usuario vea el mensaje de éxito
       setTimeout(() => {
-        router.push('/');
+        // Usar la ruta completa con el locale para evitar problemas con el middleware
+        const locale = window.location.pathname.split('/')[1];
+        router.push(`/${locale}/`);
+
+        // Fallback: si después de 5 segundos no se redirigió, forzar la redirección
+        setTimeout(() => {
+          if (window.location.pathname.includes('/onboarding')) {
+            window.location.href = `/${locale}/`;
+          }
+        }, 5000);
       }, 2000);
-          } catch (err) {
-        setError(err instanceof Error ? err.message : t('saveError'));
-        console.error('Error en onboarding:', err);
-      } finally {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Hubo un error al guardar tu información. Por favor, intenta de nuevo.');
+      console.error('Error en onboarding:', err);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -302,7 +309,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
         <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-lg p-6 text-center">
           <h1 className="text-2xl font-bold mb-4">Error</h1>
-          <p className="text-red-500">{t('sessionError')}</p>
+          <p className="text-red-500">No se encontró la sesión del usuario. Por favor, inicia sesión nuevamente.</p>
         </div>
       </div>
     );
@@ -327,10 +334,10 @@ export default function OnboardingPage() {
               />
             </div>
             <h2 className="text-2xl font-semibold text-gray-100 mb-2">
-              {t('title')}
+              Completa tu Perfil
             </h2>
             <p className="text-gray-400 text-sm">
-              {t('subtitle')}
+              Configura tu información personal y ubicación
             </p>
           </div>
 
@@ -352,7 +359,7 @@ export default function OnboardingPage() {
               {/* Nombre */}
               <div className="group">
                 <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  {t('name')}
+                  Nombre
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -366,9 +373,9 @@ export default function OnboardingPage() {
                     id="name"
                     type="text"
                     autoComplete="given-name"
-                    {...register('name', { required: t('nameRequired') })}
+                    {...register('name', { required: 'El nombre es requerido' })}
                     className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
-                    placeholder={t('yourName')}
+                    placeholder="Tu nombre"
                   />
                 </div>
                 {errors.name && (
@@ -379,7 +386,7 @@ export default function OnboardingPage() {
               {/* Apellido */}
               <div className="group">
                 <label htmlFor="surname" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  {t('surname')}
+                  Apellido
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -393,9 +400,9 @@ export default function OnboardingPage() {
                     id="surname"
                     type="text"
                     autoComplete="family-name"
-                    {...register('surname', { required: t('surnameRequired') })}
+                    {...register('surname', { required: 'El apellido es requerido' })}
                     className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
-                    placeholder={t('yourSurname')}
+                    placeholder="Tu apellido"
                   />
                 </div>
                 {errors.surname && (
@@ -408,7 +415,7 @@ export default function OnboardingPage() {
               {/* Selección de País */}
               <div className="group">
                 <label htmlFor="country-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  {t('country')}
+                  País
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -421,7 +428,7 @@ export default function OnboardingPage() {
                                     <select
                     id="country-select"
                     autoComplete="country"
-                    {...register('country', { required: t('countryRequired') })}
+                    {...register('country', { required: 'El país es requerido' })}
                     className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onChange={(e) => {
                       const countryValue = e.target.value;
@@ -450,7 +457,7 @@ export default function OnboardingPage() {
                     disabled={isLoadingNeighborhoods}
                   >
                     <option value="">
-                      {isLoadingNeighborhoods ? t('loadingCountries') : `-- ${t('selectCountry')} --`}
+                      {isLoadingNeighborhoods ? 'Cargando países...' : '-- Selecciona un país --'}
                     </option>
                     {!isLoadingNeighborhoods && getUniqueCountries().map((country) => (
                       <option key={country} value={country}>
@@ -479,8 +486,8 @@ export default function OnboardingPage() {
               {/* Selección de Ciudad */}
               <div className={`group transition-all duration-300 ${!isCountrySelected ? 'opacity-50' : 'opacity-100'}`}>
                 <label htmlFor="city-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  {t('city')}
-                  {!isCountrySelected && <span className="text-gray-500 ml-1">{t('selectCountryFirst')}</span>}
+                  Ciudad
+                  {!isCountrySelected && <span className="text-gray-500 ml-1">(Selecciona un país primero)</span>}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -493,7 +500,7 @@ export default function OnboardingPage() {
                   <select
                     id="city-select"
                     autoComplete="address-level2"
-                    {...register('city', { required: t('cityRequired') })}
+                    {...register('city', { required: 'La ciudad es requerida' })}
                     className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!isCountrySelected || isLoadingCities}
                     onChange={(e) => {
@@ -509,7 +516,7 @@ export default function OnboardingPage() {
                     }}
                   >
                     <option value="">
-                      {isLoadingCities ? t('loadingCities') : `-- ${t('selectCity')} --`}
+                      {isLoadingCities ? 'Cargando ciudades...' : '-- Selecciona una ciudad --'}
                     </option>
                     {isCountrySelected && !isLoadingCities && getCitiesForCountry(selectedCountry).map((city) => (
                       <option key={city} value={city}>
@@ -538,8 +545,8 @@ export default function OnboardingPage() {
               {/* Selección de Barrio */}
               <div className={`group transition-all duration-300 ${!isCitySelected ? 'opacity-50' : 'opacity-100'}`}>
                 <label htmlFor="neighborhood-select" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  {t('neighborhood')}
-                  {!isCitySelected && <span className="text-gray-500 ml-1">{t('selectCityFirst')}</span>}
+                  Barrio
+                  {!isCitySelected && <span className="text-gray-500 ml-1">(Selecciona una ciudad primero)</span>}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -553,12 +560,12 @@ export default function OnboardingPage() {
                   <select
                     id="neighborhood-select"
                     autoComplete="address-level3"
-                    {...register('neighborhood', { required: t('neighborhoodRequired') })}
+                    {...register('neighborhood', { required: 'El barrio es requerido' })}
                     className="appearance-none relative block w-full pl-12 pr-10 py-4 border border-gray-700 bg-gray-800/50 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!isCitySelected || isLoadingNeighborhoodsList}
                   >
                     <option value="">
-                      {isLoadingNeighborhoodsList ? t('loadingNeighborhoods') : `-- ${t('selectNeighborhood')} --`}
+                      {isLoadingNeighborhoodsList ? 'Cargando barrios...' : '-- Selecciona un barrio --'}
                     </option>
                     {!isLoadingNeighborhoodsList && filteredNeighborhoods
                       .sort((a, b) => {
@@ -607,14 +614,14 @@ export default function OnboardingPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>{t('saving')}</span>
+                    <span>Guardando...</span>
                   </>
                 ) : (
                   <>
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>{t('completeProfile')}</span>
+                    <span>Completar Perfil</span>
                   </>
                 )}
               </button>
@@ -649,11 +656,11 @@ export default function OnboardingPage() {
           </div>
 
           <h2 className="text-2xl font-semibold text-gray-100 mb-4">
-            {t('profileCompleted')}
+            ¡Perfil Completado!
           </h2>
 
           <p className="text-gray-300 mb-6 leading-relaxed">
-            {t('profileSavedSuccess')}
+            Tu información ha sido guardada exitosamente. Ya puedes acceder a todas las funcionalidades de Claridad.
           </p>
 
           <div className="space-y-3 text-sm text-gray-400 mb-6">
@@ -661,13 +668,13 @@ export default function OnboardingPage() {
               <svg className="w-5 h-5 mr-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{t('profileConfigured')}</span>
+              <span>Tu perfil está configurado</span>
             </div>
             <div className="flex items-center justify-center">
               <svg className="w-5 h-5 mr-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{t('redirectingToApp')}</span>
+              <span>Redirigiendo a la aplicación...</span>
             </div>
           </div>
 
