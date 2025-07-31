@@ -180,7 +180,17 @@
       "Medio": "Medio",
       "Bajo": "Bajo"
     },
-    "varied": "Variado"
+    "varied": "Variado",
+    "resolutionRate": "Tasa Resolución",
+    "securityAnalysis": "Análisis de Seguridad",
+    "casesResolved": "{count} casos resueltos",
+    "incidentsRegistered": "{count} incidentes registrados en {period}",
+    "incidentsVerified": "{count} incidentes verificados por autoridades",
+    "casesResolvedSuccessfully": "{count} casos resueltos exitosamente",
+    "incidentsPendingVerification": "{count} incidentes pendientes de verificación",
+    "someDataMayNotBeUpdated": "⚠️ Algunos datos pueden no estar actualizados",
+    "mostReportedIncident": "Incidente más reportado",
+    "errorLoadingStats": "Error al cargar las estadísticas"
   },
   "Profile": {
     "profile": "Perfil",

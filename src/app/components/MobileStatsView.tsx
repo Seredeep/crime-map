@@ -122,17 +122,17 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
         changeType: 'increase',
         icon: <FiActivity className="w-5 h-5" />,
         color: 'bg-purple-500',
-        description: 'Incidente más reportado'
+        description: t('mostReportedIncident')
       },
       {
         id: 'resolution-rate',
-        title: 'Tasa Resolución',
+        title: t('resolutionRate'),
         value: `${Math.round(resolutionRate * 100)}%`,
         change: resolutionRate > 0.5 ? '+18%' : '-8%',
         changeType: resolutionRate > 0.5 ? 'increase' : 'decrease',
         icon: <FiActivity className="w-5 h-5" />,
         color: 'bg-emerald-500',
-        description: `${resolvedCount} casos resueltos`
+        description: t('casesResolved', { count: resolvedCount })
       }
     ];
 
@@ -229,7 +229,7 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
 
       } catch (err) {
         console.error('Error loading incident stats:', err);
-        setError('Error al cargar las estadísticas');
+        setError(t('errorLoadingStats'));
         generateFallbackStats();
       } finally {
         setLoading(false);
@@ -379,17 +379,17 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
         >
           <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
             <FiTrendingUp className="w-5 h-5 mr-2 text-blue-400" />
-            Análisis de Seguridad
+            {t('securityAnalysis')}
           </h3>
           <div className="space-y-2 text-sm text-gray-300">
-            <p>• {incidents.length} incidentes registrados en {periods.find(p => p.id === selectedPeriod)?.label.toLowerCase()}</p>
-            <p>• {incidents.filter(i => i.status === 'verified').length} incidentes verificados por autoridades</p>
-            <p>• {incidents.filter(i => i.status === 'resolved').length} casos resueltos exitosamente</p>
+            <p>• {t('incidentsRegistered', { count: incidents.length, period: periods.find(p => p.id === selectedPeriod)?.label.toLowerCase() || '' })}</p>
+            <p>• {t('incidentsVerified', { count: incidents.filter(i => i.status === 'verified').length })}</p>
+            <p>• {t('casesResolvedSuccessfully', { count: incidents.filter(i => i.status === 'resolved').length })}</p>
             {incidents.filter(i => !i.status || i.status === 'pending').length > 0 && (
-              <p className="text-yellow-400">• {incidents.filter(i => !i.status || i.status === 'pending').length} incidentes pendientes de verificación</p>
+              <p className="text-yellow-400">• {t('incidentsPendingVerification', { count: incidents.filter(i => !i.status || i.status === 'pending').length })}</p>
             )}
             {error && (
-              <p className="text-red-400">• ⚠️ Algunos datos pueden no estar actualizados</p>
+              <p className="text-red-400">• {t('someDataMayNotBeUpdated')}</p>
             )}
           </div>
         </motion.div>
