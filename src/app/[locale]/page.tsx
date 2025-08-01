@@ -10,9 +10,8 @@ import FloatingReportButton from '../components/FloatingReportButton';
 import LanguageSelector from '../components/LanguageSelector';
 import MobileBottomTabs from '../components/MobileBottomTabs';
 import MobileCommunitiesView from '../components/MobileCommunitiesView';
-import MobileProfileView from '../components/MobileProfileView';
 import MobileReportView from '../components/MobileReportView';
-import MobileSettingsPanel from '../components/MobileSettingsPanel';
+import MobileSettingsView from '../components/MobileSettingsView';
 import MobileStatsView from '../components/MobileStatsView';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
@@ -175,7 +174,7 @@ export default function Home() {
       case 'profile':
         return (
           <div className="w-full h-full">
-            <MobileProfileView />
+            <MobileSettingsView />
           </div>
         );
 
@@ -367,10 +366,7 @@ export default function Home() {
             status={status}
             availableTabs={availableTabs}
           />
-          <MobileSettingsPanel
-            isOpen={isSettingsPanelOpen}
-            onClose={() => setIsSettingsPanelOpen(false)}
-          />
+
         </div>
       </div>
     </div>

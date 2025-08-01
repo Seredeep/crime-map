@@ -5,20 +5,9 @@ import { Incident } from '@/lib/types/global';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
-import { FiActivity, FiAlertTriangle, FiClock, FiEye, FiMapPin, FiShield, FiTrendingUp } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
+import { FiAlertTriangle, FiClock, FiEye, FiMapPin, FiShield, FiTrendingUp } from 'react-icons/fi';
 import PanicButton from './PanicButton';
-
-interface StatCard {
-  id: string;
-  title: string;
-  value: string | number;
-  change: string;
-  changeType: 'increase' | 'decrease' | 'neutral';
-  icon: React.ReactNode;
-  color: string;
-  description?: string;
-}
 
 interface MobileStatsViewProps {
   className?: string;
@@ -28,172 +17,17 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
   const { data: session } = useSession();
   const t = useTranslations('Statistics');
   const [selectedPeriod, setSelectedPeriod] = useState('week');
-  const [stats, setStats] = useState<StatCard[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const generateStatCards = useCallback((current: Incident[], all: Incident[]) => {
-    // Análisis de estados
-    const pendingCount = current.filter(i => i.status === 'pending' || !i.status).length;
-    const verifiedCount = current.filter(i => i.status === 'verified').length;
-    const resolvedCount = current.filter(i => i.status === 'resolved').length;
-
-    // Análisis de tags
-    const tagCounts = new Map<string, number>();
-    current.forEach(incident => {
-      if (incident.tags && incident.tags.length > 0) {
-        incident.tags.forEach(tag => {
-          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
-        });
-      }
-    });
-
-    const mostCommonTag = tagCounts.size > 0
-      ? Array.from(tagCounts.entries()).sort((a, b) => b[1] - a[1])[0][0]
-      : t('varied');
-
-    // Calcular nivel de seguridad
-    const incidentRate = current.length / (selectedPeriod === 'day' ? 1 : selectedPeriod === 'week' ? 7 : 30);
-    let safetyLevelKey = 'high';
-    let safetyColor = 'bg-green-500';
-
-    if (incidentRate > 3) {
-      safetyLevelKey = 'low';
-      safetyColor = 'bg-red-500';
-    } else if (incidentRate > 1) {
-      safetyLevelKey = 'medium';
-      safetyColor = 'bg-yellow-500';
-    }
-
-    // Tiempo de respuesta estimado
-    const resolutionRate = current.length > 0 ? resolvedCount / current.length : 0;
-    let responseTime = '2.4h';
-    if (resolutionRate > 0.8) responseTime = '1.2h';
-    else if (resolutionRate > 0.5) responseTime = '1.8h';
-    else if (resolutionRate < 0.2) responseTime = '4.1h';
-
-    const newStats: StatCard[] = [
-      {
-        id: 'total-incidents',
-        title: t('totalIncidents'),
-        value: current.length,
-        change: current.length > all.length * 0.1 ? '+15%' : '-5%',
-        changeType: current.length > all.length * 0.1 ? 'increase' : 'decrease',
-        icon: <FiAlertTriangle className="w-5 h-5" />,
-        color: 'bg-red-500',
-        description: t('pendingVerificationCount', { count: pendingCount })
-      },
-      {
-        id: 'safety-level',
-        title: t('securityLevel'),
-        value: t(safetyLevelKey),
-        change: safetyLevelKey === 'high' ? '+8%' : safetyLevelKey === 'medium' ? '0%' : '-12%',
-        changeType: safetyLevelKey === 'high' ? 'increase' : safetyLevelKey === 'medium' ? 'neutral' : 'decrease',
-        icon: <FiShield className="w-5 h-5" />,
-        color: safetyColor,
-        description: t('basedOnReports', { count: current.length })
-      },
-      {
-        id: 'verified',
-        title: t('verified'),
-        value: verifiedCount,
-        change: verifiedCount > pendingCount ? '+25%' : '+10%',
-        changeType: 'increase',
-        icon: <FiEye className="w-5 h-5" />,
-        color: 'bg-blue-500',
-        description: t('confirmedByAuthorities')
-      },
-      {
-        id: 'response-time',
-        title: t('responseTime'),
-        value: responseTime,
-        change: resolutionRate > 0.5 ? '-20%' : '+5%',
-        changeType: resolutionRate > 0.5 ? 'decrease' : 'increase',
-        icon: <FiClock className="w-5 h-5" />,
-        color: 'bg-teal-500',
-        description: t('averageResolution')
-      },
-      {
-        id: 'most-common',
-        title: t('frequentType'),
-        value: mostCommonTag,
-        change: '+12%',
-        changeType: 'increase',
-        icon: <FiActivity className="w-5 h-5" />,
-        color: 'bg-purple-500',
-        description: t('mostReportedIncident')
-      },
-      {
-        id: 'resolution-rate',
-        title: t('resolutionRate'),
-        value: `${Math.round(resolutionRate * 100)}%`,
-        change: resolutionRate > 0.5 ? '+18%' : '-8%',
-        changeType: resolutionRate > 0.5 ? 'increase' : 'decrease',
-        icon: <FiActivity className="w-5 h-5" />,
-        color: 'bg-emerald-500',
-        description: t('casesResolved', { count: resolvedCount })
-      }
-    ];
-
-    setStats(newStats);
-  }, [selectedPeriod]);
-
-  const generateFallbackStats = useCallback(() => {
-    const fallbackStats: StatCard[] = [
-      {
-        id: 'total-incidents',
-        title: t('totalIncidents'),
-        value: 18,
-        change: '+12%',
-        changeType: 'increase',
-        icon: <FiAlertTriangle className="w-5 h-5" />,
-        color: 'bg-red-500',
-        description: t('pendingVerificationCount', { count: 3 })
-      },
-      {
-        id: 'safety-level',
-        title: t('securityLevel'),
-        value: t('medium'),
-        change: '+5%',
-        changeType: 'increase',
-        icon: <FiShield className="w-5 h-5" />,
-        color: 'bg-yellow-500',
-        description: t('basedOnActivity')
-      },
-      {
-        id: 'verified',
-        title: t('verified'),
-        value: 15,
-        change: '+22%',
-        changeType: 'increase',
-        icon: <FiEye className="w-5 h-5" />,
-        color: 'bg-blue-500',
-        description: t('confirmedByAuthorities')
-      },
-      {
-        id: 'response-time',
-        title: t('responseTime'),
-        value: '2.1h',
-        change: '-15%',
-        changeType: 'decrease',
-        icon: <FiClock className="w-5 h-5" />,
-        color: 'bg-teal-500',
-        description: t('averageResolution')
-      }
-    ];
-
-    setStats(fallbackStats);
-  }, []);
-
-  // Cargar estadísticas reales de incidentes
+  // Cargar incidentes según el período seleccionado
   useEffect(() => {
     const loadIncidentStats = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        // Definir fechas según el período seleccionado
         const today = new Date();
         let daysAgo = 7;
 
@@ -215,29 +49,22 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
         const fromDate = new Date();
         fromDate.setDate(today.getDate() - daysAgo);
 
-        // Obtener incidentes del período actual
         const currentIncidents = await fetchIncidents({
           dateFrom: fromDate.toISOString().split('T')[0],
           dateTo: today.toISOString().split('T')[0]
         });
 
-        // Obtener todos los incidentes para comparar
-        const allIncidents = await fetchIncidents({});
-
         setIncidents(currentIncidents);
-        generateStatCards(currentIncidents, allIncidents);
-
       } catch (err) {
         console.error('Error loading incident stats:', err);
         setError(t('errorLoadingStats'));
-        generateFallbackStats();
       } finally {
         setLoading(false);
       }
     };
 
     loadIncidentStats();
-  }, [selectedPeriod, generateStatCards, generateFallbackStats]);
+  }, [selectedPeriod, t]);
 
   const periods = [
     { id: 'day', label: t('today') },
@@ -246,153 +73,211 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
     { id: 'year', label: t('year') }
   ];
 
-  const getChangeColor = (changeType: string) => {
-    switch (changeType) {
-      case 'increase': return 'text-green-400';
-      case 'decrease': return 'text-red-400';
-      default: return 'text-gray-400';
-    }
+  // Calcular métricas simples y útiles
+  const totalIncidents = incidents.length;
+  const verifiedIncidents = incidents.filter(i => i.status === 'verified').length;
+  const pendingIncidents = incidents.filter(i => !i.status || i.status === 'pending').length;
+  const resolvedIncidents = incidents.filter(i => i.status === 'resolved').length;
+
+  // Determinar nivel de seguridad basado en incidentes
+  const getSafetyLevel = () => {
+    if (totalIncidents === 0) return { level: 'excellent', color: 'text-green-400', bg: 'bg-green-500/20' };
+    if (totalIncidents <= 2) return { level: 'good', color: 'text-blue-400', bg: 'bg-blue-500/20' };
+    if (totalIncidents <= 5) return { level: 'moderate', color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
+    return { level: 'attention', color: 'text-red-400', bg: 'bg-red-500/20' };
   };
 
-  const getChangeIcon = (changeType: string) => {
-    switch (changeType) {
-      case 'increase': return '↗';
-      case 'decrease': return '↘';
-      default: return '→';
-    }
-  };
+  const safetyLevel = getSafetyLevel();
 
   if (loading) {
     return (
       <div className={`w-full h-full bg-gray-900 flex items-center justify-center ${className}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">{t('analyzingIncidents')}</p>
+          <p className="text-gray-400">{t('loadingStats')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`w-full h-full bg-gray-900 ${className}`}>
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-800/95 backdrop-blur-sm border-b border-gray-600/50 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
-          <PanicButton isVisible={!!session?.user} className="relative" />
-        </div>
+    <div className={`w-full h-full relative overflow-hidden ${className}`}>
+      {/* Simple Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"></div>
 
-        {/* Period selector */}
-        <div className="flex space-x-2 overflow-x-auto pb-2">
-          {periods.map((period) => (
-            <button
-              key={period.id}
-              onClick={() => setSelectedPeriod(period.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                selectedPeriod === period.id
-                  ? 'bg-blue-500 text-white shadow-lg'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
+      {/* Subtle Background Elements */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-20 right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Stats Content */}
-      <div className="p-4 pb-24">
-        {/* Información general */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl p-4 border border-blue-700/30"
-        >
-          <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
-            <FiMapPin className="w-5 h-5 mr-2 text-blue-400" />
-                          {t('securitySummary')}
-          </h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">{t('period')}</span>
-              <span className="text-white font-medium">{periods.find(p => p.id === selectedPeriod)?.label}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">{t('totalReports')}</span>
-              <span className="text-white font-medium">{incidents.length}</span>
-            </div>
+      {/* Content Container */}
+      <div className="relative z-10 h-full flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 z-20 bg-gray-800/90 backdrop-blur-sm border-b border-gray-600/30 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+            <PanicButton isVisible={!!session?.user} className="relative" />
           </div>
-        </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          {stats.map((stat, index) => (
+          {/* Period selector */}
+          <div className="flex space-x-2 overflow-x-auto pb-2">
+            {periods.map((period) => (
+              <button
+                key={period.id}
+                onClick={() => setSelectedPeriod(period.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                  selectedPeriod === period.id
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-4 pb-24 overflow-y-auto">
+          {/* Safety Status Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mb-6 rounded-xl p-6 ${safetyLevel.bg} border border-gray-700/50 backdrop-blur-sm shadow-lg`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <FiShield className={`w-8 h-8 mr-3 ${safetyLevel.color}`} />
+                <div>
+                  <h3 className="text-xl font-bold text-white">{t('securityStatus')}</h3>
+                  <p className={`text-lg font-semibold ${safetyLevel.color}`}>
+                    {t(safetyLevel.level)}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-white">{totalIncidents}</div>
+                <div className="text-sm text-gray-400">{t('totalReports')}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-blue-400">{verifiedIncidents}</div>
+                <div className="text-xs text-gray-400">{t('verified')}</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-yellow-400">{pendingIncidents}</div>
+                <div className="text-xs text-gray-400">{t('pending')}</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-green-400">{resolvedIncidents}</div>
+                <div className="text-xs text-gray-400">{t('resolved')}</div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
             <motion.div
-              key={stat.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: index * 0.1,
-                duration: 0.3,
-                ease: "easeOut"
-              }}
-              className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-200"
+              transition={{ delay: 0.1 }}
+              className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-lg"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className={`p-2 rounded-lg ${stat.color}/20`}>
-                  <div className={`${stat.color.replace('bg-', 'text-')}`}>
-                    {stat.icon}
+              <div className="flex items-center mb-3">
+                <div className="p-2 rounded-lg bg-blue-500/20 mr-3">
+                  <FiEye className="w-5 h-5 text-blue-400" />
+                </div>
+                <div className="text-sm text-gray-400">{t('verificationRate')}</div>
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {totalIncidents > 0 ? Math.round((verifiedIncidents / totalIncidents) * 100) : 0}%
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-lg"
+            >
+              <div className="flex items-center mb-3">
+                <div className="p-2 rounded-lg bg-green-500/20 mr-3">
+                  <FiClock className="w-5 h-5 text-green-400" />
+                </div>
+                <div className="text-sm text-gray-400">{t('resolutionRate')}</div>
+              </div>
+              <div className="text-2xl font-bold text-white">
+                {totalIncidents > 0 ? Math.round((resolvedIncidents / totalIncidents) * 100) : 0}%
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Recent Activity */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 shadow-lg"
+          >
+            <div className="flex items-center mb-4">
+              <FiTrendingUp className="w-5 h-5 mr-2 text-blue-400" />
+              <h3 className="text-lg font-semibold text-white">{t('recentActivity')}</h3>
+            </div>
+
+            {totalIncidents === 0 ? (
+              <div className="text-center py-8">
+                <FiMapPin className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400">{t('noIncidentsReported')}</p>
+                <p className="text-sm text-gray-500 mt-1">{t('periodSelected', { period: periods.find(p => p.id === selectedPeriod)?.label.toLowerCase() })}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                  <div className="flex items-center">
+                    <FiAlertTriangle className="w-4 h-4 text-red-400 mr-2" />
+                    <span className="text-white">{t('incidentsReported')}</span>
                   </div>
+                  <span className="text-lg font-bold text-white">{totalIncidents}</span>
                 </div>
-                <div className={`flex items-center text-xs font-medium ${getChangeColor(stat.changeType)}`}>
-                  <span className="mr-1">{getChangeIcon(stat.changeType)}</span>
-                  {stat.change}
-                </div>
-              </div>
 
-              <div className="mb-1">
-                <div className="text-2xl font-bold text-white">
-                  {stat.value}
-                </div>
-              </div>
+                {verifiedIncidents > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-blue-500/10 rounded-lg">
+                    <div className="flex items-center">
+                      <FiEye className="w-4 h-4 text-blue-400 mr-2" />
+                      <span className="text-white">{t('incidentsVerified')}</span>
+                    </div>
+                    <span className="text-lg font-bold text-blue-400">{verifiedIncidents}</span>
+                  </div>
+                )}
 
-              <div className="space-y-1">
-                <div className="text-sm text-gray-400 font-medium">
-                  {stat.title}
-                </div>
-                {stat.description && (
-                  <div className="text-xs text-gray-500">
-                    {stat.description}
+                {resolvedIncidents > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
+                    <div className="flex items-center">
+                      <FiClock className="w-4 h-4 text-green-400 mr-2" />
+                      <span className="text-white">{t('incidentsResolved')}</span>
+                    </div>
+                    <span className="text-lg font-bold text-green-400">{resolvedIncidents}</span>
                   </div>
                 )}
               </div>
-            </motion.div>
-          ))}
-        </div>
+            )}
+          </motion.div>
 
-        {/* Insights */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.3 }}
-          className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-xl p-4 border border-blue-700/30"
-        >
-          <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
-            <FiTrendingUp className="w-5 h-5 mr-2 text-blue-400" />
-            {t('securityAnalysis')}
-          </h3>
-          <div className="space-y-2 text-sm text-gray-300">
-            <p>• {t('incidentsRegistered', { count: incidents.length, period: periods.find(p => p.id === selectedPeriod)?.label.toLowerCase() || '' })}</p>
-            <p>• {t('incidentsVerified', { count: incidents.filter(i => i.status === 'verified').length })}</p>
-            <p>• {t('casesResolvedSuccessfully', { count: incidents.filter(i => i.status === 'resolved').length })}</p>
-            {incidents.filter(i => !i.status || i.status === 'pending').length > 0 && (
-              <p className="text-yellow-400">• {t('incidentsPendingVerification', { count: incidents.filter(i => !i.status || i.status === 'pending').length })}</p>
-            )}
-            {error && (
-              <p className="text-red-400">• {t('someDataMayNotBeUpdated')}</p>
-            )}
-          </div>
-        </motion.div>
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl backdrop-blur-sm"
+            >
+              <p className="text-red-400 text-sm">{error}</p>
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );
