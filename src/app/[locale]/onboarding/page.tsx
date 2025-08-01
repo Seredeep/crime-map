@@ -45,7 +45,7 @@ interface WelcomeModalProps {
 // Componente del modal de bienvenida
 function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
   const t = useTranslations('Onboarding');
-  
+
   if (!isOpen) return null;
 
   return (

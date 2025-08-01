@@ -89,7 +89,7 @@
     "INVALID_EMAIL_FORMAT": "Invalid email format",
     "PASSWORD_TOO_SHORT": "Password must be at least 8 characters long",
     "EMAIL_ALREADY_REGISTERED": "Email is already registered",
-    "USER_REGISTERED_SUCCESS": "User registered successfully. Your account is pending approval by an administrator.",
+    "USER_REGISTERED_SUCCESS": "User registered successfully. Visit CLARIDAD.AR to sign up for our whitelist.",
     "REGISTRATION_ERROR": "Error registering user"
   },
   "Onboarding": {
