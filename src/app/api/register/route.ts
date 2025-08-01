@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     // Validamos los datos
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, message: "Faltan datos requeridos" },
+        { success: false, message: "MISSING_REQUIRED_DATA" },
         { status: 400 }
       );
     }
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { success: false, message: "Formato de email inválido" },
+        { success: false, message: "INVALID_EMAIL_FORMAT" },
         { status: 400 }
       );
     }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     // Validamos la longitud de la contraseña
     if (password.length < 8) {
       return NextResponse.json(
-        { success: false, message: "La contraseña debe tener al menos 8 caracteres" },
+        { success: false, message: "PASSWORD_TOO_SHORT" },
         { status: 400 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const existingMongoUser = await db.collection("users").findOne({ email });
     if (existingMongoUser) {
       return NextResponse.json(
-        { success: false, message: "El email ya está registrado" },
+        { success: false, message: "EMAIL_ALREADY_REGISTERED" },
         { status: 409 }
       );
     }
@@ -75,13 +75,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Usuario registrado correctamente. Tu cuenta está pendiente de aprobación por un administrador.",
+      message: "USER_REGISTERED_SUCCESS",
       userId: userId,
     });
   } catch (error) {
     console.error("Error en el registro:", error);
     return NextResponse.json(
-      { success: false, message: "Error al registrar el usuario" },
+      { success: false, message: "REGISTRATION_ERROR" },
       { status: 500 }
     );
   }

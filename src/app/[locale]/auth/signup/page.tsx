@@ -52,11 +52,14 @@ export default function SignUp() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || t('registrationError'));
+        // Manejar claves de traducción desde la API
+        const errorMessage = data.message && t(data.message) ? t(data.message) : t('registrationError');
+        throw new Error(errorMessage);
       }
 
       // Registro exitoso
-      setSuccess(data.message || t('registrationSuccess'));
+      const successMessage = data.message && t(data.message) ? t(data.message) : t('registrationSuccess');
+      setSuccess(successMessage);
       setEmail('');
       setPassword('');
       setConfirmPassword('');

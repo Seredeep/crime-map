@@ -107,7 +107,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (user.enabled === false) {
-            throw new Error("Tu cuenta está pendiente de aprobación por un administrador.");
+            throw new Error("ACCOUNT_PENDING_APPROVAL");
           }
 
           return {
