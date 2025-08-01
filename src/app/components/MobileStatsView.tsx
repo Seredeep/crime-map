@@ -232,7 +232,7 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
               <div className="text-center py-8">
                 <FiMapPin className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-400">{t('noIncidentsReported')}</p>
-                <p className="text-sm text-gray-500 mt-1">{t('periodSelected', { period: periods.find(p => p.id === selectedPeriod)?.label.toLowerCase() })}</p>
+                <p className="text-sm text-gray-500 mt-1">{t('periodSelected', { period: periods.find(p => p.id === selectedPeriod)?.label?.toLowerCase() || '' })}</p>
               </div>
             ) : (
               <div className="space-y-3">
