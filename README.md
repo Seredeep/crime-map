@@ -171,3 +171,5 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 - 📧 Email: [tu-email@ejemplo.com]
 - 🐛 Issues: [GitHub Issues](link-to-issues)
 - 📖 Docs: [Ver documentación completa](link-to-docs)
+
+
