@@ -13,6 +13,7 @@ import { reverseGeocode } from '@/lib/services/geo';
 import { updateIncident } from '@/lib/services/incidents/incidentService';
 import { Neighborhood } from '@/lib/services/neighborhoods';
 import { Incident } from '@/lib/types/global';
+import { useSession } from 'next-auth/react';
 // #endregion
 
 // #region Leaflet Configuration
@@ -24,6 +25,37 @@ const fixLeafletIcons = () => {
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   });
+};
+// #endregion
+
+// #region User Location Helper
+const getUserLocationCoordinates = (user: any): [number, number] => {
+  console.log('🔍 getUserLocationCoordinates - User data:', user);
+  
+  if (!user) {
+    console.log('⚠️ No user data, defaulting to San Francisco');
+    return [37.7749, -122.4194];
+  }
+
+  // Mapeo de ciudades específicas a sus coordenadas
+  const cityCoordinates: { [key: string]: [number, number] } = {
+    'Mar del Plata': [-38.0055, -57.5426],
+    'San Francisco': [37.7749, -122.4194],
+    // Puedes agregar más ciudades aquí según sea necesario
+  };
+
+  console.log('🏙️ User city:', user.city);
+  console.log('🗺️ Available cities:', Object.keys(cityCoordinates));
+
+  // Si el usuario tiene una ciudad específica, usar esas coordenadas
+  if (user.city && cityCoordinates[user.city]) {
+    console.log('✅ Using coordinates for city:', user.city, cityCoordinates[user.city]);
+    return cityCoordinates[user.city];
+  }
+
+  console.log('⚠️ City not found or no city data, defaulting to San Francisco');
+  // Fallback: usar San Francisco por defecto
+  return [37.7749, -122.4194];
 };
 // #endregion
 
@@ -311,12 +343,18 @@ export default function MapComponent({
   editingIncident,
   onIncidentUpdate
 }: MapComponentProps) {
+  const { data: session } = useSession();
+
   useEffect(() => {
     fixLeafletIcons();
   }, []);
 
-  // Mar del Plata coordinates as default center
-  const defaultCenter: L.LatLngExpression = [-38.0729, -57.5725];
+  console.log('🔍 MapComponent - Session data:', session);
+  console.log('👤 Session user:', session?.user);
+
+  // Get user location coordinates based on their city
+  const userCoordinates = getUserLocationCoordinates(session?.user);
+  const defaultCenter: L.LatLngExpression = userCoordinates;
 
   // Using state for marker position to allow updates
   const [position, setPosition] = useState<[number, number] | undefined>(markerPosition);

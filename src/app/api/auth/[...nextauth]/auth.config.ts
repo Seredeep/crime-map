@@ -18,6 +18,8 @@ declare module 'next-auth' {
     enabled?: boolean;
     onboarded?: boolean;
     neighborhood?: string;
+    country?: string;
+    city?: string;
     notificationsEnabled?: boolean;
     privacyPublic?: boolean;
     autoLocationEnabled?: boolean;
@@ -35,6 +37,8 @@ declare module 'next-auth' {
       onboarded?: boolean;
       createdAt?: Date;
       neighborhood?: string;
+      country?: string;
+      city?: string;
       notificationsEnabled?: boolean;
       privacyPublic?: boolean;
       autoLocationEnabled?: boolean;
@@ -54,6 +58,8 @@ declare module 'next-auth/jwt' {
     onboarded?: boolean;
     createdAt?: Date;
     neighborhood?: string;
+    country?: string;
+    city?: string;
     notificationsEnabled?: boolean;
     privacyPublic?: boolean;
     autoLocationEnabled?: boolean;
@@ -119,6 +125,8 @@ export const authOptions: NextAuthOptions = {
             onboarded: user.onboarded || user.isOnboarded || false,
             createdAt: user.createdAt || new Date(),
             neighborhood: user.neighborhood || null,
+            country: user.country || null,
+            city: user.city || null,
             notificationsEnabled: user.notificationsEnabled ?? true,
             privacyPublic: user.privacyPublic ?? false,
             autoLocationEnabled: user.autoLocationEnabled ?? true,
@@ -173,6 +181,8 @@ export const authOptions: NextAuthOptions = {
         token.enabled = user.enabled;
         token.onboarded = user.onboarded;
         token.neighborhood = user.neighborhood;
+        token.country = user.country;
+        token.city = user.city;
         token.notificationsEnabled = user.notificationsEnabled;
         token.privacyPublic = user.privacyPublic;
         token.autoLocationEnabled = user.autoLocationEnabled;
@@ -215,6 +225,8 @@ export const authOptions: NextAuthOptions = {
               token.role = dbUser.role || token.role;
               token.createdAt = dbUser.createdAt || token.createdAt;
               token.neighborhood = dbUser.neighborhood || token.neighborhood;
+              token.country = dbUser.country || token.country;
+              token.city = dbUser.city || token.city;
               token.notificationsEnabled = dbUser.notificationsEnabled ?? token.notificationsEnabled;
               token.privacyPublic = dbUser.privacyPublic ?? token.privacyPublic;
               token.autoLocationEnabled = dbUser.autoLocationEnabled ?? token.autoLocationEnabled;
@@ -239,6 +251,8 @@ export const authOptions: NextAuthOptions = {
         session.user.onboarded = token.onboarded;
         session.user.createdAt = token.createdAt;
         session.user.neighborhood = token.neighborhood;
+        session.user.country = token.country;
+        session.user.city = token.city;
         session.user.notificationsEnabled = token.notificationsEnabled;
         session.user.privacyPublic = token.privacyPublic;
         session.user.autoLocationEnabled = token.autoLocationEnabled;
