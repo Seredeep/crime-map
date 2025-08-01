@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     // Actualizar información del usuario en Firestore
     const userDocRef = firestore.collection('users').doc(userIdString);
-    await userDocRef.update({
+    await userDocRef.set({
       name,
       surname,
       country,
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       isOnboarded: true,
       updatedAt: new Date(),
       chatId: chatId,
-    });
+    }, { merge: true });
 
     // Asignar usuario al chat del neighborhood en Firestore
     try {
