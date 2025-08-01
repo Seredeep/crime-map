@@ -1,4 +1,5 @@
 import { firestore } from '@/lib/config/db/firebase';
+import clientPromise from '@/lib/config/db/mongodb';
 import { getUserChatById } from '@/lib/services/chat/chatService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,22 +15,43 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar usuario por email en Firestore
-    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
+    // Primero buscar usuario en MongoDB
+    const client = await clientPromise;
+    const db = client.db();
+    const mongoUser = await db.collection('users').findOne({ email: session.user.email });
 
-    if (userSnapshot.empty) {
+    if (!mongoUser) {
       return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado en Firestore' },
+        { success: false, error: 'Usuario no encontrado en MongoDB' },
         { status: 404 }
       );
     }
 
-    const userDoc = userSnapshot.docs[0];
-    const userData = userDoc.data();
-    const userId = userDoc.id; // ID del documento de Firestore
+    const userId = mongoUser._id.toString();
+
+    // Buscar usuario en Firestore también
+    const userSnapshot = await firestore.collection('users').where('email', '==', session.user.email).limit(1).get();
+    let userData = null;
+    let firestoreUserId = null;
+
+    if (!userSnapshot.empty) {
+      const userDoc = userSnapshot.docs[0];
+      userData = userDoc.data();
+      firestoreUserId = userDoc.id;
+    }
+
+    // Usar datos de MongoDB si no hay datos en Firestore
+    if (!userData) {
+      userData = {
+        name: mongoUser.name,
+        email: mongoUser.email,
+        neighborhood: mongoUser.neighborhood,
+        chatId: mongoUser.chatId
+      };
+    }
 
     // Obtener el chat del usuario
-    const userChat = await getUserChatById(userId);
+    const userChat = await getUserChatById(firestoreUserId || userId);
 
     if (!userChat) {
       return NextResponse.json(
@@ -40,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     const chatInfo = {
       chatId: userChat._id,
-      userId: userId,
+      userId: firestoreUserId || userId,
       userName: userData.name || userData.email.split('@')[0],
       neighborhood: userChat.neighborhood,
       participantsCount: userChat.participants.length,
