@@ -3,13 +3,12 @@ require('dotenv').config();
 const { MongoClient, ObjectId } = require('mongodb');
 
 const MONGO_URI = process.env.MONGODB_URI
-const DB_NAME =  'test';
 
 async function main() {
   const client = new MongoClient(MONGO_URI);
   try {
     await client.connect();
-    const db = client.db(DB_NAME);
+    const db = client.db();
 
     // 1. Obtener todos los _id de users como string
     const users = await db.collection('users').find({}, { projection: { _id: 1 } }).toArray();

@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/crime-map';
-const DATABASE_NAME = 'crime-map';
+const DATABASE_NAME = 'demo';
 const COLLECTION_NAME = 'incident_draft';
 
 async function checkAndCreateIncidents() {

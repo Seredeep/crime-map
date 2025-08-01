@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
 
     // Incidentes recientes en el área (últimos 7 días) - Mantiene en MongoDB
     const client = await clientPromise;
-    const db = client.db('crime-map');
+    const db = client.db('demo');
     const recentIncidents = await (db.collection('incidents') as any).countDocuments({
       neighborhood: chatData.neighborhood,
       createdAt: { $gte: weekAgo }

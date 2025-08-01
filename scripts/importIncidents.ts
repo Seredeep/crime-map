@@ -3,7 +3,7 @@ import { MongoClient } from "mongodb";
 
 // #region Configuration
 const MONGODB_URI = process.env.MONGODB_URI || "";
-const DATABASE_NAME = process.env.DATABASE_NAME || "test";
+const DATABASE_NAME = process.env.DATABASE_NAME || "demo";
 const COLLECTION_NAME = process.env.COLLECTION_NAME || "incident_draft";
 
 const GOOGLE_GEOCODING_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";

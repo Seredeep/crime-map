@@ -13,7 +13,7 @@ const path = require('path');
 
 // #region Configuration
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-const DATABASE_NAME = process.env.DATABASE_NAME || 'crime-map';
+const DATABASE_NAME = process.env.DATABASE_NAME || 'demo';
 // #endregion
 
 // #region Database Utilities

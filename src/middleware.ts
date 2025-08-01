@@ -28,6 +28,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Redirigir la raíz a /en/ por defecto
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL('/en/', request.url));
+  }
+
   // Para rutas que no son API, aplicar primero el middleware de i18n
   if (!pathname.startsWith('/api')) {
     const intlResponse = intlMiddleware(request);
