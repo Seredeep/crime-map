@@ -51,6 +51,7 @@ export interface IncidentFilters {
   timeFrom?: string;
   timeTo?: string;
   status?: 'pending' | 'verified' | 'resolved';
+  type?: string;
   tags?: string[];
 }
 // #endregion

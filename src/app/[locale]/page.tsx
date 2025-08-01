@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiArrowLeft } from 'react-icons/fi';
@@ -18,6 +19,7 @@ import Sidebar from '../components/Sidebar';
 import SwipeableIncidentsView from '../components/SwipeableIncidentsView';
 
 export default function Home() {
+  const t = useTranslations('Forms');
   // State to track sidebar collapse state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [appLoading, setAppLoading] = useState(true);
@@ -336,7 +338,7 @@ export default function Home() {
                         >
                           <FiArrowLeft className="w-5 h-5" />
                         </motion.button>
-                        <h1 className="text-lg font-semibold font-manrope text-white">Reportar Incidente</h1>
+                        <h1 className="text-lg font-semibold font-manrope text-white">{t('reportIncident')}</h1>
 
                       </div>
                   </div>

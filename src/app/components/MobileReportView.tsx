@@ -327,7 +327,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               <div>
                 <label className="block text-md text-gray-400 mb-1">
                   <FiCalendar className="inline w-3 h-3 mr-1" />
-                  Fecha
+                  {t('date')}
                 </label>
                 <input
                   type="date"
@@ -345,7 +345,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               <div>
                 <label className="block text-md text-gray-400 mb-1">
                   <FiClock className="inline w-3 h-3 mr-1" />
-                  Hora
+                  {t('time')}
                 </label>
                 <input
                   type="time"
@@ -367,7 +367,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <label className="flex items-center gap-2 my-4 text-md font-medium text-gray-300">
               <FiType className="w-4 h-4 text-green-400" />
-              Descripción del incidente
+              {t('incidentDescription')}
             </label>
             <textarea
               name="description"
@@ -394,9 +394,9 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, tags: [] }))}
                     className="flex items-center gap-1 text-xs bg-blue-500/20 hover:bg-red-500/20 text-blue-300 hover:text-red-300 px-2 py-0.5 rounded-full transition-colors"
-                    title="Deseleccionar todo"
+                    title={t('deselectAll')}
                   >
-                    <span>{formData.tags.length} seleccionado{formData.tags.length > 1 ? 's' : ''}</span>
+                    <span>{formData.tags.length} {formData.tags.length > 1 ? t('selectedPlural') : t('selectedSingular')}</span>
                     <FiX className="w-3 h-3" />
                   </button>
                 )}
@@ -476,7 +476,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
             <div className="flex items-center gap-2 my-4">
               <FiCamera className="w-4 h-4 text-pink-400" />
-              <h2 className="text-md font-medium text-gray-300">Evidencia <span className="text-xs text-gray-500">(opcional)</span></h2>
+              <h2 className="text-md font-medium text-gray-300">{t('evidence')} <span className="text-xs text-gray-500">{t('optional')}</span></h2>
             </div>
 
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -496,7 +496,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     <FiCamera className="w-6 h-6 text-gray-500 mb-1" />
                   )}
                   <p className="text-xs text-gray-400 text-center leading-tight">
-                    {formData.evidence.length > 0 ? 'Agregar' : 'Subir'}
+                    {formData.evidence.length > 0 ? t('add') : t('upload')}
                   </p>
                 </div>
                 <input
@@ -542,7 +542,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="rounded-lg my-4">
             <div className="flex items-center gap-2 mb-3">
               <FiMapPin className="w-4 h-4 text-purple-400" />
-              <h2 className="text-md font-medium text-gray-300">Ubicación del incidente</h2>
+              <h2 className="text-md font-medium text-gray-300">{t('incidentLocation')}</h2>
             </div>
 
             <div className="space-y-4">
@@ -762,10 +762,10 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     <FiAlertCircle className="w-8 h-8 text-blue-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-2">
-                    ¿Confirmar reporte?
+                    {t('confirmReport')}
                   </h3>
                   <p className="text-gray-300 text-sm">
-                    ¿Estás seguro de que querés enviar este reporte de incidente?
+                    {t('confirmReportMessage')}
                   </p>
                 </div>
 
@@ -845,7 +845,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     onClick={() => setShowDiscardModal(false)}
                     className="w-full py-3 px-4 bg-gray-600 hover:bg-gray-700 text-gray-200 rounded-lg font-medium transition-colors"
                   >
-                    Continuar editando
+                    {t('continueEditing')}
                   </button>
                 </div>
               </motion.div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,6 +12,7 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
   const error = searchParams.get('error');
+  const t = useTranslations('Auth');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +24,7 @@ function SignInForm() {
 
     // Validación básica
     if (!email || !password) {
-      setErrorMsg('Por favor complete todos los campos');
+      setErrorMsg(t('pleaseCompleteFields'));
       return;
     }
 
@@ -46,7 +48,7 @@ function SignInForm() {
       router.push(callbackUrl);
     } catch (error) {
       console.error('Error durante el inicio de sesión:', error);
-      setErrorMsg('Ocurrió un error inesperado');
+      setErrorMsg(t('unexpectedError'));
       setLoading(false);
     }
   };
@@ -73,10 +75,10 @@ function SignInForm() {
               />
             </div>
             <h2 className="text-2xl font-semibold text-gray-100 mb-2">
-              Iniciar sesión
+              {t('signInTitle')}
             </h2>
             <p className="text-gray-400 text-sm">
-              Accede a tu cuenta de seguridad
+              {t('signInSubtitle')}
             </p>
           </div>
                     {/* Mensajes de estado */}
@@ -87,10 +89,10 @@ function SignInForm() {
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span className="text-sm">{error === 'CredentialsSignin'
-                  ? 'Credenciales inválidas'
+                  ? t('invalidCredentials')
                   : error === 'AccessDenied'
-                  ? 'Tu cuenta está pendiente de aprobación'
-                  : errorMsg || 'Error al iniciar sesión'}</span>
+                  ? t('accountPending')
+                  : errorMsg || t('signInError')}</span>
               </div>
             </div>
           )}
@@ -101,7 +103,7 @@ function SignInForm() {
               {/* Email */}
               <div className="group">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  Email
+                  {t('email')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -118,7 +120,7 @@ function SignInForm() {
                     autoComplete="username"
                     required
                     className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
-                    placeholder="tu@email.com"
+                    placeholder={t('emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
@@ -129,7 +131,7 @@ function SignInForm() {
               {/* Contraseña */}
               <div className="group">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  Contraseña
+                  {t('password')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -146,7 +148,7 @@ function SignInForm() {
                     autoComplete="current-password"
                     required
                     className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
-                    placeholder="••••••••"
+                    placeholder={t('passwordPlaceholder')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
@@ -172,7 +174,7 @@ function SignInForm() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
                 )}
-                Iniciar sesión
+                {t('signInButton')}
               </button>
             </div>
         </form>
@@ -183,7 +185,7 @@ function SignInForm() {
               <div className="w-full border-t border-gray-700/50"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-gray-900/80 text-gray-400">O continúa con</span>
+              <span className="px-4 bg-gray-900/80 text-gray-400">{t('orContinueWith')}</span>
             </div>
           </div>
 
@@ -201,7 +203,7 @@ function SignInForm() {
                   <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
                 </g>
               </svg>
-              Continuar con Google
+              {t('continueWithGoogle')}
             </button>
           </div>
         </div>
@@ -209,9 +211,9 @@ function SignInForm() {
         {/* Enlace de registro */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-400">
-            ¿No tienes una cuenta?{' '}
+            {t('noAccount')}{' '}
             <Link href="/auth/signup" className="font-medium text-orange-400 hover:text-orange-300 transition-colors duration-200">
-              Regístrate aquí
+              {t('registerHere')}
             </Link>
           </p>
         </div>
@@ -220,34 +222,40 @@ function SignInForm() {
   );
 }
 
-export default function SignIn() {
+function SignInFallback() {
+  const t = useTranslations('Auth');
+
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900 py-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="max-w-md w-full relative z-10">
-          <div className="bg-gray-900/80 p-8 rounded-2xl shadow-2xl border border-gray-800/50">
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center mb-2">
-                <Image
-                  src="/icons/clari.svg"
-                  alt="Claridad Logo"
-                  width={180}
-                  height={180}
-                  className="h-28 w-28 object-contain"
-                  priority
-                />
-              </div>
-              <h2 className="text-2xl font-semibold text-gray-100 mb-2">
-                Cargando...
-              </h2>
-              <div className="flex justify-center mt-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
-              </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900 py-6 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="max-w-md w-full relative z-10">
+        <div className="bg-gray-900/80 p-8 rounded-2xl shadow-2xl border border-gray-800/50">
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center mb-2">
+              <Image
+                src="/icons/clari.svg"
+                alt="Claridad Logo"
+                width={180}
+                height={180}
+                className="h-28 w-28 object-contain"
+                priority
+              />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-100 mb-2">
+              {t('loading')}
+            </h2>
+            <div className="flex justify-center mt-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
             </div>
           </div>
         </div>
       </div>
-    }>
+    </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={<SignInFallback />}>
       <SignInForm />
     </Suspense>
   );

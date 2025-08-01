@@ -802,7 +802,11 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
 
                       <div className="flex-1">
                         <h2 className="text-xl font-bold text-white mb-1">
-                          {session.user.name || 'Usuario'}
+                          {(() => {
+                            console.log('Session user data:', session.user);
+                            console.log('Session user name:', session.user.name);
+                            return session.user.name || 'Usuario';
+                          })()}
                         </h2>
                         <div className="flex items-center space-x-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getRoleColor(session.user.role || 'user')}`}>

@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -6,6 +7,7 @@ import { useState } from 'react';
 
 export default function SignUp() {
   const router = useRouter();
+  const t = useTranslations('Auth');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,17 +26,17 @@ export default function SignUp() {
 
     // Validación básica
     if (!email || !password || !confirmPassword) {
-      setError('Por favor complete todos los campos');
+      setError(t('pleaseCompleteFields'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError(t('passwordsDontMatch'));
       return;
     }
 
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres');
+      setError(t('passwordTooShort'));
       return;
     }
 
@@ -50,11 +52,11 @@ export default function SignUp() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Error al registrar');
+        throw new Error(data.message || t('registrationError'));
       }
 
       // Registro exitoso
-      setSuccess(data.message || 'Registro exitoso. Tu cuenta está pendiente de aprobación por un administrador.');
+      setSuccess(data.message || t('registrationSuccess'));
       setEmail('');
       setPassword('');
       setConfirmPassword('');
@@ -72,7 +74,7 @@ export default function SignUp() {
         });
       }, 1000);
     } catch (error: Error | unknown) {
-      setError(error instanceof Error ? error.message : 'Ocurrió un error inesperado');
+      setError(error instanceof Error ? error.message : t('unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -96,10 +98,10 @@ export default function SignUp() {
               />
             </div>
             <h2 className="text-2xl font-semibold text-gray-100 mb-2">
-              Crear una cuenta
+              {t('signUpTitle')}
             </h2>
             <p className="text-gray-400 text-sm">
-              Únete a nuestra comunidad de seguridad
+              {t('signUpSubtitle')}
             </p>
           </div>
 
@@ -130,14 +132,14 @@ export default function SignUp() {
                       <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      <span>Redirigiendo a login en {redirectCountdown} segundos...</span>
+                      <span>{t('redirectingToLogin', { countdown: redirectCountdown })}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => router.push('/auth/signin')}
                       className="text-xs text-orange-400 hover:text-orange-300 underline transition-colors"
                     >
-                      Ir ahora
+                      {t('goNow')}
                     </button>
                   </div>
                 )}
@@ -152,7 +154,7 @@ export default function SignUp() {
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               <span className="text-sm font-medium">
-                Las cuentas nuevas requieren aprobación por parte de un administrador antes de poder acceder a la aplicación.
+                {t('approvalNotice')}
               </span>
             </div>
           </div>
@@ -163,14 +165,14 @@ export default function SignUp() {
               {/* Email */}
               <div className="group">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  Email
+                  {t('email')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className={`h-5 w-5 transition-all duration-300 ${
                       email ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' : 'text-gray-400 blur-sm group-focus-within:text-orange-400 group-focus-within:blur-none'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
                   </div>
                   <input
@@ -180,7 +182,7 @@ export default function SignUp() {
                     autoComplete="username"
                     required
                     className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
-                    placeholder="tu@email.com"
+                    placeholder={t('emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
@@ -191,7 +193,7 @@ export default function SignUp() {
               {/* Contraseña */}
               <div className="group">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  Contraseña
+                  {t('password')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -208,7 +210,7 @@ export default function SignUp() {
                     autoComplete="new-password"
                     required
                     className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder={t('passwordMinPlaceholder')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
@@ -219,7 +221,7 @@ export default function SignUp() {
               {/* Confirmar contraseña */}
               <div className="group">
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2 group-focus-within:text-orange-400 transition-colors">
-                  Confirmar contraseña
+                  {t('confirmPassword')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -236,7 +238,7 @@ export default function SignUp() {
                     autoComplete="new-password"
                     required
                     className="appearance-none relative block w-full pl-12 pr-4 py-4 border border-gray-700 bg-gray-800/50 text-white placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-300 sm:text-sm group-hover:border-gray-600"
-                    placeholder="Repite tu contraseña"
+                    placeholder={t('confirmPasswordPlaceholder')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={loading}
@@ -261,14 +263,14 @@ export default function SignUp() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Creando cuenta...</span>
+                    <span>{t('creatingAccount')}</span>
                   </>
                 ) : (
                   <>
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                     </svg>
-                    <span>Crear cuenta</span>
+                    <span>{t('createAccount')}</span>
                   </>
                 )}
               </button>
@@ -278,12 +280,12 @@ export default function SignUp() {
           {/* Enlace de login */}
           <div className="text-center mt-8 pt-6 border-t border-gray-800">
             <p className="text-sm text-gray-400">
-              ¿Ya tienes una cuenta?{' '}
+              {t('alreadyHaveAccount')}{' '}
               <Link
                 href="/auth/signin"
                 className="font-medium text-orange-400 hover:text-orange-300 transition-colors duration-200 hover:underline"
               >
-                Inicia sesión aquí
+                {t('signInHere')}
               </Link>
             </p>
           </div>

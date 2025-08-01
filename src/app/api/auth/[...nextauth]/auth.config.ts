@@ -11,6 +11,9 @@ import GoogleProvider from "next-auth/providers/google";
 declare module 'next-auth' {
   interface User {
     id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
     role: Role;
     enabled?: boolean;
     onboarded?: boolean;
@@ -43,6 +46,9 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
     role: Role;
     enabled?: boolean;
     onboarded?: boolean;
@@ -141,6 +147,9 @@ export const authOptions: NextAuthOptions = {
 
         // Actualizar el objeto user con los datos de la base de datos
         if (dbUser) {
+          user.name = dbUser.name || user.name;
+          user.email = dbUser.email || user.email;
+          user.image = dbUser.image || user.image;
           user.onboarded = dbUser.onboarded || dbUser.isOnboarded || false;
           user.enabled = dbUser.enabled;
           user.role = dbUser.role || getDefaultRole();
@@ -157,6 +166,9 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.image = user.image;
         token.role = user.role;
         token.enabled = user.enabled;
         token.onboarded = user.onboarded;
@@ -195,6 +207,9 @@ export const authOptions: NextAuthOptions = {
             });
 
             if (dbUser) {
+              token.name = dbUser.name || token.name;
+              token.email = dbUser.email || token.email;
+              token.image = dbUser.image || token.image;
               token.onboarded = dbUser.onboarded || dbUser.isOnboarded || false;
               token.enabled = dbUser.enabled;
               token.role = dbUser.role || token.role;
@@ -216,6 +231,9 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session?.user && token) {
         session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.image;
         session.user.role = token.role;
         session.user.enabled = token.enabled;
         session.user.onboarded = token.onboarded;

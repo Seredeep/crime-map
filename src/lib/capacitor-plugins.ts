@@ -6,36 +6,60 @@
  * de Capacitor para la aplicación Claridad.
  */
 
-import { App } from '@capacitor/app';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Capacitor } from '@capacitor/core';
-import { Geolocation } from '@capacitor/geolocation';
-import { Keyboard } from '@capacitor/keyboard';
-import { LocalNotifications } from '@capacitor/local-notifications';
+// Importaciones condicionales para evitar errores en el servidor
+let App: any;
+let Camera: any;
+let Capacitor: any;
+let Geolocation: any;
+let Keyboard: any;
+let LocalNotifications: any;
+let SplashScreen: any;
+let StatusBar: any;
 
-import { SplashScreen } from '@capacitor/splash-screen';
-import { StatusBar, Style } from '@capacitor/status-bar';
+// Solo importar en el cliente
+if (typeof window !== 'undefined') {
+  try {
+    App = require('@capacitor/app').App;
+    Camera = require('@capacitor/camera');
+    Capacitor = require('@capacitor/core').Capacitor;
+    Geolocation = require('@capacitor/geolocation').Geolocation;
+    Keyboard = require('@capacitor/keyboard').Keyboard;
+    LocalNotifications = require('@capacitor/local-notifications').LocalNotifications;
+    SplashScreen = require('@capacitor/splash-screen').SplashScreen;
+    StatusBar = require('@capacitor/status-bar').StatusBar;
+  } catch (error) {
+    console.warn('Capacitor plugins not available:', error);
+  }
+}
 
 // #region Utilidades de Plataforma
 export const isNativePlatform = () => {
+  if (!Capacitor) return false;
   return Capacitor.isNativePlatform();
 };
 
 export const getPlatform = () => {
+  if (!Capacitor) return 'web';
   return Capacitor.getPlatform();
 };
 
 export const isAndroid = () => {
+  if (!Capacitor) return false;
   return Capacitor.getPlatform() === 'android';
 };
 
 export const isIOS = () => {
+  if (!Capacitor) return false;
   return Capacitor.getPlatform() === 'ios';
 };
 // #endregion
 
 // #region Configuración de Geolocalización
 export const getCurrentPosition = async () => {
+  if (!Geolocation) {
+    throw new Error('Geolocation not available');
+  }
+
   try {
     const permissions = await Geolocation.checkPermissions();
 
@@ -63,6 +87,11 @@ export const getCurrentPosition = async () => {
 };
 
 export const watchPosition = (callback: (position: any) => void) => {
+  if (!Geolocation) {
+    console.warn('Geolocation not available');
+    return null;
+  }
+
   return Geolocation.watchPosition({
     enableHighAccuracy: true,
     timeout: 10000,
@@ -72,12 +101,16 @@ export const watchPosition = (callback: (position: any) => void) => {
 
 // #region Configuración de Cámara
 export const takePhoto = async () => {
+  if (!Camera) {
+    throw new Error('Camera not available');
+  }
+
   try {
     const image = await Camera.getPhoto({
       quality: 90,
       allowEditing: false,
-      resultType: CameraResultType.Uri,
-      source: CameraSource.Camera,
+      resultType: Camera.CameraResultType.Uri,
+      source: Camera.CameraSource.Camera,
     });
 
     return image;
@@ -88,12 +121,16 @@ export const takePhoto = async () => {
 };
 
 export const pickImage = async () => {
+  if (!Camera) {
+    throw new Error('Camera not available');
+  }
+
   try {
     const image = await Camera.getPhoto({
       quality: 90,
       allowEditing: false,
-      resultType: CameraResultType.Uri,
-      source: CameraSource.Photos,
+      resultType: Camera.CameraResultType.Uri,
+      source: Camera.CameraSource.Photos,
     });
 
     return image;
@@ -106,100 +143,97 @@ export const pickImage = async () => {
 
 // #region Configuración de Status Bar
 export const configureStatusBar = async () => {
-  if (isNativePlatform()) {
-    try {
-      await StatusBar.setStyle({ style: Style.Dark });
-      await StatusBar.setBackgroundColor({ color: '#040910' });
-    } catch (error) {
-      console.error('Error configurando status bar:', error);
-    }
+  if (!isNativePlatform() || !StatusBar) return;
+
+  try {
+    await StatusBar.setStyle({ style: StatusBar.Style.Dark });
+    await StatusBar.setBackgroundColor({ color: '#040910' });
+  } catch (error) {
+    console.error('Error configurando status bar:', error);
   }
 };
 // #endregion
 
 // #region Configuración de Teclado
 export const configureKeyboard = () => {
-  if (isNativePlatform()) {
-    Keyboard.addListener('keyboardWillShow', (info) => {
-      document.body.style.setProperty('--keyboard-height', `${info.keyboardHeight}px`);
-    });
+  if (!isNativePlatform() || !Keyboard) return;
 
-    Keyboard.addListener('keyboardWillHide', () => {
-      document.body.style.setProperty('--keyboard-height', '0px');
-    });
-  }
+  Keyboard.addListener('keyboardWillShow', (info: any) => {
+    document.body.style.setProperty('--keyboard-height', `${info.keyboardHeight}px`);
+  });
+
+  Keyboard.addListener('keyboardWillHide', () => {
+    document.body.style.setProperty('--keyboard-height', '0px');
+  });
 };
 // #endregion
 
 // #region Configuración de App
 export const configureApp = () => {
-  if (isNativePlatform()) {
-    App.addListener('appStateChange', ({ isActive }) => {
-      console.log('App state changed. Is active?', isActive);
-    });
+  if (!isNativePlatform() || !App) return;
 
-    App.addListener('backButton', ({ canGoBack }) => {
-      if (!canGoBack) {
-        App.exitApp();
-      } else {
-        window.history.back();
-      }
-    });
-  }
+  App.addListener('appStateChange', ({ isActive }: any) => {
+    console.log('App state changed. Is active?', isActive);
+  });
+
+  App.addListener('backButton', ({ canGoBack }: any) => {
+    if (!canGoBack) {
+      App.exitApp();
+    } else {
+      window.history.back();
+    }
+  });
 };
 // #endregion
 
 // #region Configuración de Splash Screen
 export const hideSplashScreen = async () => {
-  if (isNativePlatform()) {
-    try {
-      await SplashScreen.hide();
-    } catch (error) {
-      console.error('Error ocultando splash screen:', error);
-    }
+  if (!isNativePlatform() || !SplashScreen) return;
+
+  try {
+    await SplashScreen.hide();
+  } catch (error) {
+    console.error('Error ocultando splash screen:', error);
   }
 };
 // #endregion
 
 // #region Configuración de Notificaciones Locales
 export const scheduleLocalNotification = async (title: string, body: string, id: number = 1) => {
-  if (isNativePlatform()) {
-    try {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            title,
-            body,
-            id,
-            schedule: { at: new Date(Date.now() + 1000 * 5) }, // 5 segundos
-            sound: 'beep.wav',
-            attachments: undefined,
-            actionTypeId: '',
-            extra: null,
-          },
-        ],
-      });
-    } catch (error) {
-      console.error('Error programando notificación local:', error);
-    }
+  if (!isNativePlatform() || !LocalNotifications) return;
+
+  try {
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title,
+          body,
+          id,
+          schedule: { at: new Date(Date.now() + 1000 * 5) }, // 5 segundos
+          sound: 'beep.wav',
+          attachments: undefined,
+          actionTypeId: '',
+          extra: null,
+        },
+      ],
+    });
+  } catch (error) {
+    console.error('Error programando notificación local:', error);
   }
 };
 
 export const configureLocalNotifications = async () => {
-  if (isNativePlatform()) {
-    try {
-      const permissions = await LocalNotifications.checkPermissions();
-      if (permissions.display !== 'granted') {
-        await LocalNotifications.requestPermissions();
-      }
-    } catch (error) {
-      console.error('Error configurando notificaciones locales:', error);
+  if (!isNativePlatform() || !LocalNotifications) return;
+
+  try {
+    const permissions = await LocalNotifications.checkPermissions();
+    if (permissions.display !== 'granted') {
+      await LocalNotifications.requestPermissions();
     }
+  } catch (error) {
+    console.error('Error configurando notificaciones locales:', error);
   }
 };
-// #endregion
-
-
 // #endregion
 
 // #region Función de Inicialización

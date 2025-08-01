@@ -15,6 +15,7 @@ interface MobileSettingsPanelProps {
 const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
   const { data: session, status } = useSession();
   const t = useTranslations('Settings');
+  const authT = useTranslations('Auth');
 
   // Prevenir scroll del body cuando el panel está abierto
   useEffect(() => {
@@ -183,7 +184,7 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
                     className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200"
                   >
                     <FiLogIn className="w-5 h-5" />
-                    <span className="font-medium">Iniciar Sesión</span>
+                    <span className="font-medium">{authT('signIn')}</span>
                   </Link>
                   <Link
                     href="/auth/signup"
@@ -191,7 +192,7 @@ const MobileSettingsPanel = ({ isOpen, onClose }: MobileSettingsPanelProps) => {
                     className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-gray-600/50"
                   >
                     <FiUser className="w-5 h-5" />
-                    <span className="font-medium">Registrarse</span>
+                    <span className="font-medium">{authT('signUp')}</span>
                   </Link>
                 </div>
               )}
