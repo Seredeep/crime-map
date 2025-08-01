@@ -8,7 +8,6 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
-import MobileExploreCommunitiesView from './MobileExploreCommunitiesView';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
 // NO IMPORTAR firestore AQUÍ. firestore es para el backend.
 // #endregion
@@ -290,15 +289,12 @@ const MobileCommunitiesView = () => {
                   {t('myNeighborhood')}
                 </button>
                 <button
-                  onClick={() => handleTabChange('explore')}
-                  className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === 'explore'
-                      ? 'bg-gray-600 text-white shadow-lg'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }`}
+                  disabled
+                  className="flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 bg-gray-700/30 text-gray-500 cursor-not-allowed opacity-60"
                 >
                   <FiCompass className="w-4 h-4 mx-auto mb-1" />
                   {t('explore')}
+                  <div className="text-xs text-gray-400 mt-1">Not available in demo</div>
                 </button>
               </div>
             </div>
@@ -356,7 +352,22 @@ const MobileCommunitiesView = () => {
               )}
 
               {activeTab === 'explore' && (
-                <MobileExploreCommunitiesView className="w-full h-full" />
+                <div className="p-6">
+                  <div className="text-center py-16 bg-gray-800 rounded-2xl p-5 shadow-lg border border-gray-700/50">
+                    <div className="w-24 h-24 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-600/50">
+                      <FiCompass className="w-12 h-12 text-gray-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-200 mb-3">
+                      Explore Feature Disabled
+                    </h3>
+                    <p className="text-gray-400 text-base max-w-sm mx-auto leading-relaxed mb-6">
+                      This feature is currently disabled for the demo. In the full version, you will be able to explore and join other neighborhood communities.
+                    </p>
+                    <div className="text-xs text-gray-500 bg-gray-700/30 rounded-lg px-4 py-2 inline-block">
+                      Coming soon in the full release
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
             {/* #endregion */}

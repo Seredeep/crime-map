@@ -7,26 +7,26 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  FiAlertTriangle,
-  FiBell,
-  FiCamera,
-  FiCheckCircle,
-  FiChevronRight,
-  FiClock,
-  FiHelpCircle,
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-  FiSmartphone,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-  FiZap
+    FiAlertTriangle,
+    FiBell,
+    FiCamera,
+    FiCheckCircle,
+    FiChevronRight,
+    FiClock,
+    FiHelpCircle,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiSmartphone,
+    FiUser,
+    FiUsers,
+    FiXCircle,
+    FiZap
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
-interface MobileProfileViewProps {
+interface MobileSettingsViewProps {
   className?: string;
 }
 
@@ -53,7 +53,7 @@ const Toast = ({ message, type, onHide }: { message: string; type: 'success' | '
   );
 };
 
-const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
+const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
   const { data: session, update } = useSession();
   const t = useTranslations('Profile');
   const configT = useTranslations('ConfigSections');
@@ -1069,4 +1069,4 @@ const MobileProfileView = ({ className = '' }: MobileProfileViewProps) => {
   );
 };
 
-export default MobileProfileView;
+export default MobileSettingsView;
