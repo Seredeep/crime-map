@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       email,
       password: hashedPassword,
       role: getDefaultRole(),
-      enabled: false, // Usuario deshabilitado por defecto
+      enabled: true, // Usuario habilitado por defecto
       createdAt: new Date(),
       // Los campos `name`, `onboarded` y `chatId` se manejarán en el onboarding
     });
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       email,
       password: hashedPassword, // Considerar si Firebase Auth maneja las contraseñas
       role: getDefaultRole(),
-      enabled: false, // Usuario deshabilitado por defecto
+      enabled: true, // Usuario habilitado por defecto
       createdAt: new Date(),
       onboarded: false, // Nuevo campo para indicar si el usuario ha completado el onboarding
       chatId: null, // Nuevo campo para almacenar el chatId del barrio

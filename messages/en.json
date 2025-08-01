@@ -64,7 +64,7 @@
     "registrationSuccess": "Registration successful. Your account is pending approval by an administrator.",
     "creatingAccount": "Creating account...",
     "createAccount": "Create account",
-    "redirectingToLogin": "Redirecting to login in {countdown} seconds...",
+    "redirectingToLogin": "Redirecting to claridad.ar in {countdown} seconds...",
     "goNow": "Go now",
     "approvalNotice": "New accounts require approval by an administrator before accessing the application.",
     "alreadyHaveAccount": "Already have an account?",

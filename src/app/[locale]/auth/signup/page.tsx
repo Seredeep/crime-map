@@ -65,7 +65,7 @@ export default function SignUp() {
       setConfirmPassword('');
 
       // Iniciar contador de redirección
-      setRedirectCountdown(10);
+      setRedirectCountdown(2);
       const countdownInterval = setInterval(() => {
         setRedirectCountdown((prev) => {
           if (prev <= 1) {

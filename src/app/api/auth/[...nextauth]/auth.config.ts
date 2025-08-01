@@ -85,7 +85,7 @@ export const authOptions: NextAuthOptions = {
           email: profile.email,
           image: profile.picture,
           role: getDefaultRole(),
-          enabled: false,
+          enabled: true,
         };
       },
     }),
