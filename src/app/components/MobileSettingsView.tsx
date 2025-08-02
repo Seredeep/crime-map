@@ -7,23 +7,23 @@ import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  FiAlertTriangle,
-  FiBell,
-  FiCamera,
-  FiCheckCircle,
-  FiChevronLeft,
-  FiChevronRight,
-  FiClock,
-  FiHelpCircle,
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-  FiSmartphone,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-  FiZap,
+    FiAlertTriangle,
+    FiBell,
+    FiCamera,
+    FiCheckCircle,
+    FiChevronLeft,
+    FiChevronRight,
+    FiClock,
+    FiHelpCircle,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiSmartphone,
+    FiUser,
+    FiUsers,
+    FiXCircle,
+    FiZap,
 } from 'react-icons/fi'
 import IncidentQueue from './IncidentQueue'
 
@@ -131,11 +131,11 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       }>
     ) => {
       if (isSaving) {
-        console.log('Intento de guardar mientras ya se está guardando.')
+        console.log('Attempt to save while already saving.')
         return
       }
       setIsSaving(true)
-      console.log('Iniciando guardado de configuración...')
+      console.log('Starting configuration save...')
 
       const fullSettings = {
         notificationsEnabled,
@@ -143,7 +143,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
         autoLocationEnabled,
         ...newSettings,
       }
-      console.log('Configuración a enviar:', fullSettings)
+      console.log('Configuration to send:', fullSettings)
 
       try {
         const response = await fetch('/api/user/settings', {
@@ -163,9 +163,9 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
           )
         }
 
-        console.log('Configuración guardada en la API. Actualizando sesión...')
+        console.log('Configuration saved in API. Updating session...')
         await update(fullSettings)
-        console.log('Sesión actualizada.')
+        console.log('Session updated.')
         showToast(configT('configurationSaved'), 'success')
       } catch (error) {
         console.error('Error al guardar la configuración:', error)
@@ -183,7 +183,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
         }
       } finally {
         setIsSaving(false)
-        console.log('Finalizado el intento de guardado de configuración.')
+        console.log('Configuration save attempt finished.')
       }
     },
     [
@@ -223,22 +223,22 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
 
     if (newValue) {
       if ('geolocation' in navigator) {
-        console.log('Solicitando permiso de geolocalización...')
+        console.log('Requesting geolocation permission...')
         navigator.geolocation.getCurrentPosition(
           () => {
-            console.log('Permiso de ubicación concedido.')
+            console.log('Location permission granted.')
             showToast(configT('locationActivated'), 'success')
             handleSettingChange({ autoLocationEnabled: true })
           },
           () => {
-            console.log('Permiso de ubicación denegado.')
+            console.log('Location permission denied.')
             showToast(configT('locationPermissionDenied'), 'error')
             setAutoLocationEnabled(false)
             handleSettingChange({ autoLocationEnabled: false })
           }
         )
       } else {
-        console.log('Geolocalización no soportada.')
+        console.log('Geolocation not supported.')
         showToast(configT('geolocationNotSupported'), 'error')
         setAutoLocationEnabled(false)
       }
@@ -256,7 +256,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       setProfileImagePreview(previewUrl)
       console.log('Generated image preview URL (blob):', previewUrl)
     } else {
-      console.log('Ningún archivo de imagen seleccionado.')
+      console.log('No image file selected.')
       setProfileImageFile(null)
       setProfileImagePreview(session?.user?.profileImage || null)
     }
@@ -304,7 +304,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       }
 
       const result = await response.json()
-      console.log('Imagen subida con éxito. Resultado:', result)
+      console.log('Image uploaded successfully. Result:', result)
       showToast(configT('imageUpdated'), 'success')
       console.log(
         'Actualizando sesión con nueva URL de imagen:',
@@ -323,7 +323,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
         'error'
       )
       setProfileImagePreview(session?.user?.profileImage || null)
-      console.log('Estado de previsualización de imagen revertido tras error.')
+      console.log('Image preview state reverted after error.')
     } finally {
       setIsSaving(false)
       console.log('Finalizado el intento de subida de imagen.')

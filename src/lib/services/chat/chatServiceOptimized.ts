@@ -178,7 +178,7 @@ class ChatServiceOptimized {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`🚨 Mensaje de pánico enviado via API: ${data.data.messageId}`);
+        console.log(`🚨 Panic message sent via API: ${data.data.messageId}`);
         return data.success;
       }
       return false;
@@ -191,7 +191,7 @@ class ChatServiceOptimized {
   // *** MÉTODOS DE TYPING Y ONLINE STATUS (PENDIENTES DE MIGRAR A FIRESTORE) ***
 
   async startTyping() {
-    // console.log(`⌨️ ${this.userName} está escribiendo...`);
+    // console.log(`⌨️ ${this.userName} is typing...`);
     if (!this.chatId || !this.userId) return;
     try {
       await fetch('/api/chat/typing', {
@@ -210,7 +210,7 @@ class ChatServiceOptimized {
   }
 
   async stopTyping() {
-    // console.log(`⌨️ ${this.userName} dejó de escribir.`);
+    // console.log(`⌨️ ${this.userName} stopped typing.`);
     if (!this.chatId || !this.userId) return;
     try {
       await fetch('/api/chat/typing', {

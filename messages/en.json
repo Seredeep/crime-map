@@ -185,7 +185,8 @@
   "Panic": {
     "panic": "Panic",
     "alert": "ALERT!",
-    "panicButton": "⚠️ Panic button"
+    "panicButton": "⚠️ Panic button",
+    "panicAlert": "PANIC ALERT!"
   },
     "Sidebar": {
     "map": "Map",

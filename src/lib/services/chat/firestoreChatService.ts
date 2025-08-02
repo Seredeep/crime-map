@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import { firestore } from '../../config/db/firebase';
 import { User } from '../../types/global';
-import { FirestoreChat, FirestoreMessage, ChatWithParticipants} from './types';
+import { ChatWithParticipants, FirestoreChat, FirestoreMessage } from './types';
 
 /**
  * Obtiene el chat de un usuario desde Firestore
@@ -55,7 +55,7 @@ export async function getUserChatFromFirestore(userEmail: string): Promise<ChatW
         // Actualizar el chatId en el documento del usuario para futuras búsquedas
         await firestore.collection('users').doc(userId).update({ chatId: correctChatId });
       } else {
-        console.log(`No se encontró ningún chat para el barrio: ${userData.neighborhood}`);
+        console.log(`No chat found for neighborhood: ${userData.neighborhood}`);
         return null;
       }
     }

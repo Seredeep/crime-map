@@ -30,7 +30,7 @@ export default function SessionRefresh() {
           if (data.success && data.user) {
             // Solo actualizar si hay diferencias importantes
             if (session.user.onboarded !== data.user.onboarded) {
-              console.log('🔄 Actualizando sesión - onboarded:', data.user.onboarded);
+              console.log('🔄 Updating session - onboarded:', data.user.onboarded);
               await update({
                 onboarded: data.user.onboarded,
                 enabled: data.user.enabled,

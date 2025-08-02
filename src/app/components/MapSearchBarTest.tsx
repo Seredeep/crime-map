@@ -20,7 +20,7 @@ export default function MapSearchBarTest() {
     setSelectedIncidentId(null);
     setSearchHistory(prev => [...prev, `📍 ${address}`]);
 
-    console.log('📍 Ubicación seleccionada:', {
+    console.log('📍 Selected location:', {
       address,
       coordinates,
       latitude: coordinates[1],

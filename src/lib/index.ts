@@ -7,13 +7,13 @@
  * configuraciones y utilidades.
  */
 
-// #region Exportaciones de Configuración
+// #region Configuration Exports
 export * from './config';
 // #endregion
 
 // #region Exportaciones de Tipos Globales
 export * from './types/global';
-// Re-exportar UserRole explícitamente desde config para evitar ambigüedad
+// Re-export UserRole explicitly from config to avoid ambiguity
 export type { UserRole } from './config';
 // #endregion
 

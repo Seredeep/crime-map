@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       updatedAt: new Date()
     });
 
-    console.log(`🚨 MENSAJE DE PÁNICO ENVIADO - ${userData.neighborhood}:`, {
+    console.log(`🚨 PANIC MESSAGE SENT - ${userData.neighborhood}:`, {
       user: `${userData.name} ${userData.surname}`,
       chatId: userData.chatId,
       messageId: messageRef.id,

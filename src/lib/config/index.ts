@@ -7,21 +7,21 @@
  * de forma organizada y centralizada.
  */
 
-// #region Exportaciones de Configuración de Aplicación
+// #region Application Configuration Exports
 export {
     API_ENDPOINTS, APP_CONFIG, DATE_FORMATS, INCIDENT_SEVERITY, INCIDENT_STATUS, MAP_CONFIG, TIME_RANGES, UPLOAD_CONFIG, USER_ROLES
 } from './app';
 export type { UserRole } from './app';
 // #endregion
 
-// #region Exportaciones de Configuración de UI
+// #region UI Configuration Exports
 export {
     CAROUSEL_CONFIG,
     GRID_CONFIG, INCIDENT_COLORS, MESSAGES, TIME_CONFIG
 } from './ui';
 // #endregion
 
-// #region Exportaciones de Configuración de Validación
+// #region Validation Configuration Exports
 export {
     COMMON_TAGS, FORM_LIMITS, VALIDATION_RULES
 } from './validation';

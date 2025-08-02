@@ -8,5 +8,6 @@
 // Exportar utilidades de formateo
 export * from './formatting/dateTime';
 
-// Exportar utilidades de criptografía
+// Export cryptography utilities
 export * from './crypto/password';
+

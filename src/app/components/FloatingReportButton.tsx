@@ -153,7 +153,7 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
             style={{ borderRadius: '22px' }}
           />
 
-          {/* Texto "Reportar" con efecto de glow */}
+          {/* "Report" text with glow effect */}
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -205,7 +205,7 @@ const FloatingReportButton = ({ onClick, isVisible = true, className }: Floating
             `
           }}
         >
-          <span className="text-red-300 font-semibold">¡Reportar incidente!</span>
+                        <span className="text-red-300 font-semibold">Report incident!</span>
           <div
             className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-3 h-3 rotate-45"
             style={{

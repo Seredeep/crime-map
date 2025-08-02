@@ -78,7 +78,7 @@ export function useChatOptimized() {
           setLoading(true);
           setError(null);
 
-          console.log('🚀 Inicializando chat optimizado con caché...');
+          console.log('🚀 Initializing optimized chat with cache...');
 
           await chatServiceOptimized.initialize(
             session.user.id,
@@ -198,7 +198,7 @@ export function useChatOptimized() {
   const clearCache = useCallback((type?: 'messages' | 'chatInfo' | 'typing' | 'online' | 'all') => {
     simpleChatCache.clearCache(type);
     setCacheStats(chatServiceOptimized.getCacheStats());
-    console.log(`🗑️ Caché limpiado: ${type || 'all'}`);
+    console.log(`🗑️ Cache cleared: ${type || 'all'}`);
   }, []);
 
   // Estadísticas memoizadas

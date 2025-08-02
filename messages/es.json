@@ -185,7 +185,8 @@
   "Panic": {
     "panic": "Pánico",
     "alert": "¡ALERTA!",
-    "panicButton": "⚠️ Botón de pánico"
+    "panicButton": "⚠️ Botón de pánico",
+    "panicAlert": "¡ALERTA DE PÁNICO!"
   },
     "Sidebar": {
     "map": "Mapa",
