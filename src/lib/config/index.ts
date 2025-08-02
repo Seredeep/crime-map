@@ -17,7 +17,7 @@ export type { UserRole } from './app';
 // #region UI Configuration Exports
 export {
     CAROUSEL_CONFIG,
-    GRID_CONFIG, INCIDENT_COLORS, MESSAGES, TIME_CONFIG
+    GRID_CONFIG, INCIDENT_COLORS, MESSAGES, TIME_CONFIG, getUIMessages
 } from './ui';
 // #endregion
 

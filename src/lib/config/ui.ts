@@ -172,7 +172,32 @@ export const TIME_CONFIG = {
 
 // #region System Messages
 /**
- * System error and success messages
+ * Función para obtener mensajes del sistema traducidos
+ * @param t - Función de traducción de next-intl
+ * @returns Objeto con mensajes traducidos
+ */
+export const getUIMessages = (t: (key: string) => string) => ({
+  ERRORS: {
+    DESCRIPTION_REQUIRED: t('errors.descriptionRequired'),
+    LOCATION_REQUIRED: t('errors.locationRequired'),
+    TAGS_REQUIRED: t('errors.tagsRequired'),
+    SUBMIT_ERROR: t('errors.submitError'),
+    NETWORK_ERROR: t('errors.networkError')
+  },
+  SUCCESS: {
+    INCIDENT_REPORTED: t('success.incidentReported'),
+    FORM_SUBMITTED: t('success.formSubmitted')
+  },
+  INFO: {
+    LOADING: t('info.loading'),
+    SUBMITTING: t('info.submitting'),
+    PROCESSING: t('info.processing')
+  }
+});
+
+/**
+ * @deprecated Usar getUIMessages() en su lugar
+ * Mensajes hardcodeados (mantenidos para compatibilidad)
  */
 export const MESSAGES = {
   ERRORS: {
