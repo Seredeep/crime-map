@@ -5,7 +5,7 @@
  * Servicios para manejo de geocodificación, mapas y ubicaciones
  */
 
-// Exportar todo del servicio de geocodificación
+// Export everything from geocoding service
 export * from './geocoding';
 
 // Exportar tipos

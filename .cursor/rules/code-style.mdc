@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+# Code Style Guidelines
+
+## Language Requirements
+
+- **All code must be written in English**: This includes variable names, function names, class names, comments, and documentation
+- **Comments must be in English**: Even if the user communicates in Spanish, all code comments should be written in English
+- **User communication**: While users may ask questions in Spanish and receive Spanish responses in chat, every piece of code output must be in English
+
+## Localization
+
+- **No hardcoded user-facing text**: This project uses localization, so any text that will be displayed to users should never be hardcoded in the source code
+- **Use localization references**: Instead of hardcoded strings, create or update entries in the localization files (`messages/en.json`, `messages/es.json`, etc.) and reference them in the code
+- **Localization file updates**: When adding new user-facing text, update the appropriate localization files and use the localization key in the component/code

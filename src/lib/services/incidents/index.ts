@@ -15,7 +15,7 @@ export type { IncidentType } from './types';
 export type { IncidentTypeFilters } from './utils';
 // #endregion
 
-// #region Exportaciones de Configuración
+// #region Configuration Exports
 export {
     CURRENT_REGION, INCIDENT_FILTER_CONFIG,
     INCIDENT_SEARCH_CONFIG, LEGACY_COMMON_TAGS
@@ -27,23 +27,23 @@ export {
 
     // Constantes de conveniencia
     ACTIVE_INCIDENT_TYPES, areValidIncidentTypeIds,
-    // Funciones de filtrado y búsqueda
+    // Filtering and search functions
     filterIncidentTypes, getActiveIncidentTypeById, getActiveIncidentTypes, getCombinedColorClasses,
     // Funciones de estilos
     getIncidentColorClasses, getIncidentTypeById, getIncidentTypeClasses, getIncidentTypesByCategory, getIncidentTypesByPriority,
-    // Funciones de obtención
+    // Getter functions
     getIncidentTypesForRegion,
-    // Funciones de estadísticas
+    // Statistics functions
     getIncidentTypesStats, getInvalidIncidentTypeIds, getUrgentIncidentTypes,
     // Funciones de agrupamiento
     groupIncidentTypesByCategory,
     groupIncidentTypesByColor,
     groupIncidentTypesByPriority, isValidActiveIncidentTypeId,
-    // Funciones de validación
+    // Validation functions
     isValidIncidentTypeId, searchIncidentTypes
 } from './utils';
 // #endregion
 
-// #region Exportación por Defecto
+// #region Default Export
 export { default } from './utils';
 // #endregion

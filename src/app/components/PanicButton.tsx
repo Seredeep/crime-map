@@ -60,23 +60,23 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
         console.error('❌ Geolocalización no soportada por este navegador');
         // No mostrar alert aquí ya que el botón está en estado alerting
       } else {
-        console.log('🔍 Solicitando permisos de ubicación...');
+        console.log('🔍 Requesting location permissions...');
 
         // Verificar permisos primero
         try {
           const permission = await navigator.permissions.query({ name: 'geolocation' });
-          console.log('📋 Estado de permisos de geolocalización:', permission.state);
+          console.log('📋 Geolocation permission status:', permission.state);
         } catch (permissionError) {
           console.log('⚠️ No se pudo verificar permisos:', permissionError);
         }
 
         // Intentar obtener ubicación con alta precisión
         try {
-          console.log('🎯 Obteniendo ubicación de alta precisión...');
+          console.log('🎯 Getting high precision location...');
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
               (pos) => {
-                console.log('✅ Ubicación obtenida exitosamente');
+                console.log('✅ Location obtained successfully');
                 resolve(pos);
               },
               (error) => {
@@ -105,13 +105,13 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             const geoResponse = await reverseGeocode(location.lat, location.lng);
             if (geoResponse.features && geoResponse.features.length > 0) {
               formattedAddress = formatAddress(geoResponse.features[0]);
-              console.log(`📍 Dirección obtenida: ${formattedAddress}`);
+              console.log(`📍 Address obtained: ${formattedAddress}`);
             }
           } catch (geoError) {
             console.error('❌ Error en geocodificación inversa:', geoError);
           }
 
-          console.log(`📍 Ubicación GPS obtenida:`, {
+          console.log(`📍 GPS location obtained:`, {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
             accuracy: `${position.coords.accuracy}m`,
@@ -123,7 +123,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
 
           // Intentar fallback sin mostrar alerts (el botón está en modo alerting)
           if (error.code === 3) { // TIMEOUT
-            console.log('⏱️ Timeout en alta precisión, intentando fallback...');
+            console.log('⏱️ High precision timeout, trying fallback...');
 
             try {
               const fallbackPosition = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -151,13 +151,13 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                 const geoResponse = await reverseGeocode(location.lat, location.lng);
                 if (geoResponse.features && geoResponse.features.length > 0) {
                   formattedAddress = formatAddress(geoResponse.features[0]);
-                  console.log(`📍 Dirección fallback obtenida: ${formattedAddress}`);
+                  console.log(`📍 Fallback address obtained: ${formattedAddress}`);
                 }
               } catch (geoError) {
                 console.error('❌ Error en geocodificación inversa para fallback:', geoError);
               }
 
-              console.log(`📍 Ubicación fallback obtenida con precisión de ${fallbackPosition.coords.accuracy}m`);
+              console.log(`📍 Fallback location obtained with ${fallbackPosition.coords.accuracy}m accuracy`);
 
             } catch (fallbackError) {
               console.error('❌ También falló el fallback:', fallbackError);

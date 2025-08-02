@@ -16,21 +16,59 @@ let LocalNotifications: any;
 let SplashScreen: any;
 let StatusBar: any;
 
-// Solo importar en el cliente
-if (typeof window !== 'undefined') {
+// Initialize plugins asynchronously on client side
+let pluginsInitialized = false;
+
+const initializePlugins = async () => {
+  if (typeof window === 'undefined' || pluginsInitialized) return;
+
   try {
-    App = require('@capacitor/app').App;
-    Camera = require('@capacitor/camera');
-    Capacitor = require('@capacitor/core').Capacitor;
-    Geolocation = require('@capacitor/geolocation').Geolocation;
-    Keyboard = require('@capacitor/keyboard').Keyboard;
-    LocalNotifications = require('@capacitor/local-notifications').LocalNotifications;
-    SplashScreen = require('@capacitor/splash-screen').SplashScreen;
-    StatusBar = require('@capacitor/status-bar').StatusBar;
+    const [
+      { App: AppPlugin },
+      camera,
+      { Capacitor: CapacitorPlugin },
+      { Geolocation: GeolocationPlugin },
+      { Keyboard: KeyboardPlugin },
+      { LocalNotifications: LocalNotificationsPlugin },
+      { SplashScreen: SplashScreenPlugin },
+      { StatusBar: StatusBarPlugin }
+    ] = await Promise.all([
+      import('@capacitor/app'),
+      import('@capacitor/camera'),
+      import('@capacitor/core'),
+      import('@capacitor/geolocation'),
+      import('@capacitor/keyboard'),
+      import('@capacitor/local-notifications'),
+      import('@capacitor/splash-screen'),
+      import('@capacitor/status-bar')
+    ]);
+
+    App = AppPlugin;
+    Camera = camera;
+    Capacitor = CapacitorPlugin;
+    Geolocation = GeolocationPlugin;
+    Keyboard = KeyboardPlugin;
+    LocalNotifications = LocalNotificationsPlugin;
+    SplashScreen = SplashScreenPlugin;
+    StatusBar = StatusBarPlugin;
+
+    pluginsInitialized = true;
   } catch (error) {
     console.warn('Capacitor plugins not available:', error);
   }
+};
+
+// Initialize plugins on client side
+if (typeof window !== 'undefined') {
+  initializePlugins();
 }
+
+// Helper function to ensure plugins are loaded
+const ensurePluginsLoaded = async () => {
+  if (!pluginsInitialized) {
+    await initializePlugins();
+  }
+};
 
 // #region Utilidades de Plataforma
 export const isNativePlatform = () => {
@@ -54,8 +92,10 @@ export const isIOS = () => {
 };
 // #endregion
 
-// #region Configuración de Geolocalización
+// #region Geolocation Configuration
 export const getCurrentPosition = async () => {
+  await ensurePluginsLoaded();
+
   if (!Geolocation) {
     throw new Error('Geolocation not available');
   }
@@ -86,7 +126,9 @@ export const getCurrentPosition = async () => {
   }
 };
 
-export const watchPosition = (callback: (position: any) => void) => {
+export const watchPosition = async (callback: (position: any) => void) => {
+  await ensurePluginsLoaded();
+
   if (!Geolocation) {
     console.warn('Geolocation not available');
     return null;
@@ -99,8 +141,10 @@ export const watchPosition = (callback: (position: any) => void) => {
 };
 // #endregion
 
-// #region Configuración de Cámara
+// #region Camera Configuration
 export const takePhoto = async () => {
+  await ensurePluginsLoaded();
+
   if (!Camera) {
     throw new Error('Camera not available');
   }
@@ -121,6 +165,8 @@ export const takePhoto = async () => {
 };
 
 export const pickImage = async () => {
+  await ensurePluginsLoaded();
+
   if (!Camera) {
     throw new Error('Camera not available');
   }
@@ -141,7 +187,7 @@ export const pickImage = async () => {
 };
 // #endregion
 
-// #region Configuración de Status Bar
+// #region Status Bar Configuration
 export const configureStatusBar = async () => {
   if (!isNativePlatform() || !StatusBar) return;
 
@@ -154,7 +200,7 @@ export const configureStatusBar = async () => {
 };
 // #endregion
 
-// #region Configuración de Teclado
+// #region Keyboard Configuration
 export const configureKeyboard = () => {
   if (!isNativePlatform() || !Keyboard) return;
 
@@ -168,7 +214,7 @@ export const configureKeyboard = () => {
 };
 // #endregion
 
-// #region Configuración de App
+// #region App Configuration
 export const configureApp = () => {
   if (!isNativePlatform() || !App) return;
 
@@ -186,7 +232,7 @@ export const configureApp = () => {
 };
 // #endregion
 
-// #region Configuración de Splash Screen
+// #region Splash Screen Configuration
 export const hideSplashScreen = async () => {
   if (!isNativePlatform() || !SplashScreen) return;
 
@@ -198,7 +244,7 @@ export const hideSplashScreen = async () => {
 };
 // #endregion
 
-// #region Configuración de Notificaciones Locales
+// #region Local Notifications Configuration
 export const scheduleLocalNotification = async (title: string, body: string, id: number = 1) => {
   if (!isNativePlatform() || !LocalNotifications) return;
 
@@ -236,8 +282,11 @@ export const configureLocalNotifications = async () => {
 };
 // #endregion
 
-// #region Función de Inicialización
+// #region Initialization Function
 export const initializeCapacitorPlugins = async () => {
+  // Ensure plugins are loaded first
+  await initializePlugins();
+
   if (isNativePlatform()) {
     try {
       await configureStatusBar();

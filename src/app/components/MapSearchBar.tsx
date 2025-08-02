@@ -81,7 +81,7 @@ const MapSearchBar = ({
       console.error('❌ Error searching addresses:', error);
       return [];
     }
-  }, [userLocation]);
+  }, [userLocation, t]);
 
   // Función para buscar incidentes con filtros
   const searchIncidents = useCallback(async (query: string): Promise<SearchResult[]> => {

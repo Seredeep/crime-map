@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       metadata
     );
 
-    console.log(`🚨 ALERTA DE PÁNICO COMPLETA - Barrio ${neighborhood}:`, {
+    console.log(`🚨 COMPLETE PANIC ALERT - Neighborhood ${neighborhood}:`, {
       user: userName || session.user.name,
       hasGPS: !!location,
       gpsLocation: metadata.gpsLocation,

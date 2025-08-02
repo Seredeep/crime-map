@@ -11,8 +11,9 @@ export * from './incidents';
 // Servicios de chat
 export * from './chat';
 
-// Servicios geográficos
+// Geographic services
 export * from './geo';
 
 // Servicios de barrios
 export * from './neighborhoods';
+

@@ -101,11 +101,11 @@ export function logChatValidation(user: {
 }): void {
   const validation = validateUserChatConfiguration(user);
 
-  console.log(`🔍 Validación de chat para ${user.email || 'usuario desconocido'}:`);
+  console.log(`🔍 Chat validation for ${user.email || 'unknown user'}:`);
   console.log(`   Barrio: ${user.neighborhood || 'No asignado'}`);
   console.log(`   ChatId: ${user.chatId || 'No asignado'}`);
   console.log(`   Onboarded: ${user.onboarded || false}`);
-  console.log(`   Válido: ${validation.isValid ? '✅' : '❌'}`);
+  console.log(`   Valid: ${validation.isValid ? '✅' : '❌'}`);
 
   if (!validation.isValid) {
     console.log(`   Problemas: ${validation.issues.join(', ')}`);

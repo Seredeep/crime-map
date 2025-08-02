@@ -1,21 +1,21 @@
 // src/lib/utils/chatFormatting.ts
 
 /**
- * Formatea un mensaje de chat con sangrías y estructura visual
+ * Formats a chat message with indentation and visual structure
  */
 export function formatChatMessage(message: string): string {
-  // Detectar si es un mensaje estructurado (con emojis y listas)
+  // Detect if it's a structured message (with emojis and lists)
   if (message.includes('📱') || message.includes('📊') || message.includes('✅')) {
     return formatStructuredMessage(message);
   }
 
-  // Detectar si es un mensaje de alerta
-  if (message.includes('🚨') || message.includes('ALERTA')) {
+  // Detect if it's an alert message
+  if (message.includes('🚨') || message.includes('ALERTA') || message.includes('ALERT')) {
     return formatAlertMessage(message);
   }
 
-  // Detectar si es un mensaje de estadísticas
-  if (message.includes('📊') || message.includes('ESTADÍSTICAS')) {
+  // Detect if it's a statistics message
+  if (message.includes('📊') || message.includes('ESTADÍSTICAS') || message.includes('STATISTICS')) {
     return formatStatsMessage(message);
   }
 
@@ -23,7 +23,7 @@ export function formatChatMessage(message: string): string {
 }
 
 /**
- * Formatea mensajes estructurados con listas y secciones
+ * Formats structured messages with lists and sections
  */
 function formatStructuredMessage(message: string): string {
   const lines = message.split('\n');
@@ -37,43 +37,43 @@ function formatStructuredMessage(message: string): string {
       continue;
     }
 
-    // Títulos principales (con emoji al inicio)
+    // Main titles (with emoji at the beginning)
     if (line.match(/^[🚨📱📊✅❌⚠️🎉🔧👥🔍💡]/)) {
       formattedLines.push(`\n${line}`);
       continue;
     }
 
-    // Secciones con títulos (como "AVAILABLE FEATURES:", "SYSTEM STATUS:")
+    // Sections with titles (like "AVAILABLE FEATURES:", "SYSTEM STATUS:")
     if (line.match(/^[A-Z\s]+:$/)) {
       formattedLines.push(`\n${line}`);
       continue;
     }
 
-    // Elementos de lista con bullet points
+    // List items with bullet points
     if (line.match(/^[•\-]/)) {
       formattedLines.push(`    ${line}`);
       continue;
     }
 
-    // Elementos de lista con checkmarks
+    // List items with checkmarks
     if (line.match(/^✅/)) {
       formattedLines.push(`    ${line}`);
       continue;
     }
 
-    // Elementos de lista con emoji
+    // List items with emoji
     if (line.match(/^[📱🔔📊⏱️📍🎯🔧]/)) {
       formattedLines.push(`    ${line}`);
       continue;
     }
 
-    // Preguntas o llamadas a la acción
+    // Questions or calls to action
     if (line.includes('?')) {
       formattedLines.push(`\n${line}`);
       continue;
     }
 
-    // Líneas normales
+    // Normal lines
     formattedLines.push(line);
   }
 
@@ -81,7 +81,7 @@ function formatStructuredMessage(message: string): string {
 }
 
 /**
- * Formatea mensajes de alerta
+ * Formats alert messages
  */
 function formatAlertMessage(message: string): string {
   const lines = message.split('\n');
@@ -95,37 +95,37 @@ function formatAlertMessage(message: string): string {
       continue;
     }
 
-    // Título de alerta
-    if (trimmedLine.includes('ALERTA')) {
+    // Alert title
+    if (trimmedLine.includes('ALERTA') || trimmedLine.includes('ALERT')) {
       formattedLines.push(`\n🚨 ${trimmedLine.replace('🚨', '').trim()}`);
       continue;
     }
 
-    // Información de ubicación
-    if (trimmedLine.includes('📍') || trimmedLine.includes('Ubicación')) {
+    // Location information
+    if (trimmedLine.includes('📍') || trimmedLine.includes('Ubicación') || trimmedLine.includes('Location')) {
       formattedLines.push(`  📍 ${trimmedLine.replace('📍', '').trim()}`);
       continue;
     }
 
-    // Información de tiempo
-    if (trimmedLine.includes('⏰') || trimmedLine.includes('Hora')) {
+    // Time information
+    if (trimmedLine.includes('⏰') || trimmedLine.includes('Hora') || trimmedLine.includes('Time')) {
       formattedLines.push(`  ⏰ ${trimmedLine.replace('⏰', '').trim()}`);
       continue;
     }
 
-    // Información de reporte
-    if (trimmedLine.includes('📱') || trimmedLine.includes('Reportado')) {
+    // Report information
+    if (trimmedLine.includes('📱') || trimmedLine.includes('Reportado') || trimmedLine.includes('Reported')) {
       formattedLines.push(`  📱 ${trimmedLine.replace('📱', '').trim()}`);
       continue;
     }
 
-    // Estados del sistema
+    // System status
     if (trimmedLine.includes('✅')) {
       formattedLines.push(`    ✅ ${trimmedLine.replace('✅', '').trim()}`);
       continue;
     }
 
-    // Líneas normales
+    // Normal lines
     formattedLines.push(line);
   }
 
@@ -133,7 +133,7 @@ function formatAlertMessage(message: string): string {
 }
 
 /**
- * Formatea mensajes de estadísticas
+ * Formats statistics messages
  */
 function formatStatsMessage(message: string): string {
   const lines = message.split('\n');
@@ -147,55 +147,55 @@ function formatStatsMessage(message: string): string {
       continue;
     }
 
-    // Título de estadísticas
-    if (trimmedLine.includes('📊') && trimmedLine.includes('ESTADÍSTICAS')) {
+    // Statistics title
+    if (trimmedLine.includes('📊') && (trimmedLine.includes('ESTADÍSTICAS') || trimmedLine.includes('STATISTICS'))) {
       formattedLines.push(`\n📊 ${trimmedLine.replace('📊', '').trim()}`);
       continue;
     }
 
-    // Información de período
-    if (trimmedLine.includes('📅') || trimmedLine.includes('Período')) {
+    // Period information
+    if (trimmedLine.includes('📅') || trimmedLine.includes('Período') || trimmedLine.includes('Period')) {
       formattedLines.push(`  📅 ${trimmedLine.replace('📅', '').trim()}`);
       continue;
     }
 
-    // Información de participantes
-    if (trimmedLine.includes('👥') || trimmedLine.includes('Participantes')) {
+    // Participants information
+    if (trimmedLine.includes('👥') || trimmedLine.includes('Participantes') || trimmedLine.includes('Participants')) {
       formattedLines.push(`  👥 ${trimmedLine.replace('👥', '').trim()}`);
       continue;
     }
 
-    // Desglose por tipo
-    if (trimmedLine.includes('🔍') || trimmedLine.includes('DESGLOSE')) {
+    // Breakdown by type
+    if (trimmedLine.includes('🔍') || trimmedLine.includes('DESGLOSE') || trimmedLine.includes('BREAKDOWN')) {
       formattedLines.push(`\n  🔍 ${trimmedLine.replace('🔍', '').trim()}`);
       continue;
     }
 
-    // Elementos de desglose
+    // Breakdown elements
     if (trimmedLine.includes('•') && (trimmedLine.includes('incidentes') || trimmedLine.includes(':'))) {
       formattedLines.push(`    ${trimmedLine}`);
       continue;
     }
 
-    // Zonas afectadas
-    if (trimmedLine.includes('📍') || trimmedLine.includes('ZONAS')) {
+    // Affected zones
+    if (trimmedLine.includes('📍') || trimmedLine.includes('ZONAS') || trimmedLine.includes('ZONES')) {
       formattedLines.push(`\n  📍 ${trimmedLine.replace('📍', '').trim()}`);
       continue;
     }
 
-    // Tiempo de respuesta
-    if (trimmedLine.includes('⏱️') || trimmedLine.includes('TIEMPO')) {
+    // Response time
+    if (trimmedLine.includes('⏱️') || trimmedLine.includes('TIEMPO') || trimmedLine.includes('TIME')) {
       formattedLines.push(`  ⏱️ ${trimmedLine.replace('⏱️', '').trim()}`);
       continue;
     }
 
-    // Recomendaciones
-    if (trimmedLine.includes('💡') || trimmedLine.includes('RECOMENDACIONES')) {
+    // Recommendations
+    if (trimmedLine.includes('💡') || trimmedLine.includes('RECOMENDACIONES') || trimmedLine.includes('RECOMMENDATIONS')) {
       formattedLines.push(`\n  💡 ${trimmedLine.replace('💡', '').trim()}`);
       continue;
     }
 
-    // Líneas normales
+    // Normal lines
     formattedLines.push(line);
   }
 
@@ -203,83 +203,83 @@ function formatStatsMessage(message: string): string {
 }
 
 /**
- * Crea un mensaje de presentación del sistema bien formateado
+ * Creates a well-formatted system presentation message
  */
 export function createSystemPresentationMessage(): string {
-  return `🚨 SISTEMA DE SEGURIDAD CIUDADANA - ZACAGNINI JOSE MANUEL
+  return `🚨 CITIZEN SECURITY SYSTEM - ZACAGNINI JOSE MANUEL
 
-¡Hola vecinos! 👋
+Hello neighbors! 👋
 
-Este es el chat oficial de nuestro barrio para reportar incidentes y mantenernos informados sobre la seguridad de nuestra comunidad.
+This is the official chat of our neighborhood to report incidents and stay informed about the security of our community.
 
-📱 FUNCIONALIDADES DISPONIBLES:
-  • Reportar incidentes en tiempo real
-  • Botón de pánico para emergencias
-  • Estadísticas del barrio
-  • Mapa interactivo de incidentes
-  • Notificaciones automáticas
+📱 AVAILABLE FEATURES:
+  • Report incidents in real time
+  • Panic button for emergencies
+  • Neighborhood statistics
+  • Interactive incident map
+  • Automatic notifications
 
-✅ ESTADO DEL SISTEMA:
-  ✅ Chat funcionando correctamente
-  ✅ 3 participantes activos
-  ✅ Notificaciones habilitadas
-  ✅ Mapa actualizado
+✅ SYSTEM STATUS:
+  ✅ Chat working correctly
+  ✅ 3 active participants
+  ✅ Notifications enabled
+  ✅ Map updated
 
-📊 ESTADÍSTICAS RECIENTES:
-  • Incidentes reportados este mes: 12
-  • Tiempo promedio de respuesta: 3 min
-  • Vecinos activos: 3/15
+📊 RECENT STATISTICS:
+  • Incidents reported this month: 12
+  • Average response time: 3 min
+  • Active neighbors: 3/15
 
-¿Alguien tiene alguna pregunta sobre cómo usar el sistema? 🤔`;
+Does anyone have any questions about how to use the system? 🤔`;
 }
 
 /**
- * Crea un mensaje de alerta de prueba bien formateado
+ * Creates a well-formatted test alert message
  */
 export function createTestAlertMessage(): string {
-  return `🚨 ALERTA DE PRUEBA - NO ES UNA EMERGENCIA REAL
+  return `🚨 TEST ALERT - NOT A REAL EMERGENCY
 
-  📍 Ubicación: Manzana 15, Lote 8
-  ⏰ Hora: ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-  📱 Reportado por: Valentin (Admin)
+  📍 Location: Block 15, Lot 8
+  ⏰ Time: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+  📱 Reported by: Valentin (Admin)
 
-Este es un mensaje de prueba para verificar el funcionamiento del sistema de alertas.
+This is a test message to verify the alert system functionality.
 
-    ✅ Sistema funcionando correctamente
-    ✅ Notificaciones enviadas a todos los participantes
-    ✅ Ubicación registrada en el mapa
+    ✅ System working correctly
+    ✅ Notifications sent to all participants
+    ✅ Location registered on the map
 
-En caso de emergencia real, usa el botón de pánico rojo en la aplicación.
+In case of real emergency, use the red panic button in the application.
 
-Gracias por tu atención. 🙏`;
+Thank you for your attention. 🙏`;
 }
 
 /**
- * Crea un mensaje de estadísticas bien formateado
+ * Creates a well-formatted statistics message
  */
 export function createStatsMessage(): string {
-  return `📊 REPORTE SEMANAL - ZACAGNINI JOSE MANUEL
+  return `📊 WEEKLY REPORT - ZACAGNINI JOSE MANUEL
 
-  📅 Período: 20-26 de Julio 2025
-  👥 Participantes activos: 3
-  📈 Incidentes reportados: 5
+  📅 Period: July 20-26, 2025
+  👥 Active participants: 3
+  📈 Incidents reported: 5
 
-  🔍 DESGLOSE POR TIPO:
-    • Robo: 2 incidentes
-    • Vandalismo: 1 incidente
-    • Sospechoso: 1 incidente
-    • Otros: 1 incidente
+  🔍 BREAKDOWN BY TYPE:
+    • Robbery: 2 incidents
+    • Vandalism: 1 incident
+    • Suspicious: 1 incident
+    • Others: 1 incident
 
-  📍 ZONAS MÁS AFECTADAS:
-    • Manzana 12-15: 3 incidentes
-    • Manzana 8-11: 2 incidentes
+  📍 MOST AFFECTED ZONES:
+    • Block 12-15: 3 incidents
+    • Block 8-11: 2 incidents
 
-  ⏱️ TIEMPO PROMEDIO DE RESPUESTA: 2.5 minutos
+  ⏱️ AVERAGE RESPONSE TIME: 2.5 minutes
 
-  💡 RECOMENDACIONES:
-    • Mantener luces encendidas por la noche
-    • Reportar cualquier actividad sospechosa
-    • Usar el botón de pánico en emergencias
+  💡 RECOMMENDATIONS:
+    • Keep lights on at night
+    • Report any suspicious activity
+    • Use the panic button in emergencies
 
-¡Sigamos cuidando nuestro barrio! 🏘️`;
+Let's keep taking care of our neighborhood! 🏘️`;
 }

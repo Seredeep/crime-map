@@ -1,10 +1,10 @@
 /**
- * TIPOS ESPECÍFICOS DE INCIDENTES
- * ===============================
+ * SPECIFIC INCIDENT TYPES
+ * =======================
  *
- * Este archivo contiene todas las definiciones de tipos específicos
- * para el sistema de incidentes, incluyendo configuraciones regionales
- * y definiciones de tipos de incidentes.
+ * This file contains all specific type definitions
+ * for the incident system, including regional configurations
+ * and incident type definitions.
  */
 
 import {
@@ -29,32 +29,32 @@ import {
 } from 'react-icons/md';
 
 
-// #region Definición de Tipo de Incidente
+// #region Incident Type Definition
 /**
- * Definición completa de un tipo de incidente
+ * Complete definition of an incident type
  */
 export interface IncidentType {
-  /** Identificador único del tipo de incidente */
+  /** Unique identifier for the incident type */
   id: string;
-  /** Nombre legible del tipo de incidente */
+  /** Human-readable name of the incident type */
   label: string;
-  /** Componente de icono de React */
+  /** React icon component */
   icon: React.ComponentType<any>;
-  /** Color temático para UI */
+  /** Theme color for UI */
   color: IncidentColor;
-  /** Descripción detallada del tipo (opcional) */
+  /** Detailed description of the type (optional) */
   description?: string;
-  /** Nivel de prioridad (1=baja, 5=crítica) */
+  /** Priority level (1=low, 5=critical) */
   priority: 1 | 2 | 3 | 4 | 5;
-  /** Si requiere intervención inmediata */
+  /** Whether it requires immediate intervention */
   urgent: boolean;
-  /** Categoría general del incidente */
+  /** General category of the incident */
   category: IncidentCategory;
 }
 
-// #region Tipos Base para Incidentes
+// #region Base Types for Incidents
 /**
- * Colores disponibles para tipos de incidentes
+ * Available colors for incident types
  */
 export type IncidentColor =
   | 'red' | 'orange' | 'yellow' | 'blue'
@@ -63,14 +63,14 @@ export type IncidentColor =
   | 'rose' | 'emerald' | 'amber' | 'lime';
 
 /**
- * Categorías generales de incidentes
+ * General incident categories
  */
 export type IncidentCategory =
   | 'violence' | 'theft' | 'property' | 'suspicious'
   | 'traffic' | 'disturbance' | 'emergency' | 'other';
 
 /**
- * Estados posibles de un incidente
+ * Possible incident states
  */
 export type IncidentStatus = 'pending' | 'verified' | 'resolved';
 
@@ -102,97 +102,97 @@ export interface IncidentFilters {
 
 // #endregion
 
-// #region Tipos de Incidentes Base
+// #region Base Incident Types
 /**
- * Tipos de incidentes base - comunes a todas las regiones
+ * Base incident types - common to all regions
  */
 export const BASE_INCIDENT_TYPES: IncidentType[] = [
   {
     id: 'amenaza',
-    label: 'Amenaza',
+    label: 'Threat',
     icon: FiAlertTriangle,
     color: 'yellow',
-    description: 'Intimidación o amenaza verbal o escrita',
+    description: 'Verbal or written intimidation or threat',
     priority: 3,
     urgent: false,
     category: 'violence'
   },
   {
     id: 'asalto',
-    label: 'Asalto',
+    label: 'Assault',
     icon: FiShield,
     color: 'red',
-    description: 'Ataque físico o amenaza directa a personas',
+    description: 'Physical attack or direct threat to people',
     priority: 5,
     urgent: true,
     category: 'violence'
   },
   {
     id: 'disturbio',
-    label: 'Disturbio',
+    label: 'Disturbance',
     icon: FiVolumeX,
     color: 'amber',
-    description: 'Alteración del orden público o ruidos molestos',
+    description: 'Public order disruption or disturbing noises',
     priority: 2,
     urgent: false,
     category: 'disturbance'
   },
   {
     id: 'hurto',
-    label: 'Hurto',
+    label: 'Theft',
     icon: MdOutlineDirectionsRun,
     color: 'orange',
-    description: 'Sustracción de bienes sin violencia',
+    description: 'Theft of goods without violence',
     priority: 3,
     urgent: false,
     category: 'theft'
   },
   {
     id: 'otro',
-    label: 'Otro',
+    label: 'Other',
     icon: FiHelpCircle,
     color: 'gray',
-    description: 'Otros tipos de incidentes no categorizados',
+    description: 'Other types of uncategorized incidents',
     priority: 1,
     urgent: false,
     category: 'other'
   },
   {
     id: 'robo',
-    label: 'Robo',
+    label: 'Robbery',
     icon: FiLock,
     color: 'rose',
-    description: 'Sustracción de bienes con violencia o intimidación',
+    description: 'Theft of goods with violence or intimidation',
     priority: 4,
     urgent: true,
     category: 'theft'
   },
   {
     id: 'sospechoso',
-    label: 'Actividad Sospechosa',
+    label: 'Suspicious Activity',
     icon: FiEye,
     color: 'pink',
-    description: 'Comportamiento o situación que genera sospecha',
+    description: 'Behavior or situation that raises suspicion',
     priority: 2,
     urgent: false,
     category: 'suspicious'
   },
   {
     id: 'vandalismo',
-    label: 'Vandalismo',
+    label: 'Vandalism',
     icon: FiTool,
     color: 'violet',
-    description: 'Daños intencionales a propiedad pública o privada',
+    description: 'Intentional damage to public or private property',
     priority: 2,
     urgent: false,
     category: 'property'
   },
   {
     id: 'violencia',
-    label: 'Violencia',
+    label: 'Violence',
     icon: FiZap,
     color: 'indigo',
-    description: 'Actos violentos o agresiones físicas',
+    description: 'Violent acts or physical aggressions',
     priority: 5,
     urgent: true,
     category: 'violence'
@@ -200,9 +200,9 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
 ];
 // #endregion
 
-// #region Tipos de Incidentes Regionales
+// #region Regional Incident Types
 /**
- * Tipos de incidentes específicos para Argentina
+ * Argentina-specific incident types
  */
 export const ARGENTINA_INCIDENT_TYPES: IncidentType[] = [
   ...BASE_INCIDENT_TYPES,
@@ -211,7 +211,7 @@ export const ARGENTINA_INCIDENT_TYPES: IncidentType[] = [
     label: 'Motochorro',
     icon: MdOutlineDirectionsBike,
     color: 'emerald',
-    description: 'Robo realizado desde motocicleta',
+    description: 'Robbery carried out from motorcycle',
     priority: 5,
     urgent: true,
     category: 'theft'
@@ -219,26 +219,26 @@ export const ARGENTINA_INCIDENT_TYPES: IncidentType[] = [
 ];
 
 /**
- * Tipos de incidentes específicos para México
+ * Mexico-specific incident types
  */
 export const MEXICO_INCIDENT_TYPES: IncidentType[] = [
   ...BASE_INCIDENT_TYPES,
   {
     id: 'secuestro_express',
-    label: 'Secuestro Express',
+    label: 'Express Kidnapping',
     icon: BiSolidCar,
     color: 'indigo',
-    description: 'Secuestro de corta duración para extorsión',
+    description: 'Short-duration kidnapping for extortion',
     priority: 5,
     urgent: true,
     category: 'violence'
   },
   {
     id: 'extorsion',
-    label: 'Extorsión',
+    label: 'Extortion',
     icon: FiPhone,
     color: 'teal',
-    description: 'Amenazas para obtener dinero o beneficios',
+    description: 'Threats to obtain money or benefits',
     priority: 4,
     urgent: true,
     category: 'violence'
@@ -246,26 +246,26 @@ export const MEXICO_INCIDENT_TYPES: IncidentType[] = [
 ];
 
 /**
- * Tipos de incidentes específicos para Colombia
+ * Colombia-specific incident types
  */
 export const COLOMBIA_INCIDENT_TYPES: IncidentType[] = [
   ...BASE_INCIDENT_TYPES,
   {
     id: 'atraco',
-    label: 'Atraco',
+    label: 'Armed Robbery',
     icon: GiRevolver,
     color: 'pink',
-    description: 'Robo a mano armada',
+    description: 'Armed robbery',
     priority: 5,
     urgent: true,
     category: 'theft'
   },
   {
     id: 'cosquilleo',
-    label: 'Cosquilleo',
+    label: 'Pickpocketing',
     icon: MdOutlinePersonSearch,
     color: 'lime',
-    description: 'Hurto mediante distracción o engaño',
+    description: 'Theft through distraction or deception',
     priority: 3,
     urgent: false,
     category: 'theft'
@@ -273,7 +273,7 @@ export const COLOMBIA_INCIDENT_TYPES: IncidentType[] = [
 ];
 
 /**
- * Tipos de incidentes específicos para Chile
+ * Chile-specific incident types
  */
 export const CHILE_INCIDENT_TYPES: IncidentType[] = [
   ...BASE_INCIDENT_TYPES,
@@ -282,17 +282,17 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
     label: 'Lanza',
     icon: FiTarget,
     color: 'yellow',
-    description: 'Hurto especializado y sigiloso',
+    description: 'Specialized and stealthy theft',
     priority: 3,
     urgent: false,
     category: 'theft'
   },
   {
     id: 'portonazo',
-    label: 'Portonazo',
+    label: 'Home Invasion Robbery',
     icon: FiLock,
     color: 'purple',
-    description: 'Robo al ingresar a domicilio',
+    description: 'Robbery when entering home',
     priority: 4,
     urgent: true,
     category: 'theft'
@@ -302,14 +302,14 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
 
 
 /**
- * Regiones disponibles para configuración
+ * Available regions for configuration
  */
 export type Region = 'argentina' | 'mexico' | 'colombia' | 'chile' | 'general';
 
 
-// #region Mapa de Regiones
+// #region Region Map
 /**
- * Mapa de regiones a sus tipos de incidentes correspondientes
+ * Map of regions to their corresponding incident types
  */
 export const REGION_INCIDENT_TYPES: Record<Region, IncidentType[]> = {
   argentina: ARGENTINA_INCIDENT_TYPES,

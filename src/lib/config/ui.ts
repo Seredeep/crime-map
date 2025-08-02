@@ -1,18 +1,17 @@
 /**
- * CONFIGURACIÓN DE INTERFAZ DE USUARIO
- * ====================================
+ * USER INTERFACE CONFIGURATION
+ * ============================
  *
- * Este archivo centraliza toda la configuración relacionada con la interfaz
- * de usuario, incluyendo colores, estilos, configuraciones de componentes
- * y mensajes del sistema.
+ * This file centralizes all user interface related configuration,
+ * including colors, styles, component configurations and system messages.
  */
 
 import { IncidentColor } from '../services/incidents/types';
 
-// #region Configuración de Colores para Incidentes
+// #region Incident Color Configuration
 /**
- * Configuración de colores para tipos de incidentes
- * Incluye clases CSS para bordes, fondos, texto y hover
+ * Color configuration for incident types
+ * Includes CSS classes for borders, backgrounds, text and hover states
  */
 export const INCIDENT_COLORS: Record<IncidentColor, {
   border: string;
@@ -119,78 +118,78 @@ export const INCIDENT_COLORS: Record<IncidentColor, {
 } as const;
 // #endregion
 
-// #region Configuración de Carrusel
+// #region Carousel Configuration
 /**
- * Configuración de animaciones para el carrusel de incidentes
+ * Animation configuration for the incident carousel
  */
 export const CAROUSEL_CONFIG = {
-  /** Velocidad de scroll automático (unidades por frame) */
+  /** Auto-scroll speed (units per frame) */
   SCROLL_SPEED: 0.3,
-  /** Intervalo de actualización en milisegundos */
+  /** Update interval in milliseconds */
   SCROLL_INTERVAL: 60,
-  /** Duración de transición en segundos */
+  /** Transition duration in seconds */
   TRANSITION_DURATION: 0.6,
-  /** Número de copias del carrusel */
+  /** Number of carousel copies */
   CAROUSEL_COPIES: 3,
-  /** Espaciado entre elementos */
+  /** Spacing between elements */
   ELEMENT_SPACING: 12
 } as const;
 // #endregion
 
-// #region Configuración de Grid
+// #region Grid Configuration
 /**
- * Configuración de la vista grid de incidentes
+ * Configuration for the incident grid view
  */
 export const GRID_CONFIG = {
-  /** Número de columnas en la vista grid */
+  /** Number of columns in grid view */
   COLUMNS: 2,
-  /** Espaciado entre elementos */
+  /** Spacing between elements */
   GAP: 4,
-  /** Altura de los botones en la vista grid */
+  /** Button height in grid view */
   BUTTON_HEIGHT: 20,
-  /** Altura de los botones en el carrusel */
+  /** Button height in carousel */
   CAROUSEL_BUTTON_HEIGHT: 16,
-  /** Ancho de los botones en el carrusel */
+  /** Button width in carousel */
   CAROUSEL_BUTTON_WIDTH: 20
 } as const;
 // #endregion
 
-// #region Configuración de Tiempo
+// #region Time Configuration
 /**
- * Configuraciones relacionadas con tiempo y fechas
+ * Time and date related configurations
  */
 export const TIME_CONFIG = {
-  /** Tiempo de espera antes de redirigir después de envío exitoso (ms) */
+  /** Wait time before redirect after successful submission (ms) */
   REDIRECT_DELAY: 2000,
-  /** Tiempo de pausa del carrusel al seleccionar elemento (ms) */
+  /** Carousel pause duration when selecting element (ms) */
   CAROUSEL_PAUSE_DURATION: 1000,
-  /** Formato de fecha por defecto */
+  /** Default date format */
   DATE_FORMAT: 'yyyy-MM-dd',
-  /** Formato de hora por defecto */
+  /** Default time format */
   TIME_FORMAT: 'HH:mm'
 } as const;
 // #endregion
 
-// #region Mensajes del Sistema
+// #region System Messages
 /**
- * Mensajes de error y éxito del sistema
+ * System error and success messages
  */
 export const MESSAGES = {
   ERRORS: {
-    DESCRIPTION_REQUIRED: 'La descripción es obligatoria',
-    LOCATION_REQUIRED: 'Por favor selecciona una ubicación válida',
-    TAGS_REQUIRED: 'Selecciona al menos un tipo de incidente',
-    SUBMIT_ERROR: 'Error al reportar el incidente',
-    NETWORK_ERROR: 'Error de conexión. Por favor intenta nuevamente.'
+    DESCRIPTION_REQUIRED: 'Description is required',
+    LOCATION_REQUIRED: 'Please select a valid location',
+    TAGS_REQUIRED: 'Select at least one incident type',
+    SUBMIT_ERROR: 'Error reporting the incident',
+    NETWORK_ERROR: 'Connection error. Please try again.'
   },
   SUCCESS: {
-    INCIDENT_REPORTED: 'Incidente reportado exitosamente',
-    FORM_SUBMITTED: 'Formulario enviado correctamente'
+    INCIDENT_REPORTED: 'Incident reported successfully',
+    FORM_SUBMITTED: 'Form submitted correctly'
   },
   INFO: {
-    LOADING: 'Cargando...',
-    SUBMITTING: 'Enviando...',
-    PROCESSING: 'Procesando...'
+    LOADING: 'Loading...',
+    SUBMITTING: 'Submitting...',
+    PROCESSING: 'Processing...'
   }
 } as const;
 // #endregion

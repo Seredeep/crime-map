@@ -229,7 +229,7 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
                     {message.type === 'panic' ? (
                       <div className="flex items-center space-x-2 text-red-100 mb-1">
                         <FiAlertTriangle className="w-4 h-4" />
-                        <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
+                        <span className="font-semibold">{t('panicAlert') || '¡PANIC ALERT!'}</span>
                       </div>
                     ) : null}
                     <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
@@ -237,7 +237,7 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
                         <div>
                           <div className="text-xs text-gray-500 mb-2">
                             DEBUG: Longitud del mensaje: {message.message.length} |
-                            Contiene \n: {message.message.includes('\n') ? 'SÍ' : 'NO'} |
+                            Contains \n: {message.message.includes('\n') ? 'YES' : 'NO'} |
                             Primeros 100 chars: {JSON.stringify(message.message.substring(0, 100))}
                           </div>
                           <div className="whitespace-pre-wrap">

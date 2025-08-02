@@ -4,7 +4,7 @@ import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
 import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  List
+    List
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -77,7 +77,7 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
     }
 
     loadNeighborhoods();
-  }, []);
+  }, [t]);
 
   // Handle neighborhood selection change - memoized
   const handleNeighborhoodChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {

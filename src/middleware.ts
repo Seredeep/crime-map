@@ -9,7 +9,7 @@ const intlMiddleware = createMiddleware(routing);
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Definir rutas públicas que no requieren autenticación
+  // Define public routes that don't require authentication
   const publicRoutes = [
     '/api/auth',
     '/api/register',
@@ -18,17 +18,17 @@ export async function middleware(request: NextRequest) {
     '/api/geocode'
   ];
 
-  // Verificar si es una ruta pública (API)
+  // Check if it's a public route (API)
   const isPublicApiRoute = publicRoutes.some(route =>
     pathname.startsWith(route) || pathname === route
   );
 
-  // Si es una ruta de API pública, permitir acceso directo sin i18n
+  // If it's a public API route, allow direct access without i18n
   if (isPublicApiRoute) {
     return NextResponse.next();
   }
 
-  // Redirigir la raíz a /en/ por defecto
+  // Redirect root to /en/ by default
   if (pathname === '/') {
     return NextResponse.redirect(new URL('/en/', request.url));
   }
@@ -46,26 +46,26 @@ export async function middleware(request: NextRequest) {
     const locale = request.nextUrl.pathname.split('/')[1];
     const pathnameWithoutLocale = request.nextUrl.pathname.slice(locale.length + 1) || '/';
 
-    // Verificar rutas de autenticación con locale
+    // Check authentication routes with locale
     const isAuthPage = pathnameWithoutLocale.startsWith('/auth');
     const isOnboardingPage = pathnameWithoutLocale === '/onboarding' || pathnameWithoutLocale === '/onboarding/';
 
-    // Si es página de auth u onboarding, permitir acceso
+    // If it's auth or onboarding page, allow access
     if (isAuthPage || isOnboardingPage) {
       return intlResponse || NextResponse.next();
     }
 
-    // Verificar autenticación para páginas protegidas
+    // Check authentication for protected pages
     const token = await getToken({ req: request });
 
-    // Si no hay token y no está en página de auth, redirigir a signin
+    // If no token and not on auth page, redirect to signin
     if (!token && !isAuthPage) {
       const url = new URL(`/${locale}/auth/signin`, request.url);
       url.searchParams.set('callbackUrl', request.nextUrl.pathname);
       return NextResponse.redirect(url);
     }
 
-    // Si está autenticado pero no ha completado onboarding
+    // If authenticated but hasn't completed onboarding
     if (token && token.onboarded === false && !isOnboardingPage && !isAuthPage) {
       console.log('🔀 Redirigiendo al onboarding:', {
         pathname: pathnameWithoutLocale,
@@ -77,7 +77,7 @@ export async function middleware(request: NextRequest) {
 
     // Si ya completó onboarding y trata de acceder a onboarding
     if (token && token.onboarded === true && isOnboardingPage) {
-      console.log('🔀 Redirigiendo a la página principal desde onboarding');
+      console.log('🔀 Redirecting to main page from onboarding');
       return NextResponse.redirect(new URL(`/${locale}/`, request.url));
     }
 

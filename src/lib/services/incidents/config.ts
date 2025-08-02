@@ -9,7 +9,7 @@
 
 import { Region } from './types';
 
-// #region Configuración Regional
+// #region Regional Configuration
 /**
  * Región actual del sistema
  * Cambiar esta constante para adaptar los tipos de incidentes a la región específica
@@ -17,7 +17,7 @@ import { Region } from './types';
 export const CURRENT_REGION: Region = 'argentina';
 // #endregion
 
-// #region Configuración de Etiquetas Legacy
+// #region Legacy Tags Configuration
 /**
  * Tags comunes de incidentes (compatibilidad con versiones anteriores)
  * @deprecated Usar getActiveIncidentTypes() en su lugar
@@ -35,7 +35,7 @@ export const LEGACY_COMMON_TAGS = [
 ];
 // #endregion
 
-// #region Configuración de Filtros
+// #region Filters Configuration
 /**
  * Configuración para filtros de incidentes
  */
@@ -51,7 +51,7 @@ export const INCIDENT_FILTER_CONFIG = {
 } as const;
 // #endregion
 
-// #region Configuración de Búsqueda
+// #region Search Configuration
 /**
  * Configuración para búsqueda de incidentes
  */
