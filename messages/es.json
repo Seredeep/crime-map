@@ -506,6 +506,24 @@
     "couldNotSaveConfiguration": "No se pudo guardar la configuración.",
     "couldNotUploadImage": "Error al subir la imagen."
   },
+  "UI": {
+    "errors": {
+      "descriptionRequired": "La descripción es obligatoria",
+      "locationRequired": "Por favor selecciona una ubicación válida",
+      "tagsRequired": "Selecciona al menos un tipo de incidente",
+      "submitError": "Error al reportar el incidente",
+      "networkError": "Error de conexión. Por favor intenta nuevamente."
+    },
+    "success": {
+      "incidentReported": "Incidente reportado exitosamente",
+      "formSubmitted": "Formulario enviado correctamente"
+    },
+    "info": {
+      "loading": "Cargando...",
+      "submitting": "Enviando...",
+      "processing": "Procesando..."
+    }
+  },
   "AppLoading": {
     "startingClaridad": "Iniciando Claridad...",
     "connectingCommunity": "Conectando con la comunidad...",
@@ -514,5 +532,71 @@
     "checkingNotifications": "Verificando notificaciones...",
     "preparingPanicAlerts": "Preparando alertas de pánico...",
     "readyToChat": "Listo para chatear con tus vecinos"
+  },
+  "incidentTypes": {
+    "amenaza": {
+      "label": "Amenaza",
+      "description": "Intimidación o amenaza verbal o escrita"
+    },
+    "asalto": {
+      "label": "Asalto",
+      "description": "Ataque físico o amenaza directa a personas"
+    },
+    "disturbio": {
+      "label": "Disturbio",
+      "description": "Alteración del orden público o ruidos molestos"
+    },
+    "hurto": {
+      "label": "Hurto",
+      "description": "Sustracción de bienes sin violencia"
+    },
+    "otro": {
+      "label": "Otro",
+      "description": "Otros tipos de incidentes no categorizados"
+    },
+    "robo": {
+      "label": "Robo",
+      "description": "Sustracción de bienes con violencia o intimidación"
+    },
+    "sospechoso": {
+      "label": "Actividad Sospechosa",
+      "description": "Comportamiento o situación que genera sospecha"
+    },
+    "vandalismo": {
+      "label": "Vandalismo",
+      "description": "Daños intencionales a propiedad pública o privada"
+    },
+    "violencia": {
+      "label": "Violencia",
+      "description": "Actos violentos o agresiones físicas"
+    },
+    "motochorro": {
+      "label": "Motochorro",
+      "description": "Robo realizado desde motocicleta"
+    },
+    "secuestro_express": {
+      "label": "Secuestro Express",
+      "description": "Secuestro de corta duración para extorsión"
+    },
+    "extorsion": {
+      "label": "Extorsión",
+      "description": "Amenazas para obtener dinero o beneficios"
+    },
+    "atraco": {
+      "label": "Atraco",
+      "description": "Robo a mano armada"
+    },
+    "cosquilleo": {
+      "label": "Cosquilleo",
+      "description": "Hurto mediante distracción o engaño"
+    },
+    "lanza": {
+      "label": "Lanza",
+      "description": "Hurto especializado y sigiloso"
+    },
+    "portonazo": {
+      "label": "Portonazo",
+      "description": "Robo al ingresar a domicilio"
+    }
   }
 }

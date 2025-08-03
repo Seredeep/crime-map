@@ -1,8 +1,8 @@
 'use client';
 
-import { CAROUSEL_CONFIG, MESSAGES, TIME_CONFIG } from '@/lib/config';
+import { CAROUSEL_CONFIG, getUIMessages, TIME_CONFIG } from '@/lib/config';
 import { GeocodingResult } from '@/lib/services/geo';
-import { ACTIVE_INCIDENT_TYPES } from '@/lib/services/incidents';
+import { getTranslatedIncidentTypes } from '@/lib/services/incidents';
 import { motion } from 'framer-motion';
 import { DateTime } from 'luxon';
 import { useTranslations } from 'next-intl';
@@ -17,11 +17,8 @@ interface MobileReportViewProps {
   className?: string;
 }
 
-// Usar los tipos de incidentes organizados por regiones
-const INCIDENT_TYPES = ACTIVE_INCIDENT_TYPES;
-
 // Función mejorada para obtener los colores de los tipos de incidentes
-const getIncidentColors = (type: typeof INCIDENT_TYPES[0], isSelected: boolean) => {
+const getIncidentColors = (type: any, isSelected: boolean) => {
   if (!isSelected) {
     // Cuando no está seleccionado, usar colores blancos/grises
     return 'border-white/40 bg-gray-800/30 hover:bg-gray-800/50 hover:border-white/60 text-white/80';
@@ -82,6 +79,10 @@ interface IncidentFormData {
 const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => {
   const t = useTranslations('Forms');
   const tStates = useTranslations('States');
+  const tUI = useTranslations('UI');
+  const tIncidentTypes = useTranslations('incidentTypes');
+  const uiMessages = getUIMessages(tUI);
+  const incidentTypes = getTranslatedIncidentTypes(tIncidentTypes);
   const [formData, setFormData] = useState<IncidentFormData>({
     description: '',
     address: '',
@@ -207,19 +208,19 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     setSubmitMessage(null);
 
     if (!formData.description.trim()) {
-      setSubmitMessage({ type: 'error', message: MESSAGES.ERRORS.DESCRIPTION_REQUIRED });
+      setSubmitMessage({ type: 'error', message: uiMessages.ERRORS.DESCRIPTION_REQUIRED });
       setIsSubmitting(false);
       return;
     }
 
     if (!formData.location) {
-      setSubmitMessage({ type: 'error', message: MESSAGES.ERRORS.LOCATION_REQUIRED });
+      setSubmitMessage({ type: 'error', message: uiMessages.ERRORS.LOCATION_REQUIRED });
       setIsSubmitting(false);
       return;
     }
 
     if (formData.tags.length === 0) {
-      setSubmitMessage({ type: 'error', message: MESSAGES.ERRORS.TAGS_REQUIRED });
+      setSubmitMessage({ type: 'error', message: uiMessages.ERRORS.TAGS_REQUIRED });
       setIsSubmitting(false);
       return;
     }
@@ -242,7 +243,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
       const data = await response.json();
 
       if (response.ok) {
-        setSubmitMessage({ type: 'success', message: MESSAGES.SUCCESS.INCIDENT_REPORTED });
+        setSubmitMessage({ type: 'success', message: uiMessages.SUCCESS.INCIDENT_REPORTED });
         setFormData({
           description: '',
           address: '',
@@ -254,12 +255,12 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
         });
         setTimeout(() => onBack(), TIME_CONFIG.REDIRECT_DELAY);
       } else {
-        throw new Error(data.message || MESSAGES.ERRORS.SUBMIT_ERROR);
+        throw new Error(data.message || uiMessages.ERRORS.SUBMIT_ERROR);
       }
     } catch (error) {
       setSubmitMessage({
         type: 'error',
-        message: error instanceof Error ? error.message : MESSAGES.ERRORS.SUBMIT_ERROR
+        message: error instanceof Error ? error.message : uiMessages.ERRORS.SUBMIT_ERROR
       });
     } finally {
       setIsSubmitting(false);
@@ -269,7 +270,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   const isFormValid = formData.description.trim() && formData.location && formData.tags.length > 0;
   const hasFormData = formData.description.trim() || formData.location || formData.tags.length > 0 || formData.evidence.length > 0;
 
-  const renderIncidentButton = (type: typeof INCIDENT_TYPES[0], isCarousel = false) => {
+  const renderIncidentButton = (type: any, isCarousel = false) => {
     const isSelected = formData.tags.includes(type.id);
     const colorClasses = getIncidentColors(type, isSelected);
 
@@ -446,7 +447,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     dragConstraints={{ left: -1000, right: 0 }}
                   >
                     {Array.from({ length: CAROUSEL_CONFIG.CAROUSEL_COPIES }, (_, copyIndex) =>
-                      INCIDENT_TYPES.map(type => (
+                      incidentTypes.map(type => (
                         <div key={`${type.id}-${copyIndex}`} className="flex-shrink-0">
                           {renderIncidentButton(type, true)}
                         </div>
@@ -457,7 +458,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                {INCIDENT_TYPES.map((type, index) => (
+                {incidentTypes.map((type, index) => (
                   <motion.div
                     key={type.id}
                     initial={{ opacity: 0, scale: 0.9 }}

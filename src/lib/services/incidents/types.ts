@@ -8,24 +8,24 @@
  */
 
 import {
-    FiAlertTriangle,
-    FiEye,
-    FiHelpCircle,
-    FiLock,
-    FiPhone,
-    FiShield,
-    FiTarget,
-    FiTool,
-    FiVolumeX,
-    FiZap
+  FiAlertTriangle,
+  FiEye,
+  FiHelpCircle,
+  FiLock,
+  FiPhone,
+  FiShield,
+  FiTarget,
+  FiTool,
+  FiVolumeX,
+  FiZap
 } from 'react-icons/fi';
 
 import { BiSolidCar } from 'react-icons/bi';
 import { GiRevolver } from 'react-icons/gi';
 import {
-    MdOutlineDirectionsBike,
-    MdOutlineDirectionsRun,
-    MdOutlinePersonSearch
+  MdOutlineDirectionsBike,
+  MdOutlineDirectionsRun,
+  MdOutlinePersonSearch
 } from 'react-icons/md';
 
 
@@ -298,6 +298,125 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
     category: 'theft'
   }
 ];
+// #endregion
+
+// #region Función para Tipos de Incidentes Traducidos
+/**
+ * Función para obtener tipos de incidentes con etiquetas traducidas
+ * @param t - Función de traducción de next-intl
+ * @param region - Región para obtener los tipos específicos
+ * @returns Array de tipos de incidentes con etiquetas traducidas
+ */
+export const getTranslatedIncidentTypes = (
+  t: (key: string) => string,
+  region: Region = 'general'
+): IncidentType[] => {
+  const baseTypes = BASE_INCIDENT_TYPES.map(type => ({
+    ...type,
+    label: t(`${type.id}.label`),
+    description: t(`${type.id}.description`)
+  }));
+
+  // Agregar tipos específicos de la región
+  const regionSpecificTypes = getRegionSpecificTypes(t, region);
+
+  return [...baseTypes, ...regionSpecificTypes];
+};
+
+/**
+ * Obtiene los tipos específicos de una región con traducciones
+ */
+const getRegionSpecificTypes = (
+  t: (key: string) => string,
+  region: Region
+): IncidentType[] => {
+  switch (region) {
+    case 'argentina':
+      return [
+        {
+          id: 'motochorro',
+          label: t('motochorro.label'),
+          icon: MdOutlineDirectionsBike,
+          color: 'emerald',
+          description: t('motochorro.description'),
+          priority: 5,
+          urgent: true,
+          category: 'theft'
+        }
+      ];
+    case 'mexico':
+      return [
+        {
+          id: 'secuestro_express',
+          label: t('secuestro_express.label'),
+          icon: BiSolidCar,
+          color: 'indigo',
+          description: t('secuestro_express.description'),
+          priority: 5,
+          urgent: true,
+          category: 'violence'
+        },
+        {
+          id: 'extorsion',
+          label: t('extorsion.label'),
+          icon: FiPhone,
+          color: 'teal',
+          description: t('extorsion.description'),
+          priority: 4,
+          urgent: true,
+          category: 'violence'
+        }
+      ];
+    case 'colombia':
+      return [
+        {
+          id: 'atraco',
+          label: t('atraco.label'),
+          icon: GiRevolver,
+          color: 'pink',
+          description: t('atraco.description'),
+          priority: 5,
+          urgent: true,
+          category: 'theft'
+        },
+        {
+          id: 'cosquilleo',
+          label: t('cosquilleo.label'),
+          icon: MdOutlinePersonSearch,
+          color: 'lime',
+          description: t('cosquilleo.description'),
+          priority: 3,
+          urgent: false,
+          category: 'theft'
+        }
+      ];
+    case 'chile':
+      return [
+        {
+          id: 'lanza',
+          label: t('lanza.label'),
+          icon: FiTarget,
+          color: 'yellow',
+          description: t('lanza.description'),
+          priority: 3,
+          urgent: false,
+          category: 'theft'
+        },
+        {
+          id: 'portonazo',
+          label: t('portonazo.label'),
+          icon: FiLock,
+          color: 'purple',
+          description: t('portonazo.description'),
+          priority: 4,
+          urgent: true,
+          category: 'theft'
+        }
+      ];
+    default:
+      return [];
+  }
+};
 // #endregion
 
 

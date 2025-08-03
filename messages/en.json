@@ -506,6 +506,24 @@
     "couldNotSaveConfiguration": "Could not save configuration.",
     "couldNotUploadImage": "Could not upload image."
   },
+  "UI": {
+    "errors": {
+      "descriptionRequired": "Description is required",
+      "locationRequired": "Please select a valid location",
+      "tagsRequired": "Select at least one incident type",
+      "submitError": "Error reporting the incident",
+      "networkError": "Connection error. Please try again."
+    },
+    "success": {
+      "incidentReported": "Incident reported successfully",
+      "formSubmitted": "Form submitted successfully"
+    },
+    "info": {
+      "loading": "Loading...",
+      "submitting": "Sending...",
+      "processing": "Processing..."
+    }
+  },
   "AppLoading": {
     "startingClaridad": "Starting Claridad...",
     "connectingCommunity": "Connecting with the community...",
@@ -514,5 +532,71 @@
     "checkingNotifications": "Checking notifications...",
     "preparingPanicAlerts": "Preparing panic alerts...",
     "readyToChat": "Ready to chat with your neighbors"
+  },
+  "incidentTypes": {
+    "amenaza": {
+      "label": "Threat",
+      "description": "Verbal or written intimidation or threat"
+    },
+    "asalto": {
+      "label": "Assault",
+      "description": "Physical attack or direct threat to people"
+    },
+    "disturbio": {
+      "label": "Disturbance",
+      "description": "Public order disruption or annoying noises"
+    },
+    "hurto": {
+      "label": "Theft",
+      "description": "Property theft without violence"
+    },
+    "otro": {
+      "label": "Other",
+      "description": "Other uncategorized types of incidents"
+    },
+    "robo": {
+      "label": "Robbery",
+      "description": "Property theft with violence or intimidation"
+    },
+    "sospechoso": {
+      "label": "Suspicious Activity",
+      "description": "Behavior or situation that generates suspicion"
+    },
+    "vandalismo": {
+      "label": "Vandalism",
+      "description": "Intentional damage to public or private property"
+    },
+    "violencia": {
+      "label": "Violence",
+      "description": "Violent acts or physical assaults"
+    },
+    "motochorro": {
+      "label": "Motorcycle Thief",
+      "description": "Theft carried out from a motorcycle"
+    },
+    "secuestro_express": {
+      "label": "Express Kidnapping",
+      "description": "Short-term kidnapping for extortion"
+    },
+    "extorsion": {
+      "label": "Extortion",
+      "description": "Threats to obtain money or benefits"
+    },
+    "atraco": {
+      "label": "Armed Robbery",
+      "description": "Armed robbery"
+    },
+    "cosquilleo": {
+      "label": "Pickpocketing",
+      "description": "Theft through distraction or deception"
+    },
+    "lanza": {
+      "label": "Pickpocket",
+      "description": "Specialized and stealthy theft"
+    },
+    "portonazo": {
+      "label": "Home Invasion",
+      "description": "Robbery when entering a home"
+    }
   }
 }

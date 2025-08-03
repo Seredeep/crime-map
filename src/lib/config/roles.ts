@@ -63,5 +63,5 @@ export function hasPermission(userRole: Role | undefined, permission: keyof type
  * Get the default role for new users
  */
 export function getDefaultRole(): Role {
-  return ROLES.DEFAULT;
-} 
+  return ROLES.EDITOR;
+}
