@@ -9,9 +9,9 @@
 
 // #region Exportaciones de Tipos
 export {
-    ARGENTINA_INCIDENT_TYPES, BASE_INCIDENT_TYPES, CHILE_INCIDENT_TYPES, COLOMBIA_INCIDENT_TYPES, getTranslatedIncidentTypes, MEXICO_INCIDENT_TYPES, REGION_INCIDENT_TYPES
+    ARGENTINA_INCIDENT_TYPES, BASE_INCIDENT_TYPES, CHILE_INCIDENT_TYPES, COLOMBIA_INCIDENT_TYPES, GET_REGION_INCIDENT_TYPES, MEXICO_INCIDENT_TYPES, REGION_INCIDENT_TYPES
 } from './types';
-export type { IncidentType } from './types';
+export type { IncidentType, Region } from './types';
 export type { IncidentTypeFilters } from './utils';
 // #endregion
 

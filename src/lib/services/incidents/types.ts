@@ -300,14 +300,14 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
 ];
 // #endregion
 
-// #region Función para Tipos de Incidentes Traducidos
+// #region Función para Tipos de Incidentes por Región
 /**
- * Función para obtener tipos de incidentes con etiquetas traducidas
+ * Función para obtener tipos de incidentes específicos de cada región
  * @param t - Función de traducción de next-intl
  * @param region - Región para obtener los tipos específicos
- * @returns Array de tipos de incidentes con etiquetas traducidas
+ * @returns Array de tipos de incidentes con etiquetas traducidas para la región
  */
-export const getTranslatedIncidentTypes = (
+export const GET_REGION_INCIDENT_TYPES = (
   t: (key: string) => string,
   region: Region = 'general'
 ): IncidentType[] => {

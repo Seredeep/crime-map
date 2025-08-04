@@ -17,7 +17,7 @@ export type { UserRole } from './app';
 // #region UI Configuration Exports
 export {
     CAROUSEL_CONFIG,
-    GRID_CONFIG, INCIDENT_COLORS, MESSAGES, TIME_CONFIG, getUIMessages
+    GRID_CONFIG, INCIDENT_COLORS, MESSAGES, TIME_CONFIG, UI_MESSAGES
 } from './ui';
 // #endregion
 
@@ -28,9 +28,6 @@ export {
 // #endregion
 
 // #region Exportaciones de Roles (para compatibilidad)
-export {
-    REQUIRED_ROLES, ROLES,
-    ROLE_PERMISSIONS, getDefaultRole, hasPermission, hasRequiredRole
-} from './roles';
+export { getDefaultRole, hasPermission, hasRequiredRole, REQUIRED_ROLES, ROLE_PERMISSIONS, ROLES } from './roles';
 export type { Role } from './roles';
 // #endregion

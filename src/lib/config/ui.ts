@@ -176,7 +176,7 @@ export const TIME_CONFIG = {
  * @param t - Función de traducción de next-intl
  * @returns Objeto con mensajes traducidos
  */
-export const getUIMessages = (t: (key: string) => string) => ({
+export const UI_MESSAGES = (t: (key: string) => string) => ({
   ERRORS: {
     DESCRIPTION_REQUIRED: t('errors.descriptionRequired'),
     LOCATION_REQUIRED: t('errors.locationRequired'),
@@ -196,7 +196,7 @@ export const getUIMessages = (t: (key: string) => string) => ({
 });
 
 /**
- * @deprecated Usar getUIMessages() en su lugar
+ * @deprecated Usar UI_MESSAGES() en su lugar
  * Mensajes hardcodeados (mantenidos para compatibilidad)
  */
 export const MESSAGES = {
