@@ -355,7 +355,7 @@ export default function Home() {
           <FloatingReportButton
             onClick={handleReportClick}
             isVisible={activeTab === 'incidents' && !showReportFormInPanel}
-            className="bottom-80"
+            className="bottom-56"
           />
 
           {/* Mobile Bottom Tabs */}

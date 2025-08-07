@@ -16,23 +16,14 @@ type PanicState = 'normal' | 'confirming' | 'alerting' | 'success';
 const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => {
   const [panicState, setPanicState] = useState<PanicState>('normal');
   const t = useTranslations('Panic');
-  const [showTooltip, setShowTooltip] = useState(true);
+  // Minimal UI: no tooltip or extra chrome
 
-  // Ocultar tooltip después de 3 segundos
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowTooltip(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Manejar el estado de alerta activa
+  // Handle active alert state
   useEffect(() => {
     if (panicState === 'alerting') {
       const timer = setTimeout(() => {
         setPanicState('success');
-        // Volver al estado normal después de 2 segundos más
+        // Return to normal after a short delay
         setTimeout(() => {
           setPanicState('normal');
         }, 2000);
@@ -52,25 +43,24 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
     setPanicState('alerting');
 
     try {
-      // Verificar soporte de geolocalización
+        // Check geolocation support
       let location = null;
       let formattedAddress = null;
 
       if (!navigator.geolocation) {
-        console.error('❌ Geolocalización no soportada por este navegador');
-        // No mostrar alert aquí ya que el botón está en estado alerting
+          console.error('❌ Geolocation not supported by this browser');
       } else {
         console.log('🔍 Requesting location permissions...');
 
-        // Verificar permisos primero
+          // Check permissions first
         try {
           const permission = await navigator.permissions.query({ name: 'geolocation' });
           console.log('📋 Geolocation permission status:', permission.state);
         } catch (permissionError) {
-          console.log('⚠️ No se pudo verificar permisos:', permissionError);
+            console.log('⚠️ Could not query permissions:', permissionError);
         }
 
-        // Intentar obtener ubicación con alta precisión
+          // Try to get high accuracy position
         try {
           console.log('🎯 Getting high precision location...');
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -80,13 +70,13 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                 resolve(pos);
               },
               (error) => {
-                console.error('❌ Error obteniendo ubicación:', error);
-                console.error('Código de error:', error.code);
-                console.error('Mensaje:', error.message);
+                  console.error('❌ Error getting location:', error);
+                  console.error('Error code:', error.code);
+                  console.error('Message:', error.message);
                 reject(error);
               },
               {
-                timeout: 15000, // Más tiempo para obtener ubicación
+                  timeout: 15000,
                 enableHighAccuracy: true,
                 maximumAge: 0
               }
@@ -100,7 +90,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
             timestamp: position.timestamp
           };
 
-          // Realizar geocodificación inversa
+          // Reverse geocoding
           try {
             const geoResponse = await reverseGeocode(location.lat, location.lng);
             if (geoResponse.features && geoResponse.features.length > 0) {
@@ -108,7 +98,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
               console.log(`📍 Address obtained: ${formattedAddress}`);
             }
           } catch (geoError) {
-            console.error('❌ Error en geocodificación inversa:', geoError);
+            console.error('❌ Reverse geocoding error:', geoError);
           }
 
           console.log(`📍 GPS location obtained:`, {
@@ -119,10 +109,10 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
           });
 
         } catch (error: any) {
-          console.error('❌ Error en geolocalización de alta precisión:', error);
+          console.error('❌ High accuracy geolocation error:', error);
 
-          // Intentar fallback sin mostrar alerts (el botón está en modo alerting)
-          if (error.code === 3) { // TIMEOUT
+          // Fallback when timeout
+          if (error.code === 3) {
             console.log('⏱️ High precision timeout, trying fallback...');
 
             try {
@@ -146,7 +136,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                 fallback: true
               };
 
-              // Realizar geocodificación inversa para el fallback
+              // Reverse geocoding for fallback
               try {
                 const geoResponse = await reverseGeocode(location.lat, location.lng);
                 if (geoResponse.features && geoResponse.features.length > 0) {
@@ -154,17 +144,17 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                   console.log(`📍 Fallback address obtained: ${formattedAddress}`);
                 }
               } catch (geoError) {
-                console.error('❌ Error en geocodificación inversa para fallback:', geoError);
+                console.error('❌ Reverse geocoding fallback error:', geoError);
               }
 
               console.log(`📍 Fallback location obtained with ${fallbackPosition.coords.accuracy}m accuracy`);
 
             } catch (fallbackError) {
-              console.error('❌ También falló el fallback:', fallbackError);
+              console.error('❌ Fallback also failed:', fallbackError);
               location = null;
             }
           } else {
-            console.error(`❌ Error de geolocalización (código ${error.code}):`, error.message);
+            console.error(`❌ Geolocation error (code ${error.code}):`, error.message);
             location = null;
           }
         }
@@ -190,8 +180,8 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
 
       console.log('Alerta enviada:', result.data);
     } catch (error) {
-      console.error('Error al enviar alerta:', error);
-      // En caso de error, volver al estado normal
+      console.error('Error sending alert:', error);
+      // In case of error, return to normal state
       setPanicState('normal');
     }
   };
@@ -202,15 +192,14 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
 
   if (!isVisible) return null;
 
-  const getButtonColor = () => {
-    switch (panicState) {
-      case 'alerting':
-        return 'text-red-500';
-      case 'success':
-        return 'text-emerald-500';
-      default:
-        return 'text-orange-500';
+  const getButtonStyle = () => {
+    if (panicState === 'alerting') {
+      return 'bg-red-600 text-white';
     }
+    if (panicState === 'success') {
+      return 'bg-emerald-600 text-white';
+    }
+    return 'bg-orange-600 text-white';
   };
 
   const getIcon = () => {
@@ -228,273 +217,28 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0, opacity: 0 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 20,
-          delay: 0.1
-        }}
-        className={`fixed bottom-36 right-4 z-[119] md:hidden ${className}`}
+        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+        className={`fixed bottom-[21%] right-4 z-[140] md:hidden ${className}`}
       >
-        <motion.div
+        <motion.button
+          onClick={handlePanicClick}
           whileTap={{ scale: 0.95 }}
-          animate={{
-            borderRadius: ['20%', '30%', '24%'],
-            boxShadow: [
-              '0 0 25px rgba(234, 88, 12, 0.4), 0 0 50px rgba(234, 88, 12, 0.2)',
-              '0 0 35px rgba(234, 88, 12, 0.6), 0 0 70px rgba(234, 88, 12, 0.3)',
-              '0 0 25px rgba(234, 88, 12, 0.4), 0 0 50px rgba(234, 88, 12, 0.2)'
-            ],
-            ...(panicState === 'alerting' && {
-              scale: [1, 1.1, 1],
-              boxShadow: [
-                '0 0 40px rgba(220, 38, 38, 0.6), 0 0 80px rgba(220, 38, 38, 0.4)',
-                '0 0 60px rgba(220, 38, 38, 0.8), 0 0 120px rgba(220, 38, 38, 0.6)',
-                '0 0 40px rgba(220, 38, 38, 0.6), 0 0 80px rgba(220, 38, 38, 0.4)'
-              ],
-              transition: { duration: 0.8, repeat: Infinity }
-            })
-          }}
-          transition={{ duration: 2, repeat: Infinity, repeatType: 'mirror' }}
+          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform ${
+            panicState === 'alerting' ? 'animate-pulse' : ''
+          } ${getButtonStyle()}`}
         >
-          <motion.button
-            onClick={handlePanicClick}
-            whileHover={{
-              scale: 1.05,
-              boxShadow: panicState === 'alerting'
-                ? '0 0 60px rgba(220, 38, 38, 0.8), 0 0 120px rgba(220, 38, 38, 0.6)'
-                : '0 0 40px rgba(234, 88, 12, 0.6), 0 0 80px rgba(234, 88, 12, 0.4)'
-            }}
-            className={`relative w-24 h-24 text-gray-800 flex items-center justify-center transition-all duration-300 group overflow-hidden ${
-              panicState === 'alerting' ? 'animate-pulse' : ''
-            }`}
-            style={{
-              background: panicState === 'alerting'
-                ? `
-                  radial-gradient(circle at 30% 30%, rgba(220, 38, 38, 0.3) 0%, transparent 50%),
-                  linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
-                  rgba(20, 20, 20, 0.9)
-                `
-                : `
-                  radial-gradient(circle at 30% 30%, rgba(234, 88, 12, 0.2) 0%, transparent 50%),
-                  linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%),
-                  rgba(20, 20, 20, 0.8)
-                `,
-              backdropFilter: 'blur(20px)',
-              border: panicState === 'alerting'
-                ? '2px solid rgba(220, 38, 38, 0.5)'
-                : '2px solid rgba(234, 88, 12, 0.4)',
-              boxShadow: panicState === 'alerting'
-                ? `
-                  inset 0 0 20px rgba(220, 38, 38, 0.2),
-                  0 0 40px rgba(220, 38, 38, 0.4),
-                  0 8px 32px rgba(0, 0, 0, 0.3),
-                  0 4px 16px rgba(0, 0, 0, 0.2)
-                `
-                : `
-                  inset 0 0 20px rgba(234, 88, 12, 0.15),
-                  0 0 30px rgba(234, 88, 12, 0.3),
-                  0 8px 32px rgba(0, 0, 0, 0.3),
-                  0 4px 16px rgba(0, 0, 0, 0.2)
-                `,
-              borderRadius: '30px'
-            }}
-          >
-            {/* Efecto de pulso de fondo */}
-            <motion.div
-              className={`absolute inset-0 rounded-[28px] ${
-                panicState === 'alerting'
-                  ? 'bg-gradient-to-r from-red-600/30 to-red-700/30'
-                  : 'bg-gradient-to-r from-orange-600/20 to-orange-700/20'
-              }`}
-              animate={{
-                opacity: panicState === 'alerting' ? [0.4, 0.8, 0.4] : [0.3, 0.6, 0.3],
-                scale: panicState === 'alerting' ? [1, 1.05, 1] : [1, 1.02, 1]
-              }}
-              transition={{
-                duration: panicState === 'alerting' ? 1 : 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-
-            {/* Icono principal con animación dramática */}
-            <motion.div
-              className={`relative z-10 ${getButtonColor()} group-hover:scale-110 transition-all duration-200`}
-              animate={panicState === 'alerting' ? {
-                scale: [1, 1.2, 1],
-                rotate: [0, 5, -5, 0]
-              } : {
-                scale: [1, 1.05, 1],
-                rotate: [0, 2, -2, 0]
-              }}
-              transition={{
-                duration: panicState === 'alerting' ? 0.6 : 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              <div className="relative">
-                {getIcon()}
-                {/* Efecto de glow en el icono */}
-                <div
-                  className="absolute inset-0 blur-sm"
-                  style={{
-                    background: panicState === 'alerting'
-                      ? 'radial-gradient(circle, rgba(220, 38, 38, 0.6) 0%, transparent 70%)'
-                      : 'radial-gradient(circle, rgba(234, 88, 12, 0.4) 0%, transparent 70%)'
-                  }}
-                />
-              </div>
-            </motion.div>
-
-            {/* Ondas de impacto para estado de alerta */}
-            {panicState === 'alerting' && (
-              <motion.div className="absolute inset-0 pointer-events-none">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute inset-0 border-2 border-red-600/30 rounded-full"
-                    initial={{ scale: 0.8, opacity: 0.8 }}
-                    animate={{
-                      scale: [0.8, 2.5],
-                      opacity: [0.8, 0]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      delay: i * 0.6,
-                      ease: "easeOut"
-                    }}
-                  />
-                ))}
-              </motion.div>
-            )}
-
-            {/* Partículas de emergencia */}
-            {panicState === 'normal' && (
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-              >
-                {[...Array(8)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-1 h-1 bg-orange-500 rounded-full"
-                    style={{
-                      left: `${15 + (i * 8)}%`,
-                      top: `${15 + (i * 7)}%`,
-                    }}
-                    animate={{
-                      y: [-8, -16, -8],
-                      opacity: [0.4, 0.9, 0.4],
-                      scale: [0.5, 1.2, 0.5]
-                    }}
-                    transition={{
-                      duration: 1.5 + (i * 0.1),
-                      repeat: Infinity,
-                      delay: i * 0.2,
-                      ease: "easeInOut"
-                    }}
-                  />
-                ))}
-              </motion.div>
-            )}
-
-            {/* Efecto de brillo mejorado */}
-            <div
-              className="absolute inset-0 bg-gradient-to-tr from-white/15 to-transparent opacity-60"
-              style={{ borderRadius: '24px' }}
-            />
-
-            {/* Reflejo superior más pronunciado */}
-            <div
-              className="absolute top-1 left-1 right-1 h-1/2 bg-gradient-to-b from-white/25 to-transparent"
-              style={{ borderRadius: '20px 20px 8px 8px' }}
-            />
-
-            {/* Sombra interior */}
-            <div
-              className="absolute inset-[2px] bg-gradient-to-b from-transparent via-transparent to-black/15"
-              style={{ borderRadius: '22px' }}
-            />
-
-            {/* Texto "Pánico" con efecto de glow */}
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-              className={`absolute bottom-2 text-sm font-bold drop-shadow-lg ${
-                panicState === 'alerting' ? 'text-red-300' : 'text-orange-300'
-              }`}
-              style={{
-                textShadow: panicState === 'alerting'
-                  ? '0 0 15px rgba(220, 38, 38, 0.8)'
-                  : '0 0 10px rgba(234, 88, 12, 0.6)'
-              }}
-            >
-              {panicState === 'alerting' ? t('alert') : t('panic')}
-            </motion.p>
-
-            {/* Borde animado */}
-            <motion.div
-              className={`absolute inset-0 rounded-[28px] border-2 ${
-                panicState === 'alerting' ? 'border-red-600/60' : 'border-orange-600/50'
-              }`}
-              animate={{
-                borderColor: panicState === 'alerting' ? [
-                  'rgba(220, 38, 38, 0.4)',
-                  'rgba(220, 38, 38, 0.8)',
-                  'rgba(220, 38, 38, 0.4)'
-                ] : [
-                  'rgba(234, 88, 12, 0.3)',
-                  'rgba(234, 88, 12, 0.6)',
-                  'rgba(234, 88, 12, 0.3)'
-                ]
-              }}
-              transition={{
-                duration: panicState === 'alerting' ? 1 : 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </motion.button>
-        </motion.div>
-
-        {/* Tooltip mejorado */}
-        {showTooltip && panicState === 'normal' && (
           <motion.div
-            initial={{ opacity: 0, x: 10, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 10, scale: 0.9 }}
-            transition={{ delay: 1, duration: 0.3 }}
-            className="absolute right-20 top-1/2 transform -translate-y-1/2 text-white px-5 py-3 rounded-xl text-sm font-medium whitespace-nowrap"
-            style={{
-              background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(234, 88, 12, 0.4)',
-              boxShadow: `
-                inset 0 0 10px rgba(234, 88, 12, 0.1),
-                0 0 25px rgba(0, 0, 0, 0.5),
-                0 8px 30px rgba(0, 0, 0, 0.3),
-                0 4px 15px rgba(0, 0, 0, 0.2)
-              `
-            }}
+            animate={panicState === 'alerting' ? { scale: [1, 1.1, 1] } : {}}
+            transition={{ duration: 0.8, repeat: panicState === 'alerting' ? Infinity : 0 }}
+            className="text-white"
           >
-            <span className="text-orange-300 font-semibold">{t('panicButton')}</span>
-            <div
-              className="absolute right-0 top-1/2 transform translate-x-1 -translate-y-1/2 w-3 h-3 rotate-45"
-              style={{
-                background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(40, 40, 40, 0.95) 100%)',
-                border: '1px solid rgba(234, 88, 12, 0.4)',
-                borderLeft: 'none',
-                borderTop: 'none'
-              }}
-            />
+            {panicState === 'success' ? (
+              <CheckCircle className="w-8 h-8" />
+            ) : (
+              <AlertTriangle className="w-8 h-8" />
+            )}
           </motion.div>
-        )}
+        </motion.button>
       </motion.div>
 
       {/* Modal de confirmación mejorado */}

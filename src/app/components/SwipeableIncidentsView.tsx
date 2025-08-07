@@ -373,7 +373,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
       {/* Overlay para bloquear interacción del mapa cuando el panel está expandido */}
       {isExpanded && (
         <div
-          className="fixed inset-0 z-[130] md:hidden"
+          className="fixed inset-0 z-[150] md:hidden"
           onClick={handleOutsideClick}
           style={{
             background: 'rgba(0, 0, 0, 0.15)',
@@ -384,7 +384,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
 
       {/* Bottom Sheet con lista de incidentes */}
       <motion.div
-        className="fixed left-0 right-0 z-[140] md:hidden backdrop-blur-lg rounded-t-2xl shadow-2xl"
+        className={`fixed left-0 right-0 md:hidden backdrop-blur-lg rounded-t-2xl shadow-2xl ${isExpanded ? 'z-[160]' : 'z-[120]'}`}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={0.1}
