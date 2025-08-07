@@ -14,6 +14,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiClock,
+  FiGlobe,
   FiHelpCircle,
   FiLogOut,
   FiMapPin,
@@ -26,6 +27,7 @@ import {
   FiZap,
 } from 'react-icons/fi'
 import IncidentQueue from './IncidentQueue'
+import LanguageSelector from './LanguageSelector'
 
 interface MobileSettingsViewProps {
   className?: string
@@ -375,6 +377,15 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       available: true,
     },
     {
+      id: 'language',
+      title: configT('language'),
+      icon: FiGlobe,
+      color: 'text-teal-400',
+      bgColor: 'bg-teal-500/20',
+      description: configT('languageDescription'),
+      available: true,
+    },
+    {
       id: 'notifications',
       title: configT('notifications'),
       icon: FiBell,
@@ -560,6 +571,17 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
                 onChange={handleImageChange}
                 className="hidden"
               />
+            </div>
+          </div>
+        )
+
+      case 'language':
+        return (
+          <div className="space-y-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-white font-medium mb-3">{configT('languageSettings')}</h4>
+              <p className="text-gray-400 text-sm mb-4">{configT('chooseLanguage')}</p>
+              <LanguageSelector />
             </div>
           </div>
         )
