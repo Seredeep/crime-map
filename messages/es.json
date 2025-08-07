@@ -186,7 +186,10 @@
     "panic": "Pánico",
     "alert": "¡ALERTA!",
     "panicButton": "⚠️ Botón de pánico",
-    "panicAlert": "¡ALERTA DE PÁNICO!"
+    "panicAlert": "⚠️ Alerta de Pánico",
+    "confirmDescription": "¿Confirmás la alerta para tu barrio? Se notificará a todos los vecinos conectados de manera inmediata.",
+    "confirmDescriptionRich": "¿Confirmás la alerta para tu barrio? Se notificará a todos los vecinos conectados de manera <em>inmediata</em>.",
+    "confirmAlert": "🚨 Sí, alertar"
   },
     "Sidebar": {
     "map": "Mapa",

@@ -16,6 +16,7 @@ type PanicState = 'normal' | 'confirming' | 'alerting' | 'success';
 const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => {
   const [panicState, setPanicState] = useState<PanicState>('normal');
   const t = useTranslations('Panic');
+  const commonT = useTranslations('Common');
   // Minimal UI: no tooltip or extra chrome
 
   // Handle active alert state
@@ -288,12 +289,14 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent rounded-full" />
                 </motion.div>
 
-                <h3 className="text-2xl font-bold text-white mb-2">
-                  ⚠️ Alerta de Pánico
-                </h3>
+                <h3 className="text-2xl font-bold text-white mb-2">{t('panicAlert')}</h3>
 
                 <p className="text-gray-300 text-sm mb-6 leading-relaxed">
-                  ¿Confirmás la alerta para tu barrio? Se notificará a todos los vecinos conectados de manera <span className="text-orange-400 font-semibold">inmediata</span>.
+                  {t.rich('confirmDescriptionRich', {
+                    em: (chunks) => (
+                      <span className="text-orange-400 font-semibold">{chunks}</span>
+                    ),
+                  })}
                 </p>
 
                 <div className="flex space-x-3">
@@ -301,7 +304,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                     onClick={handleCancel}
                     className="flex-1 px-4 py-3 bg-gray-700/80 hover:bg-gray-600/80 text-white rounded-xl font-medium transition-all duration-200 backdrop-blur-sm border border-gray-600/50"
                   >
-                    Cancelar
+                    {commonT('cancel')}
                   </button>
                   <motion.button
                     onClick={handleConfirm}
@@ -313,7 +316,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                       boxShadow: '0 0 20px rgba(220, 38, 38, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1)'
                     }}
                   >
-                    <span className="relative z-10">🚨 Sí, alertar</span>
+                    <span className="relative z-10">{t('confirmAlert')}</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200" />
                   </motion.button>
                 </div>
