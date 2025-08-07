@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { FiAlertTriangle, FiClock, FiEye, FiMapPin, FiShield, FiTrendingUp } from 'react-icons/fi';
-import PanicButton from './PanicButton';
 
 interface MobileStatsViewProps {
   className?: string;
@@ -116,9 +115,8 @@ const MobileStatsView = ({ className = '' }: MobileStatsViewProps) => {
       <div className="relative z-10 h-full flex flex-col">
         {/* Header */}
         <div className="sticky top-0 z-20 bg-gray-800/90 backdrop-blur-sm border-b border-gray-600/30 p-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center mb-4">
             <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
-            <PanicButton isVisible={!!session?.user} className="relative" />
           </div>
 
           {/* Period selector */}
