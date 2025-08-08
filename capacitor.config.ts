@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     androidScheme: 'http',
-    url: 'http://192.168.0.97:3000',
-    cleartext: true
+    url: 'https://demo.claridad.ar/en/',
+    cleartext: false
   },
   plugins: {
     SplashScreen: {
