@@ -11,7 +11,7 @@ export default function MapSearchBarTest() {
   const [activeFilters, setActiveFilters] = useState<IncidentFilters>({
     dateFrom: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 días atrás
     dateTo: new Date().toISOString().split('T')[0], // Hoy
-    neighborhoodId: '83', // Barrio de ejemplo
+  neighborhoodId: undefined,
     status: 'verified'
   });
 

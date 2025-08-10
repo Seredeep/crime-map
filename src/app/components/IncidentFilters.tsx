@@ -4,7 +4,7 @@ import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
 import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  List
+    List
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -29,6 +29,7 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);
+  const [selectedNeighborhoodMongoId, setSelectedNeighborhoodMongoId] = useState<string>('');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -53,21 +54,40 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
     return count;
   }, [filters]);
 
-  // Load neighborhoods on component mount
+  // Load neighborhoods filtered by user's city on component mount
   useEffect(() => {
     async function loadNeighborhoods() {
       setLoading(true);
       try {
-        const data = await fetchNeighborhoods();
+        let data: Neighborhood[] = [];
+        const userCity = (session?.user as any)?.city as string | undefined;
+        if (userCity) {
+          const { fetchNeighborhoodsByCity } = await import('@/lib/services/neighborhoods');
+          data = await fetchNeighborhoodsByCity(userCity);
+        } else {
+          data = await fetchNeighborhoods();
+        }
 
-        // Ordenar los barrios alfabéticamente por el nombre
+        // Sort neighborhoods alphabetically by display name with fallback for different datasets
         const sortedNeighborhoods = [...data].sort((a, b) => {
-          const nameA = a.properties.soc_fomen?.toLowerCase() || '';
-          const nameB = b.properties.soc_fomen?.toLowerCase() || '';
-          return nameA.localeCompare(nameB, 'es');
+          const displayA = (a.properties.soc_fomen || a.properties.name || '').toLowerCase();
+          const displayB = (b.properties.soc_fomen || b.properties.name || '').toLowerCase();
+          return displayA.localeCompare(displayB, 'es');
         });
 
         setNeighborhoods(sortedNeighborhoods);
+
+        // If filters.neighborhoodId is present (numeric/string), map it to the matching Mongo _id
+        if (filters.neighborhoodId) {
+          const match = sortedNeighborhoods.find(n => n.properties.id?.toString() === filters.neighborhoodId);
+          if (match) {
+            setSelectedNeighborhoodMongoId(match._id);
+            requestAnimationFrame(() => onNeighborhoodSelect?.(match));
+          }
+        } else {
+          setSelectedNeighborhoodMongoId('');
+          requestAnimationFrame(() => onNeighborhoodSelect?.(null));
+        }
       } catch (err) {
         console.error('Error loading neighborhoods:', err);
         setError(t('errorLoadingNeighborhoods'));
@@ -77,28 +97,27 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
     }
 
     loadNeighborhoods();
-  }, [t]);
+  }, [t, session]);
 
   // Handle neighborhood selection change - memoized
   const handleNeighborhoodChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
+    const selectedId = e.target.value; // Using Mongo _id as value
+    setSelectedNeighborhoodMongoId(selectedId);
 
-    // Actualizar filtros
+    // Find the full neighborhood object by _id
+    const selectedNeighborhood = neighborhoods.find(n => n._id === selectedId) || null;
+
+    // Update filters with properties.id (numeric) when available to keep backend search compatible
+    const neighborhoodFilterId = selectedNeighborhood?.properties.id?.toString();
+
     onFiltersChangeAction({
       ...filters,
-      neighborhoodId: value || undefined
+      neighborhoodId: neighborhoodFilterId || undefined
     });
 
-    // Buscar y pasar el objeto completo del barrio si hay un callback
+    // Emit selected neighborhood for map highlight
     if (onNeighborhoodSelect) {
-      if (value) {
-        const selectedNeighborhood = neighborhoods.find(
-          n => n.properties.id?.toString() === value
-        );
-        onNeighborhoodSelect(selectedNeighborhood || null);
-      } else {
-        onNeighborhoodSelect(null);
-      }
+      onNeighborhoodSelect(selectedNeighborhood);
     }
   }, [filters, neighborhoods, onFiltersChangeAction, onNeighborhoodSelect]);
 
@@ -172,7 +191,7 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
     onFiltersChangeAction({
       dateFrom: defaultDate.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
-      neighborhoodId: '83', // Bosque Peralta Ramos
+      neighborhoodId: undefined,
       status: 'verified' // Siempre volver a 'verified' al limpiar filtros
     });
 

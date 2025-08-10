@@ -51,8 +51,12 @@ export async function fetchNeighborhoods(): Promise<Neighborhood[]> {
  */
 export async function fetchNeighborhoodsByCity(city: string): Promise<Neighborhood[]> {
   try {
-    const neighborhoods = await fetchNeighborhoods();
-    return neighborhoods.filter(n => n.properties.city === city);
+    const response = await fetch(`/api/neighborhoods?city=${encodeURIComponent(city)}`);
+    if (!response.ok) {
+      throw new Error(`Error fetching neighborhoods by city: ${response.status} ${response.statusText}`);
+    }
+    const neighborhoods: Neighborhood[] = await response.json();
+    return neighborhoods;
   } catch (error) {
     console.error(`Error fetching neighborhoods for city ${city}:`, error);
     throw error;

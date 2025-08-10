@@ -430,11 +430,13 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
 export default function IncidentsView({
   incidents: externalIncidents,
   onIncidentUpdate: externalOnIncidentUpdate,
-  onIncidentSelect: externalOnIncidentSelect
+  onIncidentSelect: externalOnIncidentSelect,
+  selectedNeighborhood: externalSelectedNeighborhood
 }: {
   incidents?: Incident[];
   onIncidentUpdate?: (updatedIncident: Incident) => void;
   onIncidentSelect?: (incident: Incident) => void;
+  selectedNeighborhood?: Neighborhood | null;
 } = {}) {
   const { data: session } = useSession();
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -458,12 +460,19 @@ export default function IncidentsView({
     return {
       dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
-      neighborhoodId: '83',
+      neighborhoodId: undefined,
       status: 'verified' // Siempre iniciar con estado 'verified'
     };
   });
 
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
+
+  // Sync external selected neighborhood (e.g., from mobile popover) with internal state used by Map
+  useEffect(() => {
+    if (externalSelectedNeighborhood !== undefined) {
+      setSelectedNeighborhood(externalSelectedNeighborhood || null);
+    }
+  }, [externalSelectedNeighborhood]);
 
   // Function to load incidents based on filters - solo si no estamos en modo externo
   const loadIncidents = useCallback(async () => {
@@ -544,10 +553,9 @@ export default function IncidentsView({
 
   // Handler cuando se selecciona un barrio
   const handleNeighborhoodSelect = useCallback((neighborhood: Neighborhood | null) => {
+    // Force re-render of overlay: clear then set on next frame
     setSelectedNeighborhood(null);
-    setTimeout(() => {
-      setSelectedNeighborhood(neighborhood);
-    }, 50);
+    requestAnimationFrame(() => setSelectedNeighborhood(neighborhood));
   }, []);
 
   return (
