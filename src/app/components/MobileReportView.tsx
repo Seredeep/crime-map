@@ -1,10 +1,11 @@
 'use client';
 
-import { CAROUSEL_CONFIG, getUIMessages, TIME_CONFIG } from '@/lib/config';
+import { CAROUSEL_CONFIG, TIME_CONFIG, UI_MESSAGES } from '@/lib/config';
 import { GeocodingResult } from '@/lib/services/geo';
-import { getTranslatedIncidentTypes } from '@/lib/services/incidents';
+import { GET_REGION_INCIDENT_TYPES, IncidentType, Region } from '@/lib/services/incidents';
 import { motion } from 'framer-motion';
 import { DateTime } from 'luxon';
+import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
@@ -18,7 +19,7 @@ interface MobileReportViewProps {
 }
 
 // Función mejorada para obtener los colores de los tipos de incidentes
-const getIncidentColors = (type: any, isSelected: boolean) => {
+const getIncidentColors = (type: IncidentType, isSelected: boolean) => {
   if (!isSelected) {
     // Cuando no está seleccionado, usar colores blancos/grises
     return 'border-white/40 bg-gray-800/30 hover:bg-gray-800/50 hover:border-white/60 text-white/80';
@@ -77,12 +78,26 @@ interface IncidentFormData {
 }
 
 const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => {
+  const { data: session } = useSession();
   const t = useTranslations('Forms');
   const tStates = useTranslations('States');
   const tUI = useTranslations('UI');
   const tIncidentTypes = useTranslations('incidentTypes');
-  const uiMessages = getUIMessages(tUI);
-  const incidentTypes = getTranslatedIncidentTypes(tIncidentTypes);
+
+  // Helper function to get user region from session
+  const getUserRegion = (): Region => {
+    const country = session?.user?.country;
+    if (country === 'Argentina') return 'argentina';
+    if (country === 'Mexico') return 'mexico';
+    if (country === 'Colombia') return 'colombia';
+    if (country === 'Chile') return 'chile';
+    return 'general';
+  };
+
+  const userRegion = getUserRegion();
+  const uiMessages = UI_MESSAGES(tUI);
+  const incidentTypes = GET_REGION_INCIDENT_TYPES(tIncidentTypes, userRegion);
+
   const [formData, setFormData] = useState<IncidentFormData>({
     description: '',
     address: '',
@@ -270,7 +285,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   const isFormValid = formData.description.trim() && formData.location && formData.tags.length > 0;
   const hasFormData = formData.description.trim() || formData.location || formData.tags.length > 0 || formData.evidence.length > 0;
 
-  const renderIncidentButton = (type: any, isCarousel = false) => {
+  const renderIncidentButton = (type: IncidentType, isCarousel = false) => {
     const isSelected = formData.tags.includes(type.id);
     const colorClasses = getIncidentColors(type, isSelected);
 
@@ -447,7 +462,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                     dragConstraints={{ left: -1000, right: 0 }}
                   >
                     {Array.from({ length: CAROUSEL_CONFIG.CAROUSEL_COPIES }, (_, copyIndex) =>
-                      incidentTypes.map(type => (
+                      incidentTypes.map((type: IncidentType) => (
                         <div key={`${type.id}-${copyIndex}`} className="flex-shrink-0">
                           {renderIncidentButton(type, true)}
                         </div>
@@ -458,7 +473,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                {incidentTypes.map((type, index) => (
+                {incidentTypes.map((type: IncidentType, index: number) => (
                   <motion.div
                     key={type.id}
                     initial={{ opacity: 0, scale: 0.9 }}

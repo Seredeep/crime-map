@@ -33,7 +33,8 @@
     "dev:android:advanced": "powershell -ExecutionPolicy Bypass -File scripts/dev-android-advanced.ps1",
     "dev:android:robust": "powershell -ExecutionPolicy Bypass -File scripts/dev-android-robust.ps1",
     "fix-gradle-issue": "powershell -ExecutionPolicy Bypass -File scripts/fix-gradle-issue.ps1",
-    "fix-gradle-issue-aggressive": "powershell -ExecutionPolicy Bypass -File scripts/fix-gradle-issue-aggressive.ps1"
+    "fix-gradle-issue-aggressive": "powershell -ExecutionPolicy Bypass -File scripts/fix-gradle-issue-aggressive.ps1",
+    "linear:upload": "node scripts/linear-upload.js"
   },
   "dependencies": {
     "@auth/core": "^0.40.0",

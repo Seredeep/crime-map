@@ -186,7 +186,10 @@
     "panic": "Panic",
     "alert": "ALERT!",
     "panicButton": "⚠️ Panic button",
-    "panicAlert": "PANIC ALERT!"
+    "panicAlert": "⚠️ Panic Alert",
+    "confirmDescription": "Do you confirm the alert for your neighborhood? All connected neighbors will be notified immediately.",
+    "confirmDescriptionRich": "Do you confirm the alert for your neighborhood? All connected neighbors will be notified <em>immediately</em>.",
+    "confirmAlert": "🚨 Yes, alert"
   },
     "Sidebar": {
     "map": "Map",
@@ -429,6 +432,7 @@
     "device": "Device",
     "permissions": "Permissions",
     "app": "Application",
+    "language": "Language",
     "support": "Support",
     "profileDescription": "Personal information and avatar",
     "notificationsDescription": "Alert and notification settings",
@@ -437,6 +441,7 @@
     "deviceDescription": "Hardware settings",
     "permissionsDescription": "App permissions management",
     "appDescription": "General app settings",
+    "languageDescription": "Change application language",
     "supportDescription": "Help and contact",
     "personalInfo": "Personal Information",
     "name": "Name",
@@ -471,6 +476,8 @@
     "advancedSettings": "Advanced Settings",
     "hardwareTeamDevelopment": "This section is being developed by the hardware team.",
     "appPermissions": "App Permissions",
+    "languageSettings": "Language Settings",
+    "chooseLanguage": "Choose your preferred language",
     "storage": "Storage",
     "granted": "Granted",
     "pending": "Pending",

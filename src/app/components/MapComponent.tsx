@@ -31,7 +31,7 @@ const fixLeafletIcons = () => {
 // #region User Location Helper
 const getUserLocationCoordinates = (user: any): [number, number] => {
   console.log('🔍 getUserLocationCoordinates - User data:', user);
-  
+
   if (!user) {
     console.log('⚠️ No user data, defaulting to San Francisco');
     return [37.7749, -122.4194];

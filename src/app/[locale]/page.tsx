@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiArrowLeft } from 'react-icons/fi';
 import FloatingReportButton from '../components/FloatingReportButton';
-import LanguageSelector from '../components/LanguageSelector';
 import MobileBottomTabs from '../components/MobileBottomTabs';
 import MobileCommunitiesView from '../components/MobileCommunitiesView';
 import MobileReportView from '../components/MobileReportView';
@@ -202,10 +201,7 @@ export default function Home() {
         onSettingsClick={handleSettingsClick}
       />
 
-      {/* Language Selector - Fixed in top right corner */}
-      <div className="fixed top-4 right-4 z-50 md:top-6 md:right-6">
-        <LanguageSelector />
-      </div>
+      {/* Language selector removed from desktop; now available in Mobile Settings */}
 
       {/* Main content area - Below navbar */}
       <div className="flex flex-1 relative h-[calc(100vh-4rem)] ">
@@ -355,7 +351,7 @@ export default function Home() {
           <FloatingReportButton
             onClick={handleReportClick}
             isVisible={activeTab === 'incidents' && !showReportFormInPanel}
-            className="bottom-80"
+            className="bottom-56"
           />
 
           {/* Mobile Bottom Tabs */}

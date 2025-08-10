@@ -1,175 +1,174 @@
-# 🗺️ Crime Map - Mapa de Incidentes
+# 🗺️ Crime Map - Incident Map
 
-> Plataforma de visualización y reporte de incidentes de seguridad urbana en Argentina. Permite a los ciudadanos reportar, visualizar y analizar incidentes de forma colaborativa y verificada.
+> Platform for visualizing and reporting urban security incidents in Argentina. It allows citizens to report, view, and analyze incidents collaboratively with verification.
 
-## ✨ Características
+## ✨ Features
 
-- 🗺️ **Mapa interactivo** con visualización en tiempo real
-- 📱 **Responsive** - Optimizado para móvil y desktop
-- 🔐 **Autenticación** con Google y credenciales
-- 📊 **Estadísticas** y análisis temporal/geográfico
-- 🏷️ **Sistema de tags** y filtros avanzados
-- 🖼️ **Subida de evidencias** con Supabase Storage
-- 👥 **Roles de usuario** (Usuario, Editor, Admin)
+- 🗺️ **Interactive map** with real-time visualization
+- 📱 **Responsive** - Optimized for mobile and desktop
+- 🔐 **Authentication** with Google and credentials
+- 📊 **Statistics** and temporal/geographical analysis
+- 🏷️ **Tag system** and advanced filters
+- 🖼️ **Evidence uploads** with Supabase Storage
+- 👥 **User roles** (User, Editor, Admin)
 
-## 🚀 Inicio Rápido
+## 🚀 Quick Start
 
-### Prerrequisitos
-- Node.js 18+ o Bun
-- MongoDB (local o Atlas)
-- Cuenta de Supabase
+### Prerequisites
+- Node.js 18+ or Bun
+- MongoDB (local or Atlas)
+- Supabase account
 - Google Maps API Key
 
-### Instalación
+### Installation
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone <repo-url>
 cd crime-map
 
-# Instalar dependencias
+# Install dependencies
 bun install
-# o
+# or
 npm install
 
-# Configurar variables de entorno
+# Set environment variables
 cp .env.example .env.local
-# Editar .env.local con tus credenciales
+# Edit .env.local with your credentials
 
-# Ejecutar en desarrollo
+# Run in development
 bun dev
-# o
+# or
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## ⚙️ Variables de Entorno
+## ⚙️ Environment Variables
 
-Copia `.env.example` a `.env.local` y configura:
+Copy `.env.example` to `.env.local` and configure:
 
 ```bash
-# Base de datos
+# Database
 MONGODB_URI=mongodb://localhost:27017/crime-map
-# o MongoDB Atlas: mongodb+srv://user:pass@cluster.mongodb.net/crime-map
+# or MongoDB Atlas: mongodb+srv://user:pass@cluster.mongodb.net/crime-map
 
-# Autenticación
-NEXTAUTH_SECRET=tu-secret-super-seguro
+# Authentication
+NEXTAUTH_SECRET=your-super-secure-secret
 NEXTAUTH_URL=http://localhost:3000
 
 # Google OAuth
-GOOGLE_CLIENT_ID=tu-google-client-id
-GOOGLE_CLIENT_SECRET=tu-google-client-secret
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Google Maps
-GOOGLE_MAPS_API_KEY=tu-google-maps-api-key
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 
-# Supabase (para almacenamiento de archivos)
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=tu-supabase-service-key
+# Supabase (for file storage)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-key
 
-# Geocoding alternativo
-MAPS_CO_API_KEY=tu-maps-co-api-key
+# Alternative geocoding
+MAPS_CO_API_KEY=your-maps-co-api-key
 ```
 
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 src/
-├── app/                    # App Router de Next.js
-│   ├── api/               # Rutas API
-│   ├── auth/              # Páginas de autenticación
-│   ├── admin/             # Panel de administración
-│   └── components/        # Componentes React
-├── lib/                   # Utilidades y servicios
-│   ├── config/           # Configuración (roles, etc.)
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── admin/             # Admin dashboard
+│   └── components/        # React components
+├── lib/                   # Utilities and services
+│   ├── config/           # Configuration (roles, etc.)
 │   └── hooks/            # Custom hooks
-├── constants/            # Constantes del proyecto
-└── scripts/              # Scripts de utilidad/migración
+├── constants/            # Project constants
+└── scripts/              # Utility/migration scripts
 ```
 
-## 🛠️ Scripts Disponibles
+## 🛠️ Available Scripts
 
 ```bash
-# Desarrollo Web
-bun dev                    # Servidor de desarrollo web
-npm run dev               # Alternativa con npm
+# Web development
+bun dev                    # Web development server
+npm run dev               # Alternative with npm
 
-# Desarrollo Móvil (Capacitor)
-npm run dev:android:robust # Hot reload en Android (RECOMENDADO)
-npm run dev:android:simple # Hot reload simple
-npm run dev:android:advanced # Con instrucciones detalladas
+# Mobile development (Capacitor)
+npm run dev:android:robust # Hot reload on Android (RECOMMENDED)
+npm run dev:android:simple # Simple hot reload
+npm run dev:android:advanced # With detailed instructions
 
-# Solución de Problemas
-npm run fix-gradle-issue   # Solución completa para errores de Gradle
-npm run clean:android      # Limpieza de Android
-npm run cap:restore        # Restaurar configuración
+# Troubleshooting
+npm run fix-gradle-issue   # Complete solution for Gradle errors
+npm run clean:android      # Android cleanup
+npm run cap:restore        # Restore configuration
 
-# Producción
-bun build                  # Build de producción web
-npm run build:prod         # Build de producción móvil
+# Production
+bun build                  # Web production build
+npm run build:prod         # Mobile production build
 
-# Utilidades
-bun lint                   # Linter ESLint
-bun run load-neighborhoods # Cargar datos de barrios
-bun run import-incidents   # Importar incidentes (desarrollo)
+# Utilities
+bun lint                   # ESLint linter
+bun run load-neighborhoods # Load neighborhood data
+bun run import-incidents   # Import incidents (development)
 ```
 
-## 📱 Desarrollo Móvil
+## 📱 Mobile Development
 
-Para desarrollo con hot reload en Android:
+For Android development with hot reload:
 
-1. **Iniciar:** `npm run dev:android:robust`
-2. **Seguir instrucciones** que aparecen en pantalla
-3. **Desarrollar** con hot reload automático
-4. **Finalizar:** `npm run cap:restore`
+1. **Start:** `npm run dev:android:robust`
+2. **Follow** the on-screen instructions
+3. **Develop** with automatic hot reload
+4. **Finish:** `npm run cap:restore`
 
-📚 **Documentación completa:** [docs/CAPACITOR/README.md](docs/CAPACITOR/README.md)
+📚 **Full documentation:** [docs/CAPACITOR/README.md](docs/CAPACITOR/README.md)
 
-## 🗃️ Base de Datos
+## 🗃️ Database
 
-### Configuración inicial
+### Initial setup
 
-1. **MongoDB**: Crea una base de datos llamada `crime-map`
-2. **Colecciones principales**:
-   - `incidents` - Incidentes reportados
-   - `users` - Usuarios del sistema
-   - `neighborhoods` - Datos geográficos de barrios
+1. **MongoDB**: Create a database named `crime-map`
+2. **Main collections**:
+   - `incidents` - Reported incidents
+   - `users` - System users
+   - `neighborhoods` - Neighborhood geographic data
 
-3. **Cargar datos iniciales**:
+3. **Load initial data**:
 ```bash
-# Cargar barrios (requiere archivo GeoJSON)
+# Load neighborhoods (requires GeoJSON file)
 cd scripts && node load-neighborhoods-local.js
 ```
 
 ### Supabase Storage
-1. Crea un proyecto en [Supabase](https://supabase.com)
-2. El bucket `incident-evidence` se crea automáticamente
-3. Configura las policies de acceso según necesites
+1. Create a project in [Supabase](https://supabase.com)
+2. The `incident-evidence` bucket is created automatically
+3. Configure access policies as needed
 
-## 🔐 Roles y Permisos
+## 🔐 Roles and Permissions
 
-- **Usuario**: Puede reportar y ver incidentes
-- **Editor**: Puede verificar/editar incidentes
-- **Admin**: Gestión completa de usuarios e incidentes
+- **User**: Can report and view incidents
+- **Editor**: Can verify/edit incidents
+- **Admin**: Full management of users and incidents
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
+1. Fork the project
+2. Create a branch for your feature (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add new functionality'`)
+4. Push the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+This project is under the MIT License. See `LICENSE` for more details.
 
-## 🆘 Soporte
+## 🆘 Support
 
-- 📧 Email: [tu-email@ejemplo.com]
+- 📧 Email: [your-email@example.com]
 - 🐛 Issues: [GitHub Issues](link-to-issues)
-- 📖 Docs: [Ver documentación completa](link-to-docs)
-
+- 📖 Docs: [See full documentation](link-to-docs)
 
