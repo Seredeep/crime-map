@@ -127,9 +127,10 @@ export const authOptions: NextAuthOptions = {
             neighborhood: user.neighborhood || null,
             country: user.country || null,
             city: user.city || null,
-            notificationsEnabled: user.notificationsEnabled ?? true,
-            privacyPublic: user.privacyPublic ?? false,
-            autoLocationEnabled: user.autoLocationEnabled ?? true,
+            // keep only privacyPublic default here
+            notificationsEnabled: user.notificationsEnabled,
+            privacyPublic: user.privacyPublic ?? true,
+            autoLocationEnabled: user.autoLocationEnabled,
             profileImage: user.profileImage ?? undefined,
           };
         } catch (error) {
@@ -162,10 +163,24 @@ export const authOptions: NextAuthOptions = {
           user.enabled = dbUser.enabled;
           user.role = dbUser.role || getDefaultRole();
           user.neighborhood = dbUser.neighborhood || null;
-          user.notificationsEnabled = dbUser.notificationsEnabled ?? true;
-          user.privacyPublic = dbUser.privacyPublic ?? false;
-          user.autoLocationEnabled = dbUser.autoLocationEnabled ?? true;
+          user.notificationsEnabled = dbUser.notificationsEnabled;
+          user.privacyPublic = dbUser.privacyPublic ?? true;
+          user.autoLocationEnabled = dbUser.autoLocationEnabled;
           user.profileImage = dbUser.profileImage ?? undefined;
+
+          // Ensure defaults are persisted if fields are missing
+          const defaultsToPersist: Record<string, boolean> = {};
+          if (dbUser.privacyPublic === undefined) defaultsToPersist.privacyPublic = true;
+          if (Object.keys(defaultsToPersist).length > 0) {
+            try {
+              await db.collection("users").updateOne(
+                { _id: new ObjectId(dbUser._id) },
+                { $set: defaultsToPersist }
+              );
+            } catch (e) {
+              console.error('Error setting default user settings', e);
+            }
+          }
         }
       }
 

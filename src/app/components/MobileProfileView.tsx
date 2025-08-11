@@ -7,22 +7,22 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  FiAlertTriangle,
-  FiBell,
-  FiCamera,
-  FiCheckCircle,
-  FiChevronRight,
-  FiClock,
-  FiHelpCircle,
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-  FiSmartphone,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-  FiZap
+    FiAlertTriangle,
+    FiBell,
+    FiCamera,
+    FiCheckCircle,
+    FiChevronRight,
+    FiClock,
+    FiHelpCircle,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiSmartphone,
+    FiUser,
+    FiUsers,
+    FiXCircle,
+    FiZap
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -62,7 +62,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
 
   // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [privacyPublic, setPrivacyPublic] = useState(false);
+  const [privacyPublic, setPrivacyPublic] = useState(true);
   const [autoLocationEnabled, setAutoLocationEnabled] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(false);
@@ -88,7 +88,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
   useEffect(() => {
     if (session?.user) {
       setNotificationsEnabled(session.user.notificationsEnabled ?? true);
-      setPrivacyPublic(session.user.privacyPublic ?? false);
+      setPrivacyPublic(session.user.privacyPublic ?? true);
       setAutoLocationEnabled(session.user.autoLocationEnabled ?? true);
       setProfileImagePreview(session.user.profileImage || null);
       console.log("Session user profileImage on mount/update:", session.user.profileImage);
@@ -108,19 +108,14 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
     setIsSaving(true);
     console.log("Starting configuration save...");
 
-    const fullSettings = {
-      notificationsEnabled,
-      privacyPublic,
-      autoLocationEnabled,
-      ...newSettings,
-    };
-    console.log("Configuration to send:", fullSettings);
+    const payload = { ...newSettings };
+    console.log("Configuration to send:", payload);
 
     try {
       const response = await fetch('/api/user/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fullSettings),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -130,7 +125,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       }
 
       console.log("Configuration saved in API. Updating session...");
-      await update(fullSettings);
+      await update(payload);
       console.log("Session updated.");
       showToast(configT('configurationSaved'), 'success');
     } catch (error) {

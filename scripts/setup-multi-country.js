@@ -327,7 +327,7 @@ export function getDefaultLocation(country: CountryCode) {
           password: hashedPassword,
           createdAt: new Date(),
           notificationsEnabled: true,
-          privacyPublic: false,
+          privacyPublic: true,
           autoLocationEnabled: true
         };
 

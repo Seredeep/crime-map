@@ -12,10 +12,30 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const { notificationsEnabled, privacyPublic, autoLocationEnabled } = await req.json();
+    const body = await req.json();
 
-    if (typeof notificationsEnabled !== 'boolean' || typeof privacyPublic !== 'boolean' || typeof autoLocationEnabled !== 'boolean') {
-      return NextResponse.json({ message: 'Datos de configuración inválidos' }, { status: 400 });
+    const updateFields: Record<string, boolean> = {};
+    if (body.notificationsEnabled !== undefined) {
+      if (typeof body.notificationsEnabled !== 'boolean') {
+        return NextResponse.json({ message: 'Datos de configuración inválidos' }, { status: 400 });
+      }
+      updateFields.notificationsEnabled = body.notificationsEnabled;
+    }
+    if (body.privacyPublic !== undefined) {
+      if (typeof body.privacyPublic !== 'boolean') {
+        return NextResponse.json({ message: 'Datos de configuración inválidos' }, { status: 400 });
+      }
+      updateFields.privacyPublic = body.privacyPublic;
+    }
+    if (body.autoLocationEnabled !== undefined) {
+      if (typeof body.autoLocationEnabled !== 'boolean') {
+        return NextResponse.json({ message: 'Datos de configuración inválidos' }, { status: 400 });
+      }
+      updateFields.autoLocationEnabled = body.autoLocationEnabled;
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return NextResponse.json({ message: 'Sin cambios' }, { status: 400 });
     }
 
     const client = await clientPromise;
@@ -23,12 +43,7 @@ export async function PUT(req: NextRequest) {
 
     const result = await db.collection('users').updateOne(
       { _id: new ObjectId(session.user.id) },
-      { $set: {
-          notificationsEnabled,
-          privacyPublic,
-          autoLocationEnabled,
-        }
-      }
+      { $set: updateFields }
     );
 
     if (result.matchedCount === 0) {

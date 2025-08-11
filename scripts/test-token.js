@@ -44,7 +44,7 @@ async function testToken(email) {
       createdAt: user.createdAt || new Date(),
       neighborhood: user.neighborhood || null,
       notificationsEnabled: user.notificationsEnabled ?? true,
-      privacyPublic: user.privacyPublic ?? false,
+      privacyPublic: user.privacyPublic ?? true,
       autoLocationEnabled: user.autoLocationEnabled ?? true,
       profileImage: user.profileImage ?? undefined,
     };

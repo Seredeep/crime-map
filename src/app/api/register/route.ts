@@ -57,6 +57,8 @@ export async function POST(request: Request) {
       role: getDefaultRole(),
       enabled: true, // Usuario habilitado por defecto
       createdAt: new Date(),
+      // Defaults for user settings
+      privacyPublic: true,
       // Los campos `name`, `onboarded` y `chatId` se manejarán en el onboarding
     });
 
@@ -71,6 +73,8 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       onboarded: false, // Nuevo campo para indicar si el usuario ha completado el onboarding
       chatId: null, // Nuevo campo para almacenar el chatId del barrio
+      // Defaults mirrored in Firestore profile doc
+      privacyPublic: true,
     });
 
     return NextResponse.json({

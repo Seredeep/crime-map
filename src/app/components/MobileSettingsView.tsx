@@ -78,7 +78,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
 
   // Settings state
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
-  const [privacyPublic, setPrivacyPublic] = useState(false)
+  const [privacyPublic, setPrivacyPublic] = useState(true)
   const [autoLocationEnabled, setAutoLocationEnabled] = useState(false)
   const [pushNotifications, setPushNotifications] = useState(false)
   const [emailNotifications, setEmailNotifications] = useState(false)
@@ -109,7 +109,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
   useEffect(() => {
     if (session?.user) {
       setNotificationsEnabled(session.user.notificationsEnabled ?? true)
-      setPrivacyPublic(session.user.privacyPublic ?? false)
+      setPrivacyPublic(session.user.privacyPublic ?? true)
       setAutoLocationEnabled(session.user.autoLocationEnabled ?? true)
       setProfileImagePreview(session.user.profileImage || null)
       console.log(
@@ -139,19 +139,14 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       setIsSaving(true)
       console.log('Starting configuration save...')
 
-      const fullSettings = {
-        notificationsEnabled,
-        privacyPublic,
-        autoLocationEnabled,
-        ...newSettings,
-      }
-      console.log('Configuration to send:', fullSettings)
+      const payload = { ...newSettings }
+      console.log('Configuration to send:', payload)
 
       try {
         const response = await fetch('/api/user/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fullSettings),
+          body: JSON.stringify(payload),
         })
 
         if (!response.ok) {
@@ -166,7 +161,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
         }
 
         console.log('Configuration saved in API. Updating session...')
-        await update(fullSettings)
+        await update(payload)
         console.log('Session updated.')
         showToast(configT('configurationSaved'), 'success')
       } catch (error) {
@@ -571,6 +566,34 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
                 onChange={handleImageChange}
                 className="hidden"
               />
+            </div>
+
+            {/* Visibility inside Profile */}
+            <div className="bg-gray-700/40 rounded-lg p-4 border border-gray-600/20">
+              <h4 className="text-white font-medium mb-2 flex items-center">
+                <FiShield className="w-4 h-4 mr-2 text-green-400" />
+                {configT('profileVisibility')}
+              </h4>
+              <p className="text-gray-400 text-xs mb-3">{configT('profileVisibilityHelp')}</p>
+              <div className="flex items-center justify-between bg-gray-800/40 p-3 rounded-lg border border-gray-700/30">
+                <span className="text-gray-200 text-sm font-medium">
+                  {privacyPublic ? configT('public') : configT('private')}
+                </span>
+                <button
+                  onClick={togglePrivacy}
+                  disabled={isSaving}
+                  aria-pressed={privacyPublic}
+                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
+                    privacyPublic ? 'bg-blue-600' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                      privacyPublic ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         )

@@ -242,7 +242,7 @@ async function createTestUser(email, password) {
       onboarded: false,
       createdAt: new Date(),
       notificationsEnabled: true,
-      privacyPublic: false,
+      privacyPublic: true,
       autoLocationEnabled: true
     };
 
