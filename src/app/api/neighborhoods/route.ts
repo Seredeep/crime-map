@@ -16,10 +16,15 @@ export async function GET(request: NextRequest) {
       query = { 'properties.city': city };
     }
 
-    // Get neighborhoods based on query
+    // Get neighborhoods based on query and ensure _id is a string for client usage
     const neighborhoods = await db.collection('neighborhoods').find(query).toArray();
 
-    return NextResponse.json(neighborhoods);
+    const serialized = neighborhoods.map((n: any) => ({
+      ...n,
+      _id: n._id?.toString?.() || String(n._id)
+    }));
+
+    return NextResponse.json(serialized);
   } catch (error) {
     console.error('Error fetching neighborhoods:', error);
     return NextResponse.json(

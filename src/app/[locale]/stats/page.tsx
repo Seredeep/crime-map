@@ -20,7 +20,7 @@ export default function StatsPage() {
     return {
       dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
-      neighborhoodId: '83',
+      neighborhoodId: undefined,
       status: 'verified'
     };
   });

@@ -43,7 +43,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
     return {
       dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
-      neighborhoodId: '83',
+      neighborhoodId: undefined,
       status: 'verified'
     };
   });
@@ -77,7 +77,9 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
 
   // Handler para selección de barrio
   const handleNeighborhoodSelect = useCallback((neighborhood: Neighborhood | null) => {
-    setSelectedNeighborhood(neighborhood);
+    // Force re-render of GeoJSON overlay by changing key via state bounce
+    setSelectedNeighborhood(null);
+    setTimeout(() => setSelectedNeighborhood(neighborhood), 0);
   }, []);
 
   // Handler para actualización de incidentes
@@ -352,6 +354,37 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                         onNeighborhoodSelect={handleNeighborhoodSelect}
                         onClose={() => setShowFiltersPopover(false)}
                       />
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          className="flex-1 px-4 py-2 rounded-lg text-white bg-gray-600/40 border border-gray-500/40"
+                          onClick={() => {
+                            // Clear filters consistently
+                            const today = new Date();
+                            const defaultDate = new Date('2013-01-01');
+                            const cleared = {
+                              dateFrom: defaultDate.toISOString().split('T')[0],
+                              dateTo: today.toISOString().split('T')[0],
+                              neighborhoodId: undefined,
+                              status: 'verified' as const,
+                              tags: undefined,
+                              time: undefined,
+                              timeFrom: undefined,
+                              timeTo: undefined,
+                            };
+                            setSelectedNeighborhood(null);
+                            setFilters(cleared);
+                            setShowFiltersPopover(false);
+                          }}
+                        >
+                          {t('Actions.clear')}
+                        </button>
+                        <button
+                          className="flex-1 px-4 py-2 rounded-lg text-white bg-blue-600 border border-blue-500"
+                          onClick={() => setShowFiltersPopover(false)}
+                        >
+                          {t('Actions.apply')}
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 </>
@@ -367,6 +400,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
           incidents={incidents}
           onIncidentUpdate={handleIncidentUpdate}
           onIncidentSelect={handleIncidentSelect}
+          selectedNeighborhood={selectedNeighborhood}
         />
       </div>
 
