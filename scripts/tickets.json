@@ -1,0 +1,97 @@
+[
+  {
+    "title": "Mobile: Enable live reloading in Capacitor",
+    "description": "Set up fast dev loop with Capacitor for Android and iOS (hot reload). Provide docs and commands that work reliably."
+  },
+  {
+    "title": "Search: Fix search bar to query across all filters",
+    "description": "Allow searching across all filter fields and incident attributes. Debounced input, keyboard accessibility, and clear 'no results' state."
+  },
+  {
+    "title": "Approvals: Fix approval queue",
+    "description": "Ensure incidents pending approval appear in a single queue. Single-vote approval works, proper status transitions, and audit trail."
+  },
+  {
+    "title": "Config: Centralize database selection in a single env variable",
+    "description": "Introduce one environment variable to select database target (local/Atlas/etc.). Update services to read only this source and document usage."
+  },
+  {
+    "title": "Notifications: Implement push and in-app notifications",
+    "description": "Notification service for chat messages, approvals, and panic events. Respect permissions and user settings."
+  },
+  {
+    "title": "Permissions: Define and enforce permissions config",
+    "description": "Role-based access (admin/editor/user). Guard API routes and UI actions; add tests for critical paths."
+  },
+  {
+    "title": "Auth: Fix logout bug",
+    "description": "Investigate logout not clearing session fully. Ensure tokens/cookies are cleared and user is redirected correctly."
+  },
+  {
+    "title": "Android: Production support",
+    "description": "Resolve remaining Android issues (permissions, navigation, build). Deliver signed build and checklist for Play Store readiness."
+  },
+  {
+    "title": "iOS: Production support",
+    "description": "Resolve iOS-specific issues (permissions, deep links). Deliver signed build and checklist for App Store readiness."
+  },
+  {
+    "title": "BLE Panic: Onboarding flow",
+    "description": "Create onboarding to pair a BLE panic button. Handle permissions, pairing, reconnection, and error states."
+  },
+  {
+    "title": "Chat: Reply to message",
+    "description": "Support quoted replies or threaded messages in chat UI and storage."
+  },
+  {
+    "title": "Chat: Show chat members",
+    "description": "List participants with online status and role badges."
+  },
+  {
+    "title": "Chat: Anonymous messaging option",
+    "description": "Allow optional anonymous messages in neighborhood chat with moderation and abuse controls."
+  },
+  {
+    "title": "Panic: Software panic button toggle",
+    "description": "Show a toggle to enable/disable the software panic button. If location permission is off, explain the disabled state and guide to enable."
+  },
+  {
+    "title": "Profile: Public/Private setting",
+    "description": "Add privacy setting to switch between public and private profile; update visibility rules accordingly."
+  },
+  {
+    "title": "Android: Fix back navigation exits the app",
+    "description": "Handle Android back button to navigate within the app; only exit on root with confirmation."
+  },
+  {
+    "title": "Filters: Improve UX",
+    "description": "Refine filters layout and interactions: clearer multi-select, 'clear all', and persistence across navigation."
+  },
+  {
+    "title": "Incidents: Tags UI/UX",
+    "description": "Redesign tags picker, consistent colors, keyboard navigation, and accessibility."
+  },
+  {
+    "title": "Design: Set a global color palette",
+    "description": "Define design tokens and Tailwind theme. Align map overlays and UI colors for consistency."
+  },
+  {
+    "title": "Design: Dark and light mode",
+    "description": "Implement theme switcher, persist preference, and ensure contrast accessibility."
+  },
+  {
+    "title": "UI: Fix incident list modal floating bug",
+    "description": "Fix modal position/z-index and scroll locking to avoid floating glitches."
+  },
+  {
+    "title": "Map: Improve colors",
+    "description": "Adjust map marker/overlay colors for better contrast and severity scale readability."
+  },
+  {
+    "title": "Filters: Fix neighborhoods data",
+    "description": "Correct neighborhood names and mapping; ensure search and filtering work across all datasets."
+  }
+]
+
+
+

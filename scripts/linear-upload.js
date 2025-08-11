@@ -34,7 +34,7 @@ try {
 } catch {}
 
 function parseArgs(argv) {
-  const args = {};
+  const args = { _: [] };
   for (let i = 2; i < argv.length; i++) {
     const part = argv[i];
     const next = argv[i + 1];
@@ -46,6 +46,8 @@ function parseArgs(argv) {
       } else {
         args[key] = true;
       }
+    } else {
+      args._.push(part);
     }
   }
   return args;
@@ -80,9 +82,16 @@ async function linearRequest(apiKey, query, variables = {}) {
 }
 
 async function resolveTeamId(apiKey, teamKey) {
-  const query = `query TeamByKey($key: String!) { team(key: $key) { id name key } }`;
+  const query = `
+    query TeamsByKey($key: String!) {
+      teams(first: 1, filter: { key: { eq: $key } }) {
+        nodes { id name key }
+      }
+    }
+  `;
   const data = await linearRequest(apiKey, query, { key: teamKey });
-  return data.team?.id || null;
+  const nodes = data?.teams?.nodes || [];
+  return nodes.length ? nodes[0].id : null;
 }
 
 async function createIssue(apiKey, input) {
@@ -93,9 +102,15 @@ async function createIssue(apiKey, input) {
 
 async function main() {
   const args = parseArgs(process.argv);
-  const teamKey = args.team || process.env.LINEAR_TEAM_KEY;
-  const apiKey = args.token || process.env.LINEAR_API_KEY || process.env.LINEAR_TOKEN;
-  const filePath = args.file || "tickets.json";
+  const positionalTeam = args._ && args._[0] && !String(args._[0]).startsWith("-") ? args._[0] : undefined;
+  const positionalFile = args._ && args._[1] && !String(args._[1]).startsWith("-") ? args._[1] : undefined;
+  const teamKey = args.team || process.env.LINEAR_TEAM_KEY || positionalTeam;
+  const apiKey =
+    args.token ||
+    process.env.LINEAR_API_KEY ||
+    process.env.LINEAR_TOKEN ||
+    process.env.LINEAR_UPLOADER_LOCAL;
+  const filePath = args.file || positionalFile || "tickets.json";
 
   if (!teamKey) {
     console.error("❌ Missing --team TKEY (or env LINEAR_TEAM_KEY)");
