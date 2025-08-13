@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 export function useAppLoading() {
   const t = useTranslations('AppLoading');
-  
+
   const loadingSteps = [
     { progress: 10, message: t('startingClaridad') },
     { progress: 25, message: t('connectingCommunity') },
@@ -26,9 +26,9 @@ export function useAppLoading() {
         setProgress(loadingSteps[current].progress);
         setMessage(loadingSteps[current].message);
         current++;
-        setTimeout(nextStep, 350 + Math.random() * 250);
+        setTimeout(nextStep, 175 + Math.random() * 125);
       } else {
-        setTimeout(() => setIsLoading(false), 500);
+        setTimeout(() => setIsLoading(false), 250);
       }
     }
     nextStep();
@@ -37,7 +37,7 @@ export function useAppLoading() {
   const finishLoading = () => {
     setIsLoading(false);
     setProgress(100);
-    setMessage('Listo!');
+    setMessage(t('readyToChat'));
   };
 
   return {

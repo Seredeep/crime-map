@@ -22,13 +22,23 @@ export default function LoadingScreen({ isLoading, progress = 0, message }: Load
       const timer = setInterval(() => {
         setDisplayProgress(prev => {
           if (prev < progress) {
-            return Math.min(prev + 2, progress);
+            return Math.min(prev + 6, progress);
           }
           return prev;
         });
       }, 50);
 
-      return () => clearInterval(timer);
+      let forceCompleteTimer: NodeJS.Timeout | null = null;
+      if (progress === 100) {
+        forceCompleteTimer = setTimeout(() => {
+          setDisplayProgress(100);
+        }, 200);
+      }
+
+      return () => {
+        clearInterval(timer);
+        if (forceCompleteTimer) clearTimeout(forceCompleteTimer);
+      };
     }
   }, [isLoading, progress]);
 
