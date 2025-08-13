@@ -4,7 +4,7 @@ import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiSend, FiUsers } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiSend, FiUser, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
 
 interface MobileFullScreenChatViewProps {
@@ -46,10 +46,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const { data: session } = useSession();
   const t = useTranslations('States');
   const tErrors = useTranslations('Errors');
+  const tChat = useTranslations('Chat');
   const [chat, setChat] = useState<ChatInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -157,7 +159,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         },
         body: JSON.stringify({
           message: message.trim(),
-          type: 'normal'
+          type: 'normal',
+          metadata: anonymous ? { anonymous: true } : {}
         }),
       });
 
@@ -379,6 +382,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           const showAvatar = !isOwn && isLastInGroup;
           const showName = !isOwn && isFirstInGroup;
 
+          const isAnonymous = Boolean((message as any).metadata?.anonymous) || (message.userName?.toLowerCase?.() === 'anonymous');
+
           return (
             <div key={message.id} className="flex flex-col">
               {showDate && (
@@ -424,7 +429,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
                   <div
                     className={`px-4 py-2 shadow-md ${isOwn
-                        ? 'bg-blue-600 text-white'
+                        ? (isAnonymous ? 'bg-gray-600 text-white' : 'bg-blue-600 text-white')
                         : message.type === 'panic'
                           ? 'bg-red-700 text-white border border-red-600'
                           : 'bg-gray-700 text-gray-100'
@@ -465,6 +470,21 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
       {/* #region Message Input */}
       <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex items-end space-x-2">
+        {/* Toggle Anónimo */}
+        <button
+          onClick={() => setAnonymous(!anonymous)}
+          aria-pressed={anonymous}
+          className={`h-10 w-10 rounded-md border flex items-center justify-center ${anonymous ? 'bg-blue-600 border-blue-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300'}`}
+        >
+          {anonymous ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+            </svg>
+          ) : (
+            <FiUser className="w-4 h-4" />
+          )}
+        </button>
+
         <textarea
           ref={textareaRef}
           value={newMessage}
