@@ -19,6 +19,7 @@ interface Message {
   metadata?: {
     location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
     address?: string;
+    replyTo?: { id: string; userId: string; userName: string; snippet: string };
   };
 }
 
@@ -32,6 +33,7 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
   const [chat, setChat] = useState<ChatWithParticipants | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
   const [showParticipants, setShowParticipants] = useState(false);
 
@@ -80,11 +82,13 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
         message: newMessage.trim(),
         timestamp: new Date(),
         type: 'normal',
-        isOwn: true
+        isOwn: true,
+        metadata: replyingTo ? { replyTo: { id: replyingTo.id, userId: replyingTo.userId, userName: replyingTo.userName, snippet: replyingTo.message.slice(0, 140) } } : undefined
       };
 
       setMessages(prev => [...prev, message]);
       setNewMessage('');
+      setReplyingTo(null);
 
       // Aquí iría la lógica para enviar el mensaje al servidor
     }
@@ -225,7 +229,14 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
                         ? 'bg-blue-500 text-white rounded-br-md'
                         : 'bg-gray-700 text-gray-100 rounded-bl-md'
                     }`}
+                    onDoubleClick={() => setReplyingTo(message)}
                   >
+                    {message.metadata?.replyTo && (
+                      <div className={`mb-2 px-2 py-1 rounded ${message.isOwn ? 'bg-blue-500/40' : 'bg-gray-600/50'}`}>
+                        <span className="text-xs font-semibold">{message.metadata.replyTo.userName}</span>
+                        <div className="text-xs opacity-80 truncate">{message.metadata.replyTo.snippet}</div>
+                      </div>
+                    )}
                     {message.type === 'panic' ? (
                       <div className="flex items-center space-x-2 text-red-100 mb-1">
                         <FiAlertTriangle className="w-4 h-4" />
@@ -272,6 +283,16 @@ const MobileChatView = ({ className = '', onBack }: MobileChatViewProps) => {
 
       {/* Message input */}
       <div className="bg-gray-800/50 backdrop-blur-sm border-t border-gray-700/50 p-4">
+        {replyingTo && (
+          <div className="flex items-center justify-between px-3 py-2 mb-2 bg-gray-700/60 rounded-md border border-gray-600/60">
+            <div className="text-xs">
+              <span className="text-gray-300">Respondiendo a </span>
+              <span className="text-white font-semibold">{replyingTo.userName}</span>
+              <div className="text-gray-200 truncate max-w-[240px]">{replyingTo.message}</div>
+            </div>
+            <button onClick={() => setReplyingTo(null)} className="text-gray-300 hover:text-white text-xs">✕</button>
+          </div>
+        )}
         <div className="flex items-center space-x-3">
           <div className="flex-1 relative">
             <input
