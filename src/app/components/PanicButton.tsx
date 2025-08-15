@@ -268,7 +268,7 @@ const PanicButton = ({ isVisible = true, className = '' }: PanicButtonProps) => 
                   0 8px 50px rgba(0, 0, 0, 0.4)
                 `
               }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: any) => e.stopPropagation()}
             >
               {/* Efecto de brillo de fondo */}
               <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 to-transparent opacity-50" />

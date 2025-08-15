@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
         console.log('🔍 Final search query:', JSON.stringify(searchQuery, null, 2));
 
         // Búsqueda por proximidad si se proporcionan coordenadas del usuario
-        let sortOptions: any = { date: -1 }; // Ordenar por fecha más reciente por defecto
+        const sortOptions: any = { date: -1 }; // Ordenar por fecha más reciente por defecto
 
         if (userLat && userLng) {
           try {

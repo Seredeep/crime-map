@@ -1346,7 +1346,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
                     whileTap={{ scale: 0.98 }}
                   >
                     <FiLogOut className="w-5 h-5 text-red-400" />
-                    <span className="text-red-400 font-semibold">Sign Out</span>
+                    <span className="text-red-400 font-semibold">{t('signOut')}</span>
                   </motion.button>
                 </motion.div>
               )}
@@ -1370,8 +1370,11 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
                   <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
                     <FiCheckCircle className="w-4 h-4 text-blue-400" />
                   </div>
-                  Verification Queue
+                  {t('incidentVerificationQueue')}
                 </h3>
+                <p className="text-gray-400 text-sm mb-4">
+                  {t('reviewAndApproveIncidents')}
+                </p>
                 <IncidentQueue />
               </motion.div>
             </motion.div>

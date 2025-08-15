@@ -1,147 +1,145 @@
-# 📄 Proceso y Funcionamiento del Formulario de Reporte de Incidentes
+# Sistema de Filtros para Cola de Aprobación de Incidentes
 
-## 1. Propósito General
-El formulario de reporte permite a los usuarios informar incidentes de seguridad o situaciones relevantes en la ciudad de Mar del Plata y alrededores, geolocalizándolos y adjuntando evidencia.
+## Descripción
 
----
+El sistema de filtros para la cola de aprobación de incidentes ha sido completamente rediseñado para proporcionar una experiencia más eficiente y organizada para administradores y editores.
 
-## 2. Estructura General del Formulario
+## Características Principales
 
-El formulario está compuesto por las siguientes secciones principales:
+### 🎯 Filtros Consolidados
+- **Un solo botón de filtros**: Todos los filtros están organizados en un panel desplegable
+- **Interfaz limpia**: Sin dropdowns dispersos por toda la interfaz
+- **Contador de filtros activos**: Muestra cuántos filtros están aplicados
 
-1. **Tipo de Incidente (Etiquetas)**
-2. **Ubicación (Búsqueda, Autocompletado y Mapa)**
-3. **Detalles del Incidente (Descripción, Fecha y Hora)**
-4. **Evidencia (Subida de Archivos)**
-5. **Envío del Reporte**
+### 🏘️ Filtro por Barrios/Ciudades
+- **Selección de barrios**: Filtra incidentes por barrio específico
+- **Ordenamiento alfabético**: Los barrios se muestran ordenados alfabéticamente
+- **Búsqueda geográfica**: Utiliza coordenadas GeoJSON para filtrar por ubicación
 
----
+### 📅 Filtros de Fecha
+- **Rango de fechas**: Filtra incidentes entre dos fechas específicas
+- **Fecha desde/hasta**: Permite establecer períodos de tiempo personalizados
+- **Formato estándar**: Utiliza el formato de fecha ISO (YYYY-MM-DD)
 
-## 3. Flujo Paso a Paso
+### 🏷️ Filtros de Tipos de Incidente
+- **Tags relevantes**: Solo incluye tipos de incidente útiles para la administración
+- **Selección múltiple**: Permite seleccionar varios tipos simultáneamente
+- **Interfaz visual**: Botones toggle para cada tipo de incidente
 
-### A. Selección de Tipo de Incidente
-- El usuario puede elegir uno o varios tipos de incidente (robo, asalto, vandalismo, etc.) mediante botones visuales.
-- Las etiquetas seleccionadas se resaltan y se agregan al estado del formulario.
+### 📊 Filtros de Estado
+- **Estados del sistema**: Pending, Verified, Resolved
+- **Filtro por estado**: Permite enfocarse en incidentes de un estado específico
+- **Vista general**: Opción "Todos los estados" para ver todo
 
-### B. Selección de Ubicación
-- El usuario puede buscar una dirección o lugar usando un campo de autocompletado.
-- El autocompletado utiliza primero Google Places/Geocoding y, si no hay resultados, OpenStreetMap Nominatim, priorizando resultados en Mar del Plata.
-- Al seleccionar una dirección, se muestra en un recuadro verde y se coloca un marcador en el mapa.
-- El usuario puede ajustar la ubicación arrastrando el marcador en el mapa.
-- El sistema guarda tanto la dirección formateada como las coordenadas GPS.
+## Tipos de Incidente Disponibles
 
-### C. Detalles del Incidente
-- El usuario debe ingresar una **descripción** del hecho.
-- Debe seleccionar la **fecha** y la **hora** en que ocurrió el incidente.
-- Estos datos se validan para que no queden vacíos.
+Los siguientes tipos de incidente están disponibles para filtrado:
 
-### D. Subida de Evidencia
-- El usuario puede subir archivos como imágenes, PDFs o documentos Word (máx. 10MB por archivo).
-- Los archivos se muestran en una lista, permitiendo eliminar los que no desee adjuntar antes de enviar.
-- Los archivos se almacenan en Supabase Storage, y se guarda la URL pública en la base de datos.
+- **robo**: Robos y hurtos
+- **asalto**: Agresiones físicas
+- **vandalismo**: Daños intencionales a la propiedad
+- **disturbio**: Alteraciones del orden público
+- **amenaza**: Intimidaciones verbales o escritas
+- **sospechoso**: Actividades sospechosas
+- **violencia**: Actos violentos en general
 
-### E. Envío del Reporte
-- Al enviar, se valida que todos los campos obligatorios estén completos y que haya una ubicación válida.
-- Se crea un objeto `FormData` con todos los datos y archivos.
-- Se envía una petición `POST` a `/api/incidents`.
-- El backend procesa la información, sube los archivos a Supabase, guarda el incidente en MongoDB y responde con éxito o error.
-- Si el envío es exitoso, se muestra un mensaje de confirmación y se redirige al usuario.
+## Cómo Usar los Filtros
 
----
+### 1. Acceder a los Filtros
+- Haz clic en el botón "Filtros" en la parte superior de la cola
+- Se desplegará un panel con todas las opciones disponibles
 
-## 4. Tecnologías y APIs Involucradas
+### 2. Aplicar Filtros
+- **Estado**: Selecciona el estado deseado del dropdown
+- **Barrio**: Elige un barrio específico de la lista
+- **Fechas**: Establece el rango de fechas deseado
+- **Tipos**: Haz clic en los botones de tipo para activar/desactivar
 
-- **Frontend:** React/Next.js, componentes personalizados, hooks de estado.
-- **Geocoding:** Google Places/Geocoding API y OpenStreetMap Nominatim (fallback).
-- **Mapa:** Componente de mapa interactivo (Leaflet, Mapbox, etc.).
-- **Backend:** Next.js API Routes.
-- **Base de datos:** MongoDB (colección `incident_draft`).
-- **Almacenamiento de archivos:** Supabase Storage.
-- **Autenticación:** NextAuth (el usuario debe estar autenticado para reportar).
+### 3. Ver Resultados
+- Los incidentes se filtran automáticamente al aplicar cambios
+- El contador de filtros muestra cuántos están activos
+- Los resultados se actualizan en tiempo real
 
----
+### 4. Limpiar Filtros
+- Usa el botón "Limpiar" para resetear todos los filtros
+- O desactiva filtros individuales según sea necesario
 
-## 5. Validaciones y Seguridad
+## Beneficios del Nuevo Sistema
 
-- Solo usuarios autenticados pueden enviar reportes.
-- Se valida la ubicación, la descripción, la fecha y la hora.
-- Los archivos se validan por tipo y tamaño antes de subir.
-- El backend verifica la autenticidad y los permisos antes de guardar el incidente.
+### Para Administradores
+- **Eficiencia**: Filtros rápidos y precisos
+- **Organización**: Mejor gestión de incidentes por área
+- **Control**: Filtros por fecha para revisar incidentes históricos
 
----
+### Para Editores
+- **Enfoque**: Pueden concentrarse en incidentes de su área asignada
+- **Velocidad**: Filtros por tipo para procesar incidentes similares
+- **Trazabilidad**: Filtros de fecha para seguimiento temporal
 
-## 6. Diagrama de Flujo del Proceso
+### Para el Sistema
+- **Rendimiento**: Consultas más eficientes a la base de datos
+- **Escalabilidad**: Fácil agregar nuevos tipos de filtros
+- **Mantenimiento**: Código más limpio y organizado
 
-```mermaid
-graph TD
-A[Usuario accede al formulario] --> B[Selecciona tipo de incidente]
-B --> C[Busca y selecciona ubicación]
-C --> D[Ajusta marcador en el mapa]
-D --> E[Completa detalles: descripción, fecha, hora]
-E --> F[Sube archivos de evidencia]
-F --> G[Envía el formulario]
-G --> H[Backend procesa y guarda el incidente]
-H --> I[Usuario recibe confirmación]
-```
+## Implementación Técnica
 
----
+### Componente Principal
+- `IncidentQueue.tsx`: Componente principal con lógica de filtros
+- Estado local para filtros y resultados
+- Integración con API de incidentes y barrios
 
-## 7. Notas Adicionales
+### Servicios Utilizados
+- `fetchIncidents()`: API para obtener incidentes filtrados
+- `fetchNeighborhoods()`: API para obtener lista de barrios
+- Filtros geográficos usando MongoDB GeoJSON
 
-- El sistema prioriza la precisión local (Mar del Plata) en la búsqueda de direcciones.
-- El usuario puede reportar desde cualquier dispositivo, pero la UI está optimizada para móvil.
-- El proceso es robusto ante fallos de geocoding gracias al fallback a OpenStreetMap.
+### Filtros de Base de Datos
+- **MongoDB**: Consultas optimizadas con índices geográficos
+- **GeoJSON**: Filtrado espacial por barrios
+- **Agregación**: Filtros combinados para mejor rendimiento
 
----
+## Configuración y Personalización
 
-## 8. Archivos de Referencia y Consideraciones Importantes
+### Agregar Nuevos Tipos de Incidente
+1. Edita el array de tags en `IncidentQueue.tsx`
+2. Asegúrate de que el tipo esté definido en la base de datos
+3. Actualiza la documentación según sea necesario
 
-### Archivos Clave
+### Modificar Filtros de Fecha
+- Los filtros de fecha usan el formato ISO estándar
+- Se pueden agregar filtros de hora si es necesario
+- Los rangos se pueden personalizar según las necesidades
 
-- **Frontend:**
-  - `src/app/components/MobileReportForm.tsx` → Formulario principal de reporte para móvil.
-  - `src/app/components/IncidentForm.tsx` → Formulario de reporte para escritorio.
-  - `src/app/components/GeocodeSearch.tsx` → Componente de búsqueda y autocompletado de direcciones.
-  - `src/app/components/Map.tsx` → Componente de mapa interactivo.
+### Personalizar Filtros de Barrio
+- Los barrios se cargan automáticamente desde la base de datos
+- Se pueden agregar filtros por ciudad o región
+- La ordenación alfabética se puede personalizar
 
-- **Lógica de Geocodificación:**
-  - `src/lib/geocoding.ts` → Funciones utilitarias para geocoding y reverse geocoding.
-  - `src/app/api/geocode/route.ts` → Endpoint API para geocodificación y fallback a OpenStreetMap.
+## Consideraciones de Rendimiento
 
-- **Backend y Almacenamiento:**
-  - `src/app/api/incidents/route.ts` → Endpoint API para crear y consultar incidentes.
-  - `src/lib/incidentService.ts` → Funciones para consumir la API de incidentes desde el frontend.
-  - `src/lib/supabase.ts` → Configuración de Supabase para almacenamiento de archivos.
+### Optimizaciones Implementadas
+- **Lazy Loading**: Los filtros se cargan solo cuando se necesitan
+- **Debouncing**: Las consultas se optimizan para evitar llamadas excesivas
+- **Caché**: Los barrios se cargan una vez y se reutilizan
 
-- **Autenticación:**
-  - `src/app/api/auth/[...nextauth]/auth.config.ts` → Configuración de NextAuth.
-  - `src/middleware.ts` → Middleware de autenticación y control de acceso a rutas.
+### Monitoreo
+- Logs de consultas para debugging
+- Métricas de tiempo de respuesta
+- Alertas para consultas lentas
 
-### Consideraciones Importantes
+## Próximas Mejoras
 
-- **Variables de Entorno:**
-  - Asegúrate de tener configuradas las variables de entorno para las APIs de Google y Supabase (`GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, etc.).
-  - El endpoint de geocoding requiere que la API Key de Google tenga habilitados los servicios de Places y Geocoding.
+### Funcionalidades Planificadas
+- **Búsqueda de texto**: Filtro por descripción de incidente
+- **Filtros guardados**: Perfiles de filtros personalizables
+- **Exportación**: Exportar incidentes filtrados a CSV/PDF
+- **Notificaciones**: Alertas para nuevos incidentes que coincidan con filtros
 
-- **Límites y Costos:**
-  - El uso de Google Places/Geocoding puede tener costos asociados si se supera el límite gratuito.
-  - OpenStreetMap Nominatim tiene límites de uso y debe usarse con moderación (no para producción masiva sin un servidor propio).
+### Mejoras de UX
+- **Filtros rápidos**: Presets para filtros comunes
+- **Historial**: Recordar filtros utilizados recientemente
+- **Accesos directos**: Teclas de acceso rápido para filtros comunes
 
-- **Seguridad:**
-  - Solo usuarios autenticados pueden reportar incidentes.
-  - Los archivos subidos se validan por tipo y tamaño, y se almacenan en Supabase Storage.
-  - El backend valida todos los datos antes de guardar el incidente.
+## Conclusión
 
-- **Extensibilidad:**
-  - El sistema está preparado para agregar nuevos tipos de incidentes, campos adicionales o integraciones con otros servicios de mapas.
-  - El formulario es fácilmente adaptable para escritorio y móvil.
-
-- **UX/UI:**
-  - El autocompletado prioriza resultados locales, pero permite búsquedas más amplias si no se encuentra nada en Mar del Plata.
-  - El usuario puede ajustar la ubicación manualmente en el mapa para mayor precisión.
-
-- **Testing:**
-  - Se recomienda probar el flujo completo en distintos dispositivos y navegadores.
-  - Verificar la subida y visualización de archivos de evidencia.
-
----
+El nuevo sistema de filtros proporciona una experiencia significativamente mejorada para la administración de incidentes, con filtros relevantes, interfaz limpia y funcionalidad robusta. La eliminación de filtros innecesarios y la consolidación en un solo panel hace que el proceso de revisión sea más eficiente y enfocado.

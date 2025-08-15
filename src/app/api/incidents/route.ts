@@ -1,56 +1,12 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import clientPromise from '@/lib/config/db/mongodb';
 import { ROLES, Role, hasRequiredRole } from '@/lib/config/roles';
-import { createClient } from '@supabase/supabase-js';
 import { ObjectId } from 'mongodb';
 import { getServerSession } from 'next-auth/next';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Initialize Supabase client with environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-// Initialize Supabase on the server-side
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-// Define the bucket name for incident evidence
-const EVIDENCE_BUCKET = 'incident-evidence';
-
-// Ensure the bucket exists (run once during initialization)
-async function ensureBucketExists() {
-  // Skip bucket creation if Supabase is not properly configured
-  if (!supabaseUrl || !supabaseServiceKey ||
-      supabaseUrl.includes('placeholder') ||
-      supabaseServiceKey.includes('placeholder')) {
-    console.warn('Supabase not configured. Skipping bucket creation.');
-    return;
-  }
-
-  try {
-    // Check if bucket exists
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some(bucket => bucket.name === EVIDENCE_BUCKET);
-
-    if (!bucketExists) {
-      // Create bucket with public access
-      const { error } = await supabase.storage.createBucket(EVIDENCE_BUCKET, {
-        public: true, // Makes files publicly accessible
-        fileSizeLimit: 10485760 // 10MB limit
-      });
-
-      if (error) {
-        console.error('Error creating bucket:', error);
-      } else {
-        console.log(`Bucket ${EVIDENCE_BUCKET} created successfully`);
-      }
-    }
-  } catch (error) {
-    console.error('Error checking/creating bucket:', error);
-  }
-}
-
-// Call this function when the server starts
-ensureBucketExists();
+// TODO: Re-enable Supabase when properly configured
+// const EVIDENCE_BUCKET = 'incident-evidence';
 
 interface MongoQuery {
   location?: {
@@ -105,6 +61,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
+    const city = searchParams.get('city');
     const neighborhoodId = searchParams.get('neighborhoodId');
     const date = searchParams.get('date');
     const dateFrom = searchParams.get('dateFrom');
@@ -119,16 +76,35 @@ export async function GET(request: NextRequest) {
     // Build MongoDB query based on filters
     const query: MongoQuery = {};
 
+    // Add city filter if provided
+    if (city) {
+      // Buscar por ciudad en el campo neighborhood o address
+      query.$or = [
+        { neighborhood: { $regex: city, $options: 'i' } },
+        { address: { $regex: city, $options: 'i' } }
+      ];
+    }
+
     // Add neighborhood filter if provided
     if (neighborhoodId) {
-      const neighborhoodIdNum = parseInt(neighborhoodId, 10);
-      const neighborhood = await db.collection('neighborhoods').findOne({ 'properties.id': isNaN(neighborhoodIdNum) ? neighborhoodId : neighborhoodIdNum });
-      if (neighborhood) {
-        query.location = {
-          $geoWithin: {
-            $geometry: neighborhood.geometry
-          }
-        };
+      try {
+        // Buscar el barrio por _id (MongoDB ObjectId) o properties.id
+        const neighborhood = await db.collection('neighborhoods').findOne({
+          $or: [
+            { 'properties.id': neighborhoodId },
+            { 'properties.id': parseInt(neighborhoodId, 10) }
+          ]
+        });
+
+        if (neighborhood && neighborhood.geometry) {
+          query.location = {
+            $geoWithin: {
+              $geometry: neighborhood.geometry
+            }
+          };
+        }
+      } catch (error) {
+        console.error('Error filtering by neighborhood:', error);
       }
     }
 
@@ -215,14 +191,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
+    // TODO: Re-enable Supabase when properly configured
     // Check if Supabase is correctly initialized
-    if (!supabase || !supabase.storage) {
-      console.error('Supabase client not properly initialized');
-      return NextResponse.json(
-        { success: false, message: 'Storage service unavailable' },
-        { status: 500 }
-      );
-    }
+    // if (!supabase || !supabase.storage) {
+    //   console.error('Supabase client not properly initialized');
+    //   return NextResponse.json(
+    //     { success: false, message: 'Storage service unavailable' },
+    //     { status: 500 }
+    //   );
+    // }
 
     // Get user session
     const session = await getServerSession(authOptions);
@@ -267,56 +244,57 @@ export async function POST(request: Request) {
     // Get tags from form data
     const tags = formData.getAll('tags[]').map(tag => tag.toString());
 
+    // TODO: Re-enable Supabase when properly configured
     // Handle file uploads to Supabase
-    const evidenceFiles = formData.getAll('evidence') as File[];
-    const uploadedEvidences = [];
+    // const evidenceFiles = formData.getAll('evidence') as File[];
+    // const uploadedEvidences = [];
 
-    // Upload each file to Supabase
-    for (const file of evidenceFiles) {
-      try {
-        // Create a unique file name with timestamp and random string
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    // // Upload each file to Supabase
+    // for (const file of evidenceFiles) {
+    //   try {
+    //     // Create a unique file name with timestamp and random string
+    //     const fileExt = file.name.split('.').pop();
+    //     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
-        // Store files in a user-specific folder for better organization
-        const filePath = `${session.user.id}/${fileName}`;
+    //     // Store files in a user-specific folder for better organization
+    //     const filePath = `${session.user.id}/${fileName}`;
 
-        // Convert the file to array buffer for upload
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = new Uint8Array(arrayBuffer);
+    //     // Convert the file to array buffer for upload
+    //     const arrayBuffer = await file.arrayBuffer();
+    //     const buffer = new Uint8Array(arrayBuffer);
 
-        // Upload to the dedicated bucket
-        const { data, error } = await supabase
-          .storage
-          .from(EVIDENCE_BUCKET)
-          .upload(filePath, buffer, {
-            contentType: file.type,
-            upsert: false
-          });
+    //     // Upload to the dedicated bucket
+    //     const { data, error } = await supabase
+    //       .storage
+    //       .from(EVIDENCE_BUCKET)
+    //       .upload(filePath, buffer, {
+    //         contentType: file.type,
+    //         upsert: false
+    //       });
 
-        if (error) {
-          console.error('Error uploading file to Supabase:', error);
-          continue; // Skip this file but continue with the others
-        }
+    //     if (error) {
+    //       console.error('Error uploading file to Supabase:', error);
+    //       continue; // Skip this file but continue with the others
+    //     }
 
-        // Get public URL using the correct bucket
-        const { data: urlData } = supabase
-          .storage
-          .from(EVIDENCE_BUCKET)
-          .getPublicUrl(filePath);
+    //     // Get public URL using the correct bucket
+    //     const { data: urlData } = supabase
+    //       .storage
+    //       .from(EVIDENCE_BUCKET)
+    //       .getPublicUrl(filePath);
 
-        // Store file metadata with the public URL
-        uploadedEvidences.push({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          path: filePath,
-          url: urlData.publicUrl
-        });
-      } catch (error) {
-        console.error(`Error processing file ${file.name}:`, error);
-      }
-    }
+    //     // Store file metadata with the public URL
+    //     uploadedEvidences.push({
+    //       name: file.name,
+    //       type: file.type,
+    //       size: file.size,
+    //       path: filePath,
+    //       url: urlData.publicUrl
+    //     });
+    //   } catch (error) {
+    //     console.error(`Error processing file ${file.name}:`, error);
+    //   }
+    // }
 
     // Create incident data object
     const incidentData = {
@@ -328,9 +306,10 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       status: 'pending',
       tags: tags.length > 0 ? tags : undefined,
+      // TODO: Re-enable Supabase when properly configured
       // Store both file metadata and direct URLs
-      evidenceFiles: uploadedEvidences,
-      evidenceUrls: uploadedEvidences.map(file => file.url), // For backward compatibility
+      // evidenceFiles: uploadedEvidences,
+      // evidenceUrls: uploadedEvidences.map(file => file.url), // For backward compatibility
       createdBy: session.user.id,
     };
 
