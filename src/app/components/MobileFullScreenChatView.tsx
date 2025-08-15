@@ -4,7 +4,7 @@ import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiSend, FiUsers } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiSend, FiUser, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
 
 interface MobileFullScreenChatViewProps {
@@ -38,6 +38,7 @@ interface Message {
   metadata?: {
     location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
     address?: string;
+    replyTo?: { id: string; userId: string; userName: string; snippet: string };
   };
   senderProfileImage?: string;
 }
@@ -46,14 +47,23 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const { data: session } = useSession();
   const t = useTranslations('States');
   const tErrors = useTranslations('Errors');
+  const tChat = useTranslations('Chat');
   const [chat, setChat] = useState<ChatInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressMessage, setLongPressMessage] = useState<Message | null>(null);
+  const [swipeMessage, setSwipeMessage] = useState<Message | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -80,7 +90,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       console.error('Error al cargar información del chat:', error);
       setError(tErrors('chatLoadError'));
     }
-  }, [session]);
+  }, [session, tErrors]);
 
   const loadMessages = useCallback(async () => {
     if (!session?.user) return;
@@ -106,7 +116,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       setError(tErrors('messagesLoadError'));
       setIsConnected(false);
     }
-  }, [session]);
+  }, [session, tErrors]);
 
   // Cargar información del chat y mensajes en paralelo
   useEffect(() => {
@@ -139,6 +149,27 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     scrollToBottom();
   }, [messages]);
 
+  // Cleanup de timers al desmontar
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
+
+  // Cerrar menú cuando se haga clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMenu && !(event.target as Element).closest('.menu-container')) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
+
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -157,21 +188,33 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         },
         body: JSON.stringify({
           message: message.trim(),
-          type: 'normal'
+          type: 'normal',
+          metadata: {
+            ...(anonymous ? { anonymous: true } : {}),
+            ...(replyingTo ? {
+              replyTo: {
+                id: replyingTo.id,
+                userId: replyingTo.userId,
+                userName: replyingTo.userName,
+                snippet: replyingTo.message.slice(0, 140)
+              }
+            } : {})
+          }
         }),
       });
 
       if (response.ok) {
         // Recargar mensajes después de enviar
         await loadMessages();
+        setReplyingTo(null);
         return true;
       } else {
-        setError('Error enviando mensaje');
+        setError(tErrors('sendMessageError'));
         return false;
       }
     } catch (error) {
       console.error('Error enviando mensaje:', error);
-      setError('Error enviando mensaje');
+      setError(tErrors('sendMessageError'));
       return false;
     } finally {
       setIsSending(false);
@@ -199,12 +242,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         await loadMessages();
         return true;
       } else {
-        setError('Error enviando mensaje de pánico');
+        setError(tErrors('panicMessageError'));
         return false;
       }
     } catch (error) {
       console.error('Error enviando mensaje de pánico:', error);
-      setError('Error enviando mensaje de pánico');
+      setError(tErrors('panicMessageError'));
       return false;
     } finally {
       setIsSending(false);
@@ -227,6 +270,109 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
   };
 
+  const handlePickReply = (message: Message) => {
+    // Si ya está seleccionado, deseleccionar
+    if (replyingTo?.id === message.id) {
+      setReplyingTo(null);
+      return;
+    }
+
+    // Seleccionar el mensaje para responder
+    setReplyingTo(message);
+
+    // Hacer scroll al input para que el usuario vea que puede escribir
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
+  };
+
+  const handleLongPressStart = (message: Message) => {
+    // Limpiar timer anterior si existe
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+    }
+
+    // Configurar nuevo timer para long press (500ms)
+    const timer = setTimeout(() => {
+      setLongPressMessage(message);
+      handlePickReply(message);
+    }, 500);
+
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    // Limpiar timer si se cancela el long press
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    setLongPressMessage(null);
+  };
+
+  const handleMessageMouseDown = (message: Message) => {
+    handleLongPressStart(message);
+  };
+
+  const handleMessageMouseUp = () => {
+    handleLongPressEnd();
+  };
+
+  const handleMessageMouseLeave = () => {
+    handleLongPressEnd();
+  };
+
+  const handleMessageTouchStart = (message: Message) => {
+    handleLongPressStart(message);
+  };
+
+  const handleMessageTouchEnd = () => {
+    handleLongPressEnd();
+  };
+
+  // Sistema de swipe ultra-simplificado
+  const handleSwipeStart = (message: Message, e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+
+    const onMove = (moveEvent: TouchEvent) => {
+      const currentX = moveEvent.touches[0].clientX;
+      const offset = Math.max(0, startX - currentX);
+
+      if (offset > 10) {
+        setSwipeMessage(message);
+        setIsSwiping(true);
+        setSwipeOffset(Math.min(offset, 100));
+      }
+    };
+
+    const onEnd = (endEvent: TouchEvent) => {
+      const endX = endEvent.changedTouches[0].clientX;
+      const totalOffset = startX - endX;
+
+      if (totalOffset > 50) {
+        handlePickReply(message);
+      }
+
+      // Resetear
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      setTimeout(() => setSwipeMessage(null), 200);
+
+      // Limpiar
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+    };
+
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd, { passive: false });
+  };
+
+  const clearReply = () => setReplyingTo(null);
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -247,9 +393,9 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Hoy';
+      return tChat('today');
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Ayer';
+      return tChat('yesterday');
     } else {
       return new Intl.DateTimeFormat('es-ES', {
         day: 'numeric',
@@ -306,13 +452,13 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       <div className={`fixed inset-0 bg-gray-900 z-[210] flex items-center justify-center ${className}`}>
         <div className="text-center p-6">
           <FiAlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-red-400 mb-2">Error</h3>
+          <h3 className="text-xl font-semibold text-red-400 mb-2">{tErrors('error')}</h3>
           <p className="text-gray-400 mb-4">{error}</p>
           <button
             onClick={onBack}
             className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
           >
-            Volver
+            {t('back')}
           </button>
         </div>
       </div>
@@ -351,7 +497,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         </button>
         <div className="flex flex-col items-center flex-grow">
           <h2 className="text-lg font-semibold text-white">{chat?.neighborhood || t('loading')}</h2>
-          <p className="text-xs text-gray-400">{chat?.participants.length || 0} participantes</p>
+          <p className="text-xs text-gray-400">{chat?.participants.length || 0} {tChat('participants')}</p>
         </div>
         <button
           onClick={() => setShowParticipants(true)}
@@ -378,6 +524,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           // Determinar si mostrar avatar y nombre
           const showAvatar = !isOwn && isLastInGroup;
           const showName = !isOwn && isFirstInGroup;
+
+          const isAnonymous = Boolean((message as any).metadata?.anonymous) || (message.userName?.toLowerCase?.() === 'anonymous');
 
           return (
             <div key={message.id} className="flex flex-col">
@@ -423,20 +571,92 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                   )}
 
                   <div
-                    className={`px-4 py-2 shadow-md ${isOwn
-                        ? 'bg-blue-600 text-white'
+                    className={`px-4 py-2 shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] group relative ${isOwn
+                        ? (isAnonymous ? 'bg-gray-600 text-white' : 'bg-blue-600 text-white')
                         : message.type === 'panic'
                           ? 'bg-red-700 text-white border border-red-600'
                           : 'bg-gray-700 text-gray-100'
                       } ${getBorderRadiusClass(isOwn, isFirstInGroup, isLastInGroup)
-                      }`}
+                      } ${replyingTo?.id === message.id ? 'ring-2 ring-blue-400 ring-opacity-70 shadow-lg shadow-blue-500/25' : ''}
+                      ${longPressMessage?.id === message.id ? 'scale-105 ring-2 ring-yellow-400 ring-opacity-70' : ''}`}
+                    style={{
+                      transform: swipeMessage?.id === message.id ? `translateX(-${swipeOffset}px)` : 'translateX(0)',
+                      transition: isSwiping ? 'none' : 'transform 0.3s ease-out'
+                    }}
+                    onClick={() => handlePickReply(message)}
+                    onDoubleClick={() => handlePickReply(message)}
+                    onContextMenu={(e) => { e.preventDefault(); handlePickReply(message); }}
+                    onMouseDown={() => handleMessageMouseDown(message)}
+                    onMouseUp={handleMessageMouseUp}
+                    onMouseLeave={handleMessageMouseLeave}
+                    onTouchStart={(e) => handleSwipeStart(message, e)}
+                    onTouchMove={(e) => e.preventDefault()}
+                    onTouchEnd={(e) => e.preventDefault()}
+                    title={replyingTo?.id === message.id ? tChat('clickToDeselect') : tChat('swipeLongPressDoubleClick')}
                   >
+                    {/* Indicador de que es clickeable */}
+                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="w-2 h-2 bg-current opacity-60 rounded-full"></div>
+                    </div>
+
+                    {/* Indicador de long press activo */}
+                    {longPressMessage?.id === message.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute inset-0 bg-yellow-400/10 rounded-lg flex items-center justify-center pointer-events-none"
+                      >
+                        <motion.div
+                          initial={{ y: 10, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          className="bg-yellow-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg"
+                        >
+                          {tChat('responder')}
+                        </motion.div>
+                      </motion.div>
+                    )}
+
+                    {/* Indicador de swipe activo */}
+                    {swipeMessage?.id === message.id && swipeOffset > 20 && (
+                      <div className="absolute -left-16 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-16 h-16 bg-green-500 rounded-full shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Mensaje de ayuda para swipe */}
+                    {swipeMessage?.id === message.id && swipeOffset > 40 && (
+                      <div className="absolute -left-32 top-1/2 transform -translate-y-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg shadow-lg whitespace-nowrap">
+                        {tChat('responder')}
+                      </div>
+                    )}
+                    {/* Barra de progreso del swipe */}
+                    {swipeMessage?.id === message.id && (
+                      <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-green-400 to-green-600 rounded-full opacity-60">
+                        <div
+                          className="bg-green-300 rounded-full transition-all duration-200"
+                          style={{
+                            height: `${Math.min(100, (swipeOffset / 100) * 100)}%`,
+                            opacity: swipeOffset > 0 ? 1 : 0
+                          }}
+                        />
+                      </div>
+                    )}
+                    {/* Cita */}
+                    {message.metadata?.replyTo && (
+                      <div className={`mb-2 px-2 py-1 rounded ${isOwn ? 'bg-blue-500/40' : 'bg-gray-600/50'}`}>
+                        <span className="text-xs font-semibold">{message.metadata.replyTo.userName}</span>
+                        <div className="text-xs opacity-80 truncate">{message.metadata.replyTo.snippet}</div>
+                      </div>
+                    )}
                     {message.type === 'panic' ? (
                       <>
-                        <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
+                        <span className="font-semibold">{tChat('panicAlert')}</span>
                         <br />
                         <span className="text-sm">
-                          {message.metadata?.address || 'Ubicación GPS exacta no disponible'}
+                          {message.metadata?.address || tChat('gpsLocationNotAvailable')}
                         </span>
                         <br />
                         <span className="text-xs text-gray-300 mt-1 block">
@@ -464,29 +684,99 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* #endregion */}
 
       {/* #region Message Input */}
-      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex items-end space-x-2">
-        <textarea
-          ref={textareaRef}
-          value={newMessage}
-          onChange={(e) => {
-            setNewMessage(e.target.value);
-            // Auto-resize textarea
-            if (textareaRef.current) {
-              textareaRef.current.style.height = 'auto';
-              textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-            }
-          }}
-          onKeyPress={handleKeyPress}
-          placeholder="Escribe un mensaje..."
-          className="flex-1 p-2 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm max-h-10"
-        />
-        <button
-          onClick={handleSendMessage}
-          disabled={!newMessage.trim() || isSending}
-          className="p-2.5 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
-        >
-          <FiSend className="w-4 h-4" />
-        </button>
+      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex flex-col space-y-2">
+        {replyingTo && (
+          <div className="flex items-center justify-between px-3 py-2 bg-blue-600/20 rounded-md border border-blue-500/40">
+            <div className="text-xs">
+              <span className="text-blue-300">{tChat('replyingTo')} </span>
+              <span className="text-blue-200 font-semibold">{replyingTo.userName}</span>
+              <div className="text-blue-100 truncate max-w-[240px]">{replyingTo.message}</div>
+            </div>
+            <button
+              onClick={clearReply}
+              className="text-blue-300 hover:text-white text-xs p-1 rounded-full hover:bg-blue-500/30 transition-colors"
+              title={tChat('cancelReply')}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        <div className="flex items-center space-x-2">
+          {/* Menú desplegable con 3 puntitos */}
+          <div className="relative menu-container">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+
+            {/* Menú desplegable */}
+            {showMenu && (
+              <div className="absolute bottom-0 left-full ml-2 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700/50 z-50">
+                <div className="py-2">
+                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
+                    <FiUser className="w-4 h-4" />
+                    <span>{tChat('viewProfile')}</span>
+                  </button>
+
+                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>{tChat('settings')}</span>
+                  </button>
+                  <div className="border-t border-gray-700/50 my-1"></div>
+                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{tChat('help')}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Contenedor del textarea con botón de incógnito integrado */}
+          <div className="flex-1 relative h-12">
+            <textarea
+              ref={textareaRef}
+              value={newMessage}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+              }}
+              onKeyPress={handleKeyPress}
+              placeholder={anonymous ? `${tChat('writeMessage')} (${tChat('incognitoModeActive')})` : tChat('writeMessage')}
+              className="w-full h-12 px-12 py-3 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm leading-6"
+            />
+
+            {/* Botón de modo incógnito integrado en el textarea */}
+            <button
+              onClick={() => setAnonymous(!anonymous)}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 p-1 rounded-md hover:bg-gray-700/50 transition-colors z-10"
+              title={anonymous ? tChat('deactivateIncognitoMode') : tChat('activateIncognitoMode')}
+            >
+              {anonymous ? (
+                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              ) : (
+                <FiUser className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+          </div>
+         <button
+           onClick={handleSendMessage}
+           disabled={!newMessage.trim() || isSending}
+           className="h-12 w-12 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0 flex items-center justify-center"
+         >
+           <FiSend className="w-5 h-5" />
+         </button>
+        </div>
       </div>
       {/* #endregion */}
 
@@ -512,7 +802,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
               >
                 <FiArrowLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-lg font-semibold text-white">Participantes</h2>
+              <h2 className="text-lg font-semibold text-white">{tChat('participants')}</h2>
               <div className="w-10">{/* Spacer */}</div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -533,7 +823,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                   </div>
                   <div>
                     <p className="text-white font-medium">{participant.name} {participant.surname}</p>
-                    <p className="text-sm text-gray-400">Manzana {participant.blockNumber}, Lote {participant.lotNumber}</p>
+                    <p className="text-sm text-gray-400">{t('block')} {participant.blockNumber}, {t('lot')} {participant.lotNumber}</p>
                   </div>
                 </div>
               ))}

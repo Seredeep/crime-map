@@ -582,12 +582,13 @@ export default function MapComponent({
 
       {/* Ajustar zoom al barrio si está seleccionado */}
       {selectedNeighborhood && (
-        <NeighborhoodFitBounds neighborhood={selectedNeighborhood} />
+        <NeighborhoodFitBounds key={`bounds-${selectedNeighborhood._id}`} neighborhood={selectedNeighborhood} />
       )}
 
       {/* Renderizar barrio seleccionado con GeoJSON */}
       {selectedNeighborhood && (
         <GeoJSON
+          key={`geojson-${selectedNeighborhood._id}`}
           data={{
             type: 'Feature',
             properties: {},
@@ -604,7 +605,7 @@ export default function MapComponent({
         >
           <Popup>
             <div className="p-2">
-              <h3 className="font-semibold">{selectedNeighborhood.properties?.soc_fomen || 'Barrio'}</h3>
+              <h3 className="font-semibold">{selectedNeighborhood.properties?.soc_fomen || selectedNeighborhood.properties?.name || 'Barrio'}</h3>
               <p className="text-sm text-gray-600">{selectedNeighborhood.properties?.id || ''}</p>
             </div>
           </Popup>

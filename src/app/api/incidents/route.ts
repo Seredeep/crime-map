@@ -383,12 +383,50 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const formData = await request.formData();
-    const incidentId = formData.get('incidentId') as string;
-    const updates = JSON.parse(formData.get('updates') as string);
+    const contentType = request.headers.get('content-type') || '';
 
-    if (!incidentId || !updates) {
-      return NextResponse.json({ success: false, message: 'ID de incidente y actualizaciones son requeridos' }, { status: 400 });
+    let incidentId: string | undefined;
+    let updates: Record<string, unknown> | undefined;
+
+    if (contentType.includes('application/json')) {
+      // JSON payload: { incidentId, ...updates }
+      const body = await request.json().catch(() => null);
+      if (body && typeof body === 'object') {
+        const { incidentId: id, ...rest } = body as Record<string, unknown>;
+        incidentId = typeof id === 'string' ? id : undefined;
+        updates = rest;
+      }
+    } else {
+      // Form payload: incidentId + updates (as JSON string) or individual fields
+      const formData = await request.formData();
+      const id = formData.get('incidentId');
+      incidentId = typeof id === 'string' ? id : undefined;
+
+      const updatesRaw = formData.get('updates');
+      if (typeof updatesRaw === 'string' && updatesRaw.trim()) {
+        try {
+          updates = JSON.parse(updatesRaw);
+        } catch {
+          return NextResponse.json(
+            { success: false, message: 'Formato de actualizaciones inválido' },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Fallback: build updates from all form fields except incidentId
+        updates = {};
+        for (const [key, value] of formData.entries()) {
+          if (key === 'incidentId') continue;
+          (updates as Record<string, unknown>)[key] = value as unknown as string;
+        }
+      }
+    }
+
+    if (!incidentId || !updates || Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { success: false, message: 'ID de incidente y actualizaciones son requeridos' },
+        { status: 400 }
+      );
     }
 
     const client = await clientPromise;

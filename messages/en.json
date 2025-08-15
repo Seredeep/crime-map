@@ -29,7 +29,9 @@
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "block": "Block",
+    "lot": "Lot"
   },
   "Auth": {
     "signIn": "Sign In",
@@ -174,7 +176,26 @@
     "usersActive": "{count} neighbors active",
     "noIncidents": "No incidents",
     "oneIncident": "1 recent incident",
-    "multipleIncidents": "{count} recent incidents"
+    "multipleIncidents": "{count} recent incidents",
+    "writeMessage": "Write a message...",
+    "replyingTo": "Replying to",
+    "participants": "participants",
+    "viewProfile": "View profile",
+    "incognitoMode": "Incognito mode",
+    "settings": "Settings",
+    "help": "Help",
+    "cancelReply": "Cancel reply",
+    "replyToMessage": "Reply to message",
+    "clickToDeselect": "Click to deselect",
+    "swipeLongPressDoubleClick": "Swipe left, long press or double click to reply",
+    "responder": "Reply",
+    "panicAlert": "PANIC ALERT!",
+    "gpsLocationNotAvailable": "Exact GPS location not available",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "incognitoModeActive": "incognito mode active",
+    "activateIncognitoMode": "Activate incognito mode",
+    "deactivateIncognitoMode": "Deactivate incognito mode"
   },
   "Incidents": {
     "noIncidentsMatch": "No incidents match the selected filters",
@@ -253,7 +274,8 @@
     "chatLoadError": "Error loading chat information",
     "messagesLoadError": "Error loading messages",
     "sendMessageError": "Error sending message",
-    "panicMessageError": "Error sending panic message"
+    "panicMessageError": "Error sending panic message",
+    "error": "Error"
   },
   "Map": {
     "reportIncident": "Report an incident",

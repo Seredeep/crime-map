@@ -128,7 +128,7 @@ class ChatServiceOptimized {
   // No necesitamos `loadInitialMessagesWithCache` ni `loadMessagesFromAPI`
   // ya que `onSnapshot` maneja la carga inicial y las actualizaciones.
 
-  async sendMessage(message: string, type: 'normal' | 'panic' = 'normal') {
+  async sendMessage(message: string, type: 'normal' | 'panic' = 'normal', metadata?: Record<string, any>) {
     if (!this.chatId || !this.userId || !this.userName) return null;
 
     try {
@@ -142,6 +142,7 @@ class ChatServiceOptimized {
           type,
           userId: this.userId, // Añadir userId para que el backend lo use en FirestoreMessage
           userName: this.userName,
+          metadata: metadata || {}
         }),
       });
 
