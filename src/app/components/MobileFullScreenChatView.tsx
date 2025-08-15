@@ -38,6 +38,7 @@ interface Message {
   metadata?: {
     location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
     address?: string;
+    replyTo?: { id: string; userId: string; userName: string; snippet: string };
   };
   senderProfileImage?: string;
 }
@@ -46,9 +47,11 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const { data: session } = useSession();
   const t = useTranslations('States');
   const tErrors = useTranslations('Errors');
+  const tChat = useTranslations('Chat');
   const [chat, setChat] = useState<ChatInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showParticipants, setShowParticipants] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -157,13 +160,24 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         },
         body: JSON.stringify({
           message: message.trim(),
-          type: 'normal'
+          type: 'normal',
+          metadata: replyingTo
+            ? {
+                replyTo: {
+                  id: replyingTo.id,
+                  userId: replyingTo.userId,
+                  userName: replyingTo.userName,
+                  snippet: replyingTo.message.slice(0, 140)
+                }
+              }
+            : {}
         }),
       });
 
       if (response.ok) {
         // Recargar mensajes después de enviar
         await loadMessages();
+        setReplyingTo(null);
         return true;
       } else {
         setError('Error enviando mensaje');
@@ -226,6 +240,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       }
     }
   };
+
+  const handlePickReply = (message: Message) => {
+    setReplyingTo(message);
+  };
+
+  const clearReply = () => setReplyingTo(null);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -430,7 +450,16 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                           : 'bg-gray-700 text-gray-100'
                       } ${getBorderRadiusClass(isOwn, isFirstInGroup, isLastInGroup)
                       }`}
+                    onDoubleClick={() => handlePickReply(message)}
+                    onContextMenu={(e) => { e.preventDefault(); handlePickReply(message); }}
                   >
+                    {/* Cita */}
+                    {message.metadata?.replyTo && (
+                      <div className={`mb-2 px-2 py-1 rounded ${isOwn ? 'bg-blue-500/40' : 'bg-gray-600/50'}`}>
+                        <span className="text-xs font-semibold">{message.metadata.replyTo.userName}</span>
+                        <div className="text-xs opacity-80 truncate">{message.metadata.replyTo.snippet}</div>
+                      </div>
+                    )}
                     {message.type === 'panic' ? (
                       <>
                         <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
@@ -464,7 +493,18 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* #endregion */}
 
       {/* #region Message Input */}
-      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex items-end space-x-2">
+      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex flex-col space-y-2">
+        {replyingTo && (
+          <div className="flex items-center justify-between px-3 py-2 bg-gray-800/60 rounded-md border border-gray-700/60">
+            <div className="text-xs">
+              <span className="text-gray-400">{tChat('replyingTo')} </span>
+              <span className="text-gray-200 font-semibold">{replyingTo.userName}</span>
+              <div className="text-gray-300 truncate max-w-[240px]">{replyingTo.message}</div>
+            </div>
+            <button onClick={clearReply} className="text-gray-400 hover:text-white text-xs">✕</button>
+          </div>
+        )}
+        <div className="flex items-end space-x-2">
         <textarea
           ref={textareaRef}
           value={newMessage}
@@ -477,7 +517,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             }
           }}
           onKeyPress={handleKeyPress}
-          placeholder="Escribe un mensaje..."
+          placeholder={tChat('writeMessage')}
           className="flex-1 p-2 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm max-h-10"
         />
         <button
@@ -487,6 +527,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         >
           <FiSend className="w-4 h-4" />
         </button>
+        </div>
       </div>
       {/* #endregion */}
 
