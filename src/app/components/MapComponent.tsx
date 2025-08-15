@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
+import type { GeoJSON as GeoJSONType } from 'geojson';
 // #endregion
 
 // #region Internal Services & Types
@@ -260,7 +261,7 @@ function NeighborhoodFitBounds({ neighborhood }: { neighborhood: Neighborhood })
           type: 'Feature',
           properties: {},
           geometry: neighborhood.geometry
-        } as GeoJSON.Feature);
+        } as GeoJSONType);
 
         // Obtener los límites del polígono y ajustar el mapa
         const bounds = geoJsonLayer.getBounds();
@@ -593,7 +594,7 @@ export default function MapComponent({
             type: 'Feature',
             properties: {},
             geometry: selectedNeighborhood.geometry
-          } as GeoJSON.Feature}
+          } as GeoJSONType}
           style={() => ({
             color: '#3B82F6',
             weight: 3,
