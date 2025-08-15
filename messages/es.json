@@ -174,7 +174,9 @@
     "usersActive": "{count} vecinos activos",
     "noIncidents": "Sin incidentes",
     "oneIncident": "1 incidente reciente",
-    "multipleIncidents": "{count} incidentes recientes"
+    "multipleIncidents": "{count} incidentes recientes",
+    "writeMessage": "Escribe un mensaje...",
+    "replyingTo": "Respondiendo a"
   },
   "Incidents": {
     "noIncidentsMatch": "No hay incidentes que coincidan con los filtros seleccionados",

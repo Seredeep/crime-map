@@ -118,7 +118,11 @@ export function useChatOptimized() {
   }, [session?.user?.id, session?.user?.name, session?.user?.email, handleNewMessages, handleTypingUpdate, handleOnlineUpdate]);
 
   // Enviar mensaje optimizado
-  const sendMessage = useCallback(async (message: string, type: 'normal' | 'panic' = 'normal') => {
+  const sendMessage = useCallback(async (
+    message: string,
+    type: 'normal' | 'panic' = 'normal',
+    metadata?: Record<string, any>
+  ) => {
     if (!message.trim()) return;
 
     try {
@@ -132,7 +136,7 @@ export function useChatOptimized() {
       }
 
       // Enviar mensaje
-      const result = await chatServiceOptimized.sendMessage(message, type);
+      const result = await chatServiceOptimized.sendMessage(message, type, metadata);
 
       // Actualizar estadísticas
       setCacheStats(chatServiceOptimized.getCacheStats());

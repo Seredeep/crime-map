@@ -38,6 +38,7 @@ interface Message {
   metadata?: {
     location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
     address?: string;
+    replyTo?: { id: string; userId: string; userName: string; snippet: string };
   };
   senderProfileImage?: string;
 }
@@ -50,6 +51,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [chat, setChat] = useState<ChatInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showParticipants, setShowParticipants] = useState(false);
   const [anonymous, setAnonymous] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -160,13 +162,24 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         body: JSON.stringify({
           message: message.trim(),
           type: 'normal',
-          metadata: anonymous ? { anonymous: true } : {}
+          metadata: {
+            ...(anonymous ? { anonymous: true } : {}),
+            ...(replyingTo ? {
+              replyTo: {
+                id: replyingTo.id,
+                userId: replyingTo.userId,
+                userName: replyingTo.userName,
+                snippet: replyingTo.message.slice(0, 140)
+              }
+            } : {})
+          }
         }),
       });
 
       if (response.ok) {
         // Recargar mensajes después de enviar
         await loadMessages();
+        setReplyingTo(null);
         return true;
       } else {
         setError('Error enviando mensaje');
@@ -229,6 +242,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       }
     }
   };
+
+  const handlePickReply = (message: Message) => {
+    setReplyingTo(message);
+  };
+
+  const clearReply = () => setReplyingTo(null);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -435,7 +454,16 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                           : 'bg-gray-700 text-gray-100'
                       } ${getBorderRadiusClass(isOwn, isFirstInGroup, isLastInGroup)
                       }`}
+                    onDoubleClick={() => handlePickReply(message)}
+                    onContextMenu={(e) => { e.preventDefault(); handlePickReply(message); }}
                   >
+                    {/* Cita */}
+                    {message.metadata?.replyTo && (
+                      <div className={`mb-2 px-2 py-1 rounded ${isOwn ? 'bg-blue-500/40' : 'bg-gray-600/50'}`}>
+                        <span className="text-xs font-semibold">{message.metadata.replyTo.userName}</span>
+                        <div className="text-xs opacity-80 truncate">{message.metadata.replyTo.snippet}</div>
+                      </div>
+                    )}
                     {message.type === 'panic' ? (
                       <>
                         <span className="font-semibold">¡ALERTA DE PÁNICO!</span>
@@ -469,22 +497,32 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* #endregion */}
 
       {/* #region Message Input */}
-      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex items-end space-x-2">
-        {/* Toggle Anónimo */}
-        <button
-          onClick={() => setAnonymous(!anonymous)}
-          aria-pressed={anonymous}
-          className={`h-10 w-10 rounded-md border flex items-center justify-center ${anonymous ? 'bg-blue-600 border-blue-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300'}`}
-        >
-          {anonymous ? (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-            </svg>
-          ) : (
-            <FiUser className="w-4 h-4" />
-          )}
-        </button>
-
+      <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex flex-col space-y-2">
+        {replyingTo && (
+          <div className="flex items-center justify-between px-3 py-2 bg-gray-800/60 rounded-md border border-gray-700/60">
+            <div className="text-xs">
+              <span className="text-gray-400">{tChat('replyingTo')} </span>
+              <span className="text-gray-200 font-semibold">{replyingTo.userName}</span>
+              <div className="text-gray-300 truncate max-w-[240px]">{replyingTo.message}</div>
+            </div>
+            <button onClick={clearReply} className="text-gray-400 hover:text-white text-xs">✕</button>
+          </div>
+        )}
+        <div className="flex items-end space-x-2">
+          {/* Toggle Anónimo */}
+          <button
+            onClick={() => setAnonymous(!anonymous)}
+            aria-pressed={anonymous}
+            className={`h-10 w-10 rounded-md border flex items-center justify-center ${anonymous ? 'bg-blue-600 border-blue-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-300'}`}
+          >
+            {anonymous ? (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+              </svg>
+            ) : (
+              <FiUser className="w-4 h-4" />
+            )}
+          </button>
         <textarea
           ref={textareaRef}
           value={newMessage}
@@ -497,7 +535,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             }
           }}
           onKeyPress={handleKeyPress}
-          placeholder="Escribe un mensaje..."
+          placeholder={tChat('writeMessage')}
           className="flex-1 p-2 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm max-h-10"
         />
         <button
@@ -507,6 +545,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         >
           <FiSend className="w-4 h-4" />
         </button>
+        </div>
       </div>
       {/* #endregion */}
 
