@@ -55,7 +55,13 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
     try {
       setLoading(true);
       const fetchedIncidents = await fetchIncidents(filters);
-      setIncidents(fetchedIncidents);
+      // Ordenar por más recientes primero
+      const sorted = [...fetchedIncidents].sort((a, b) => {
+        const aDate = new Date(`${a.date} ${a.time || '00:00'}`).getTime();
+        const bDate = new Date(`${b.date} ${b.time || '00:00'}`).getTime();
+        return bDate - aDate;
+      });
+      setIncidents(sorted);
     } catch (error) {
       console.error('Error loading incidents:', error);
     } finally {
@@ -212,6 +218,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
       case 'hurto': return 'bg-yellow-500';
       case 'vandalismo': return 'bg-green-500';
       case 'actividad sospechosa': return 'bg-cyan-500';
+      case 'violencia': return 'bg-purple-500';
       default: return 'bg-purple-500';
     }
   };

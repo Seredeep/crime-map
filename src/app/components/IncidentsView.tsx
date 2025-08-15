@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import IncidentCharts from './IncidentCharts';
 import IncidentDetails from './IncidentDetails';
 import IncidentFiltersComponent from './IncidentFilters';
@@ -32,12 +33,18 @@ function RecentIncidentsPanel({ incidents, onIncidentClick, filters, onFiltersCh
   const panelRef = useRef<HTMLDivElement>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Filtrar incidentes basado en el término de búsqueda
-  const filteredIncidents = incidents.filter(incident =>
-    incident.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    incident.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    incident.type?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar y ordenar incidentes (más recientes primero)
+  const filteredIncidents = incidents
+    .filter(incident =>
+      incident.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      incident.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      incident.type?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aDate = new Date(`${a.date} ${a.time || '00:00'}`).getTime();
+      const bDate = new Date(`${b.date} ${b.time || '00:00'}`).getTime();
+      return bDate - aDate;
+    });
 
   // Función para obtener el color según el tipo de incidente
   const getIncidentTypeColor = (type?: string) => {
@@ -467,6 +474,21 @@ export default function IncidentsView({
 
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<Neighborhood | null>(null);
 
+  // Lock body scroll and enable ESC to close when modal is open
+  useEffect(() => {
+    if (!showDetailsModal) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowDetailsModal(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showDetailsModal]);
+
   // Sync external selected neighborhood (e.g., from mobile popover) with internal state used by Map
   useEffect(() => {
     if (externalSelectedNeighborhood !== undefined) {
@@ -508,18 +530,9 @@ export default function IncidentsView({
   };
 
   const handleIncidentSelected = (incident: Incident) => {
-    // En móvil, no abrir modal, solo actualizar el incidente seleccionado
-    if (isMobile()) {
-      setSelectedIncident(incident);
-      // Llamar al handler externo si existe
-      externalOnIncidentSelect?.(incident);
-      return;
-    }
-
+    // Seleccionar y abrir modal, sin propagar selección a externos
     setSelectedIncident(incident);
     setShowDetailsModal(true);
-    // Llamar al handler externo si existe
-    externalOnIncidentSelect?.(incident);
   };
 
   const handleIncidentUpdate = (updatedIncident: Incident) => {
@@ -559,7 +572,7 @@ export default function IncidentsView({
   }, []);
 
   return (
-    <div className="p-0 w-full h-full">
+    <div className="p-0 w-full h-full" aria-hidden={showDetailsModal ? 'true' : 'false'}>
       <div className="rounded-lg overflow-hidden shadow-xl h-full relative flex">
         {loading ? (
           <div className="w-full h-full bg-gray-800/50 flex items-center justify-center">
@@ -607,39 +620,43 @@ export default function IncidentsView({
         )}
       </div>
 
-      {/* Modal de detalles del incidente - Solo en desktop */}
-      {showDetailsModal && selectedIncident && !isMobile() && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-700">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-200">Detalles del Incidente</h2>
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="text-gray-400 hover:text-gray-300 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)] z-[1000]">
-              <IncidentDetails
-                incident={selectedIncident}
-                onIncidentUpdate={handleIncidentUpdate}
-              />
-            </div>
-
-            <div className="flex items-center justify-end p-4 border-t border-gray-700">
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="px-4 py-2 text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Cerrar
-              </button>
+      {/* Modal de detalles del incidente como portal al body */}
+      {showDetailsModal && selectedIncident && createPortal(
+        <div className="fixed inset-0 z-[1000000]" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDetailsModal(false)} />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div
+              className="bg-[#0f1317] rounded-2xl w-full max-w-[720px] max-h-[88vh] overflow-hidden border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.65),0_2px_8px_rgba(0,0,0,0.4)] animate-[modalIn_220ms_ease-out]"
+              role="document"
+            >
+              <style>{`@keyframes modalIn{0%{opacity:0;transform:translateY(18px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
+              <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/[0.03]">
+                <h2 className="text-base sm:text-lg font-semibold text-white">Detalles del Incidente</h2>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="text-gray-300 hover:text-white transition-colors rounded-lg p-1 hover:bg-white/10"
+                  aria-label="Cerrar"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-5 overflow-y-auto max-h-[calc(88vh-112px)]">
+                <IncidentDetails incident={selectedIncident} onIncidentUpdate={handleIncidentUpdate} />
+              </div>
+              <div className="flex items-center justify-end gap-3 p-4 border-t border-white/10 bg-white/[0.03]">
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
