@@ -29,7 +29,9 @@
     "confirm": "Confirmar",
     "back": "Atrás",
     "next": "Siguiente",
-    "previous": "Anterior"
+    "previous": "Anterior",
+    "block": "Manzana",
+    "lot": "Lote"
   },
   "Auth": {
     "signIn": "Iniciar Sesión",
@@ -176,7 +178,24 @@
     "oneIncident": "1 incidente reciente",
     "multipleIncidents": "{count} incidentes recientes",
     "writeMessage": "Escribe un mensaje...",
-    "replyingTo": "Respondiendo a"
+    "replyingTo": "Respondiendo a",
+    "participants": "participantes",
+    "viewProfile": "Ver perfil",
+    "incognitoMode": "Modo incógnito",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "cancelReply": "Cancelar respuesta",
+    "replyToMessage": "Responder al mensaje",
+    "clickToDeselect": "Clic para deseleccionar",
+    "swipeLongPressDoubleClick": "Desliza hacia la izquierda, mantén presionado o doble clic para responder",
+    "responder": "Responder",
+    "panicAlert": "¡ALERTA DE PÁNICO!",
+    "gpsLocationNotAvailable": "Ubicación GPS exacta no disponible",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "incognitoModeActive": "modo incógnito activo",
+    "activateIncognitoMode": "Activar modo incógnito",
+    "deactivateIncognitoMode": "Desactivar modo incógnito"
   },
   "Incidents": {
     "noIncidentsMatch": "No hay incidentes que coincidan con los filtros seleccionados",
@@ -255,7 +274,8 @@
     "chatLoadError": "Error al cargar información del chat",
     "messagesLoadError": "Error al cargar mensajes",
     "sendMessageError": "Error enviando mensaje",
-    "panicMessageError": "Error enviando mensaje de pánico"
+    "panicMessageError": "Error enviando mensaje de pánico",
+    "error": "Error"
   },
   "Map": {
     "reportIncident": "Reportar un incidente",
