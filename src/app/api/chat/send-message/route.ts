@@ -46,14 +46,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Preparar nombre público (anonimato opcional)
+    const isAnonymous = Boolean(metadata?.anonymous);
+    const publicUserName = isAnonymous
+      ? 'anonymous'
+      : (user.name || user.email.split('@')[0]);
+
+    // Enriquecer metadata con nombre real si se envía anónimo
+    const finalMetadata = isAnonymous
+      ? { ...metadata, originalUserName: (user.name || user.email.split('@')[0]) }
+      : metadata;
+
     // Enviar mensaje a Firestore
     const messageId = await sendMessageToFirestore(
       user.chatId,
       user._id.toString(),
-      user.name || user.email.split('@')[0],
+      publicUserName,
       message.trim(),
       type,
-      metadata
+      finalMetadata
     );
 
     console.log(`💬 Mensaje enviado a Firestore: ${user.name || user.email} → ${user.chatId}`);
