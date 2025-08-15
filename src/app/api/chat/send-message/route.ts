@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Preparar nombre público (anonimato opcional)
     const isAnonymous = Boolean(metadata?.anonymous);
     const publicUserName = isAnonymous
-      ? 'anonymous'
+      ? 'Anonymous'
       : (user.name || user.email.split('@')[0]);
 
     // Enriquecer metadata con nombre real si se envía anónimo

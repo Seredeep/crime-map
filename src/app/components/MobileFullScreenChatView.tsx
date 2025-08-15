@@ -58,6 +58,11 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [longPressMessage, setLongPressMessage] = useState<Message | null>(null);
+  const [swipeMessage, setSwipeMessage] = useState<Message | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -84,7 +89,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       console.error('Error al cargar información del chat:', error);
       setError(tErrors('chatLoadError'));
     }
-  }, [session]);
+  }, [session, tErrors]);
 
   const loadMessages = useCallback(async () => {
     if (!session?.user) return;
@@ -110,7 +115,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       setError(tErrors('messagesLoadError'));
       setIsConnected(false);
     }
-  }, [session]);
+  }, [session, tErrors]);
 
   // Cargar información del chat y mensajes en paralelo
   useEffect(() => {
@@ -142,6 +147,15 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Cleanup de timers al desmontar
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -244,7 +258,104 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   };
 
   const handlePickReply = (message: Message) => {
+    // Si ya está seleccionado, deseleccionar
+    if (replyingTo?.id === message.id) {
+      setReplyingTo(null);
+      return;
+    }
+
+    // Seleccionar el mensaje para responder
     setReplyingTo(message);
+
+    // Hacer scroll al input para que el usuario vea que puede escribir
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
+  };
+
+  const handleLongPressStart = (message: Message) => {
+    // Limpiar timer anterior si existe
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+    }
+
+    // Configurar nuevo timer para long press (500ms)
+    const timer = setTimeout(() => {
+      setLongPressMessage(message);
+      handlePickReply(message);
+    }, 500);
+
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    // Limpiar timer si se cancela el long press
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    setLongPressMessage(null);
+  };
+
+  const handleMessageMouseDown = (message: Message) => {
+    handleLongPressStart(message);
+  };
+
+  const handleMessageMouseUp = () => {
+    handleLongPressEnd();
+  };
+
+  const handleMessageMouseLeave = () => {
+    handleLongPressEnd();
+  };
+
+  const handleMessageTouchStart = (message: Message) => {
+    handleLongPressStart(message);
+  };
+
+  const handleMessageTouchEnd = () => {
+    handleLongPressEnd();
+  };
+
+  // Sistema de swipe ultra-simplificado
+  const handleSwipeStart = (message: Message, e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+
+    const onMove = (moveEvent: TouchEvent) => {
+      const currentX = moveEvent.touches[0].clientX;
+      const offset = Math.max(0, startX - currentX);
+
+      if (offset > 10) {
+        setSwipeMessage(message);
+        setIsSwiping(true);
+        setSwipeOffset(Math.min(offset, 100));
+      }
+    };
+
+    const onEnd = (endEvent: TouchEvent) => {
+      const endX = endEvent.changedTouches[0].clientX;
+      const totalOffset = startX - endX;
+
+      if (totalOffset > 50) {
+        handlePickReply(message);
+      }
+
+      // Resetear
+      setIsSwiping(false);
+      setSwipeOffset(0);
+      setTimeout(() => setSwipeMessage(null), 200);
+
+      // Limpiar
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+    };
+
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd, { passive: false });
   };
 
   const clearReply = () => setReplyingTo(null);
@@ -447,16 +558,79 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                   )}
 
                   <div
-                    className={`px-4 py-2 shadow-md ${isOwn
+                    className={`px-4 py-2 shadow-md cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] group relative ${isOwn
                         ? (isAnonymous ? 'bg-gray-600 text-white' : 'bg-blue-600 text-white')
                         : message.type === 'panic'
                           ? 'bg-red-700 text-white border border-red-600'
                           : 'bg-gray-700 text-gray-100'
                       } ${getBorderRadiusClass(isOwn, isFirstInGroup, isLastInGroup)
-                      }`}
+                      } ${replyingTo?.id === message.id ? 'ring-2 ring-blue-400 ring-opacity-70 shadow-lg shadow-blue-500/25' : ''}
+                      ${longPressMessage?.id === message.id ? 'scale-105 ring-2 ring-yellow-400 ring-opacity-70' : ''}`}
+                    style={{
+                      transform: swipeMessage?.id === message.id ? `translateX(-${swipeOffset}px)` : 'translateX(0)',
+                      transition: isSwiping ? 'none' : 'transform 0.3s ease-out'
+                    }}
+                    onClick={() => handlePickReply(message)}
                     onDoubleClick={() => handlePickReply(message)}
                     onContextMenu={(e) => { e.preventDefault(); handlePickReply(message); }}
+                    onMouseDown={() => handleMessageMouseDown(message)}
+                    onMouseUp={handleMessageMouseUp}
+                    onMouseLeave={handleMessageMouseLeave}
+                    onTouchStart={(e) => handleSwipeStart(message, e)}
+                    onTouchMove={(e) => e.preventDefault()}
+                    onTouchEnd={(e) => e.preventDefault()}
+                    title={replyingTo?.id === message.id ? 'Clic para deseleccionar' : 'Desliza hacia la izquierda, mantén presionado o doble clic para responder'}
                   >
+                    {/* Indicador de que es clickeable */}
+                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="w-2 h-2 bg-current opacity-60 rounded-full"></div>
+                    </div>
+
+                    {/* Indicador de long press activo */}
+                    {longPressMessage?.id === message.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute inset-0 bg-yellow-400/10 rounded-lg flex items-center justify-center pointer-events-none"
+                      >
+                        <motion.div
+                          initial={{ y: 10, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          className="bg-yellow-500 text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-lg"
+                        >
+                          Responder
+                        </motion.div>
+                      </motion.div>
+                    )}
+
+                    {/* Indicador de swipe activo */}
+                    {swipeMessage?.id === message.id && swipeOffset > 20 && (
+                      <div className="absolute -left-16 top-1/2 transform -translate-y-1/2 flex items-center justify-center w-16 h-16 bg-green-500 rounded-full shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Mensaje de ayuda para swipe */}
+                    {swipeMessage?.id === message.id && swipeOffset > 40 && (
+                      <div className="absolute -left-32 top-1/2 transform -translate-y-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-lg shadow-lg whitespace-nowrap">
+                        Responder
+                      </div>
+                    )}
+                    {/* Barra de progreso del swipe */}
+                    {swipeMessage?.id === message.id && (
+                      <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-green-400 to-green-600 rounded-full opacity-60">
+                        <div
+                          className="bg-green-300 rounded-full transition-all duration-200"
+                          style={{
+                            height: `${Math.min(100, (swipeOffset / 100) * 100)}%`,
+                            opacity: swipeOffset > 0 ? 1 : 0
+                          }}
+                        />
+                      </div>
+                    )}
                     {/* Cita */}
                     {message.metadata?.replyTo && (
                       <div className={`mb-2 px-2 py-1 rounded ${isOwn ? 'bg-blue-500/40' : 'bg-gray-600/50'}`}>
@@ -499,13 +673,19 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* #region Message Input */}
       <div className="bg-gray-900/95 backdrop-blur-md border-t border-gray-800/50 px-4 py-2 flex flex-col space-y-2">
         {replyingTo && (
-          <div className="flex items-center justify-between px-3 py-2 bg-gray-800/60 rounded-md border border-gray-700/60">
+          <div className="flex items-center justify-between px-3 py-2 bg-blue-600/20 rounded-md border border-blue-500/40">
             <div className="text-xs">
-              <span className="text-gray-400">{tChat('replyingTo')} </span>
-              <span className="text-gray-200 font-semibold">{replyingTo.userName}</span>
-              <div className="text-gray-300 truncate max-w-[240px]">{replyingTo.message}</div>
+              <span className="text-blue-300">{tChat('replyingTo')} </span>
+              <span className="text-blue-200 font-semibold">{replyingTo.userName}</span>
+              <div className="text-blue-100 truncate max-w-[240px]">{replyingTo.message}</div>
             </div>
-            <button onClick={clearReply} className="text-gray-400 hover:text-white text-xs">✕</button>
+            <button
+              onClick={clearReply}
+              className="text-blue-300 hover:text-white text-xs p-1 rounded-full hover:bg-blue-500/30 transition-colors"
+              title="Cancelar respuesta"
+            >
+              ✕
+            </button>
           </div>
         )}
         <div className="flex items-end space-x-2">
