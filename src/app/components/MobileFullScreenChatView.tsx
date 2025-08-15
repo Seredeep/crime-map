@@ -701,12 +701,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             </button>
           </div>
         )}
-        <div className="flex items-end space-x-2">
+        <div className="flex items-center space-x-2">
           {/* Menú desplegable con 3 puntitos */}
           <div className="relative menu-container">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="h-10 w-10 rounded-md border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center"
+              className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -742,27 +742,22 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           </div>
 
           {/* Contenedor del textarea con botón de incógnito integrado */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative h-12">
             <textarea
               ref={textareaRef}
               value={newMessage}
               onChange={(e) => {
                 setNewMessage(e.target.value);
-                // Auto-resize textarea
-                if (textareaRef.current) {
-                  textareaRef.current.style.height = 'auto';
-                  textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
-                }
               }}
               onKeyPress={handleKeyPress}
               placeholder={anonymous ? `${tChat('writeMessage')} (${tChat('incognitoModeActive')})` : tChat('writeMessage')}
-              className="w-full p-2 pl-10 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm max-h-10"
+              className="w-full h-12 px-12 py-3 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm leading-6"
             />
 
             {/* Botón de modo incógnito integrado en el textarea */}
             <button
               onClick={() => setAnonymous(!anonymous)}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-md hover:bg-gray-700/50 transition-colors z-10"
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 p-1 rounded-md hover:bg-gray-700/50 transition-colors z-10"
               title={anonymous ? tChat('deactivateIncognitoMode') : tChat('activateIncognitoMode')}
             >
               {anonymous ? (
@@ -774,13 +769,13 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
               )}
             </button>
           </div>
-        <button
-          onClick={handleSendMessage}
-          disabled={!newMessage.trim() || isSending}
-          className="p-2.5 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0"
-        >
-          <FiSend className="w-4 h-4" />
-        </button>
+         <button
+           onClick={handleSendMessage}
+           disabled={!newMessage.trim() || isSending}
+           className="h-12 w-12 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0 flex items-center justify-center"
+         >
+           <FiSend className="w-5 h-5" />
+         </button>
         </div>
       </div>
       {/* #endregion */}
