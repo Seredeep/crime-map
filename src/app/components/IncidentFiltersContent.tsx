@@ -4,14 +4,14 @@ import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
 import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Calendar,
-  CheckCircle,
-  Clock,
-  Clock3,
-  MapPin,
-  Tags,
-  Trash2,
-  X
+    Calendar,
+    CheckCircle,
+    Clock,
+    Clock3,
+    MapPin,
+    Tags,
+    Trash2,
+    X
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -28,6 +28,18 @@ interface IncidentFiltersContentProps {
 const COMMON_TAGS = [
   'robbery', 'theft', 'assault', 'vandalism', 'drugs', 'noise', 'violence', 'accident'
 ];
+
+// Consistent colors by tag (hex) to match markers on the map
+const TAG_COLORS: Record<string, string> = {
+  robbery: '#EF4444',
+  theft: '#F59E0B',
+  assault: '#F97316',
+  vandalism: '#22C55E',
+  violence: '#6366F1',
+  drugs: '#8B5CF6',
+  noise: '#F59E0B',
+  accident: '#F43F5E',
+};
 
 export default function IncidentFiltersContent({
   filters,
@@ -476,37 +488,51 @@ export default function IncidentFiltersContent({
             <span className="font-semibold text-white text-sm">{t('tags')}</span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {COMMON_TAGS.map((tag, index) => (
-              <motion.button
-                key={tag}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => handleTagToggle(tag)}
-                className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium ${
-                  selectedTags.includes(tag)
-                    ? 'text-white shadow-lg'
-                    : 'text-white/70 hover:text-white'
-                }`}
-                style={{
-                  background: selectedTags.includes(tag)
-                    ? 'rgba(255, 255, 255, 0.2)'
-                    : 'rgba(255, 255, 255, 0.05)',
-                  border: selectedTags.includes(tag)
-                    ? '1px solid rgba(255, 255, 255, 0.3)'
-                    : '1px solid rgba(255, 255, 255, 0.1)'
-                }}
-                whileHover={!selectedTags.includes(tag) ? {
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  transform: 'translateY(-1px)'
-                } : {}}
-                whileTap={{ scale: 0.95 }}
-              >
-                {t(`commonTags.${tag}`)}
-              </motion.button>
-            ))}
+          <div
+            className="flex flex-wrap gap-2"
+            role="listbox"
+            aria-label={t('tags')}
+          >
+            {COMMON_TAGS.map((tag, index) => {
+              const isSelected = selectedTags.includes(tag);
+              const color = TAG_COLORS[tag] || '#6B7280';
+              return (
+                <motion.button
+                  key={tag}
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.04 }}
+                  onClick={() => handleTagToggle(tag)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleTagToggle(tag);
+                    }
+                  }}
+                  aria-pressed={isSelected}
+                  aria-selected={isSelected}
+                  role="option"
+                  tabIndex={0}
+                  className={`px-3 py-2 text-xs rounded-lg transition-all duration-300 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60 ${
+                    isSelected ? 'text-white shadow-lg' : 'text-white/70 hover:text-white'
+                  }`}
+                  style={{
+                    background: isSelected ? `${color}22` : 'rgba(255, 255, 255, 0.05)',
+                    border: isSelected ? `1px solid ${color}66` : '1px solid rgba(255, 255, 255, 0.1)',
+                    color: isSelected ? color : undefined
+                  }}
+                  whileHover={!isSelected ? {
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    transform: 'translateY(-1px)'
+                  } : {}}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {t(`commonTags.${tag}`)}
+                </motion.button>
+              );
+            })}
           </div>
         </motion.div>
       </div>
