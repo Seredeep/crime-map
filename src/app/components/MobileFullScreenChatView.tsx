@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiSend, FiUser, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
+import LocationPicker from './LocationPicker';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -64,6 +65,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address?: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -257,7 +260,16 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const handleSendMessage = async () => {
     if (newMessage.trim() && !isSending) {
       try {
-        await sendMessage(newMessage);
+        // Si hay una ubicación seleccionada, incluirla en el mensaje
+        if (selectedLocation) {
+          // Crear un mensaje especial con ubicación
+          const locationMessage = `📍 Ubicación: ${selectedLocation.address || `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}\n\n${newMessage}`;
+          await sendMessage(locationMessage);
+          setSelectedLocation(null); // Limpiar ubicación después de enviar
+        } else {
+          await sendMessage(newMessage);
+        }
+
         setNewMessage('');
 
         // Reset textarea height
@@ -373,6 +385,18 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
   const clearReply = () => setReplyingTo(null);
 
+  const handleLocationSelect = () => {
+    setShowLocationPicker(true);
+    setShowMenu(false);
+  };
+
+  const handleLocationConfirm = (location: { lat: number; lng: number; address?: string }) => {
+    setSelectedLocation(location);
+    setShowLocationPicker(false);
+    // Aquí podrías abrir un modal o componente para confirmar la ubicación
+    // Por ahora, simplemente la guardamos en el estado
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -485,7 +509,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         background: 'rgba(17, 24, 39, 0.98)',
         backdropFilter: 'blur(20px)',
         boxShadow: '0 0 50px rgba(0, 0, 0, 0.5)'
-      }}
+      } as React.CSSProperties}
     >
       {/* #region Header */}
       <div className="bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50 px-4 py-4 flex items-center justify-between z-10">
@@ -736,6 +760,17 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                     </svg>
                     <span>{tChat('help')}</span>
                   </button>
+
+                  <button
+                    onClick={handleLocationSelect}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>{tChat('location')}</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -750,7 +785,13 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 setNewMessage(e.target.value);
               }}
               onKeyPress={handleKeyPress}
-              placeholder={anonymous ? `${tChat('writeMessage')} (${tChat('incognitoModeActive')})` : tChat('writeMessage')}
+              placeholder={
+                selectedLocation
+                  ? `${tChat('writeMessage')} (ubicación seleccionada)`
+                  : anonymous
+                    ? `${tChat('writeMessage')} (${tChat('incognitoModeActive')})`
+                    : tChat('writeMessage')
+              }
               className="w-full h-12 px-12 py-3 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm leading-6"
             />
 
@@ -768,6 +809,19 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 <FiUser className="w-4 h-4 text-gray-400" />
               )}
             </button>
+
+            {/* Indicador de ubicación seleccionada */}
+            {selectedLocation && (
+              <button
+                onClick={() => setSelectedLocation(null)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-md hover:bg-gray-700/50 transition-colors z-10"
+                title="Eliminar ubicación seleccionada"
+              >
+                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                </svg>
+              </button>
+            )}
           </div>
          <button
            onClick={handleSendMessage}
@@ -778,6 +832,17 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
          </button>
         </div>
       </div>
+      {/* #endregion */}
+
+      {/* #region Location Picker Modal */}
+      <AnimatePresence>
+        {showLocationPicker && (
+          <LocationPicker
+            onClose={() => setShowLocationPicker(false)}
+            onLocationSelect={handleLocationConfirm}
+          />
+        )}
+      </AnimatePresence>
       {/* #endregion */}
 
       {/* #region Participants Modal */}
