@@ -248,7 +248,7 @@ export default function Home() {
         {/* Mobile Layout */}
         <div className="md:hidden w-full relative">
           {/* Contenido principal con altura ajustada */}
-          <div className="h-[calc(100vh-4rem)] pt-16">
+          <div className="h-[calc(100vh-4rem)]">
             {/* Tab content with animation */}
             <AnimatePresence mode="wait">
               <motion.div

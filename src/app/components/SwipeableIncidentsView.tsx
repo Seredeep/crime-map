@@ -253,7 +253,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
       onTouchStart={handleTouchStart}
     >
       {/* Barra de búsqueda y filtros con estilo liquid glass mejorado */}
-      <div className="absolute top-4 left-4 right-4 z-[100] md:hidden">
+      <div className="absolute top-10 left-4 right-4 z-[100] md:hidden">
         <div className="flex items-center space-x-3">
           {/* Barra de búsqueda mejorada con estilo liquid glass */}
           <div className="flex-1">
