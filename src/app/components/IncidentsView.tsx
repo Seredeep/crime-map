@@ -573,7 +573,7 @@ export default function IncidentsView({
 
   return (
     <div className="p-0 w-full h-full" aria-hidden={showDetailsModal ? 'true' : 'false'}>
-      <div className="rounded-lg overflow-hidden shadow-xl h-full relative flex">
+      <div className="overflow-hidden shadow-xl h-full relative flex">
         {loading ? (
           <div className="w-full h-full bg-gray-800/50 flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

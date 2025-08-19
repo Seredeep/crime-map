@@ -987,7 +987,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
   }
 
   return (
-    <div className={`w-full min-h-screen bg-gray-900 ${className}`}>
+    <div className={`w-full pt-6 min-h-screen bg-gray-900 ${className}`}>
       {toast && (
         <Toast
           message={toast.message}

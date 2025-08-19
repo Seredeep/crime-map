@@ -135,7 +135,7 @@ export default function Map({
   };
 
   return (
-    <div className="rounded-lg overflow-hidden shadow-lg">
+    <div className="overflow-hidden shadow-lg">
       <MapComponentWithNoSSR
         markerPosition={markerPosition && Array.isArray(markerPosition) &&
           typeof markerPosition[0] === 'number' &&
