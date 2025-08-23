@@ -196,7 +196,21 @@
     "yesterday": "Yesterday",
     "incognitoModeActive": "incognito mode active",
     "activateIncognitoMode": "Activate incognito mode",
-    "deactivateIncognitoMode": "Deactivate incognito mode"
+    "deactivateIncognitoMode": "Deactivate incognito mode",
+    "attachMedia": "Attach media",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "document": "Document",
+    "recordAudio": "Record audio",
+    "recording": "Recording...",
+    "tapToRecord": "Tap to record",
+    "releaseToStop": "Release to stop",
+    "pressAndHold": "Press and hold",
+    "startRecording": "Start recording",
+    "stopRecording": "Stop recording",
+    "audioRecorded": "Audio recorded",
+    "retry": "Retry",
+    "send": "Send"
   },
   "Incidents": {
     "noIncidentsMatch": "No incidents match the selected filters",

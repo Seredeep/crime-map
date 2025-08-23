@@ -196,7 +196,21 @@
     "yesterday": "Ayer",
     "incognitoModeActive": "modo incógnito activo",
     "activateIncognitoMode": "Activar modo incógnito",
-    "deactivateIncognitoMode": "Desactivar modo incógnito"
+    "deactivateIncognitoMode": "Desactivar modo incógnito",
+    "attachMedia": "Adjuntar multimedia",
+    "camera": "Cámara",
+    "gallery": "Galería",
+    "document": "Documento",
+    "recordAudio": "Grabar audio",
+    "recording": "Grabando...",
+    "tapToRecord": "Toca para grabar",
+    "releaseToStop": "Suelta para detener",
+    "pressAndHold": "Presiona y mantén",
+    "startRecording": "Iniciar grabación",
+    "stopRecording": "Detener grabación",
+    "audioRecorded": "Audio grabado",
+    "retry": "Reintentar",
+    "send": "Enviar"
   },
   "Incidents": {
     "noIncidentsMatch": "No hay incidentes que coincidan con los filtros seleccionados",

@@ -4,9 +4,11 @@ import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiSend, FiUser, FiUsers } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiSend, FiUser, FiUsers, FiPaperclip, FiMic } from 'react-icons/fi';
 import LazyImage from './LazyImage';
 import LocationPicker from './LocationPicker';
+import MediaPicker from './MediaPicker';
+import AudioRecorder from './AudioRecorder';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -40,6 +42,12 @@ interface Message {
     location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
     address?: string;
     replyTo?: { id: string; userId: string; userName: string; snippet: string };
+    media?: {
+      type: 'image' | 'video' | 'audio' | 'document';
+      url: string;
+      filename?: string;
+      size?: number;
+    };
   };
   senderProfileImage?: string;
 }
@@ -67,6 +75,9 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [showMenu, setShowMenu] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address?: string } | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -279,6 +290,127 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       } catch (error) {
         console.error('Error al enviar mensaje:', error);
       }
+    }
+  };
+
+  const handleMediaSelect = async (file: File, type: 'image' | 'video' | 'document') => {
+    try {
+      setIsUploading(true);
+      
+      // Crear FormData para subir el archivo
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', type);
+      
+      // Subir archivo a Firebase Storage (esto se implementará en el backend)
+      const uploadResponse = await fetch('/api/chat/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (uploadResponse.ok) {
+        const uploadResult = await uploadResponse.json();
+        
+        // Enviar mensaje con el archivo adjunto
+        await sendMessageWithMedia(newMessage || `📎 ${type === 'image' ? 'Imagen' : type === 'video' ? 'Video' : 'Documento'}`, {
+          type,
+          url: uploadResult.url,
+          filename: file.name,
+          size: file.size
+        });
+        
+        setNewMessage('');
+      } else {
+        throw new Error('Error al subir archivo');
+      }
+    } catch (error) {
+      console.error('Error al procesar archivo multimedia:', error);
+      setError(tErrors('sendMessageError'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleAudioSend = async (audioBlob: Blob) => {
+    try {
+      setIsUploading(true);
+      
+      // Crear FormData para subir el audio
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.wav');
+      formData.append('type', 'audio');
+      
+      // Subir audio a Firebase Storage
+      const uploadResponse = await fetch('/api/chat/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (uploadResponse.ok) {
+        const uploadResult = await uploadResponse.json();
+        
+        // Enviar mensaje con el audio adjunto
+        await sendMessageWithMedia(newMessage || '🎵 Audio', {
+          type: 'audio',
+          url: uploadResult.url,
+          filename: 'audio.wav',
+          size: audioBlob.size
+        });
+        
+        setNewMessage('');
+      } else {
+        throw new Error('Error al subir audio');
+      }
+    } catch (error) {
+      console.error('Error al procesar audio:', error);
+      setError(tErrors('sendMessageError'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const sendMessageWithMedia = async (message: string, media: { type: 'image' | 'video' | 'audio' | 'document'; url: string; filename?: string; size?: number }): Promise<boolean> => {
+    if (!session?.user || !message.trim()) return false;
+
+    try {
+      setIsSending(true);
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          type: 'normal',
+          metadata: {
+            ...(anonymous ? { anonymous: true } : {}),
+            ...(replyingTo ? {
+              replyTo: {
+                id: replyingTo.id,
+                userId: replyingTo.userId,
+                userName: replyingTo.userName,
+                snippet: replyingTo.message.slice(0, 140)
+              }
+            } : {}),
+            media
+          }
+        }),
+      });
+
+      if (response.ok) {
+        await loadMessages();
+        setReplyingTo(null);
+        return true;
+      } else {
+        setError(tErrors('sendMessageError'));
+        return false;
+      }
+    } catch (error) {
+      console.error('Error enviando mensaje con multimedia:', error);
+      setError(tErrors('sendMessageError'));
+      return false;
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -675,6 +807,72 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                         <div className="text-xs opacity-80 truncate">{message.metadata.replyTo.snippet}</div>
                       </div>
                     )}
+
+                    {/* Contenido multimedia */}
+                    {message.metadata?.media && (
+                      <div className="mb-2">
+                        {message.metadata.media.type === 'image' && (
+                          <div className="relative">
+                            <img
+                              src={message.metadata?.media?.url || ''}
+                              alt="Imagen"
+                              className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => message.metadata?.media?.url && window.open(message.metadata.media.url, '_blank')}
+                            />
+                          </div>
+                        )}
+                        
+                        {message.metadata?.media?.type === 'video' && (
+                          <div className="relative">
+                            <video
+                              src={message.metadata?.media?.url || ''}
+                              controls
+                              className="max-w-full h-auto rounded-lg"
+                              preload="metadata"
+                            />
+                          </div>
+                        )}
+                        
+                        {message.metadata?.media?.type === 'audio' && (
+                          <div className="bg-gray-800/50 p-3 rounded-lg">
+                            <audio
+                              src={message.metadata?.media?.url || ''}
+                              controls
+                              className="w-full"
+                              preload="metadata"
+                            />
+                            <div className="text-xs text-gray-400 mt-1">
+                              🎵 Audio • {message.metadata?.media?.filename || 'audio.wav'}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {message.metadata?.media?.type === 'document' && (
+                          <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
+                            <div className="flex items-center space-x-3">
+                              <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-white truncate">
+                                  {message.metadata?.media?.filename || 'Documento'}
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {message.metadata?.media?.size ? `${(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB` : 'Documento'}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => message.metadata?.media?.url && window.open(message.metadata.media.url, '_blank')}
+                                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                              >
+                                Abrir
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {message.type === 'panic' ? (
                       <>
                         <span className="font-semibold">{tChat('panicAlert')}</span>
@@ -726,55 +924,39 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           </div>
         )}
         <div className="flex items-center space-x-2">
-          {/* Menú desplegable con 3 puntitos */}
-          <div className="relative menu-container">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </button>
+          {/* Indicador de carga cuando se está subiendo un archivo */}
+          {isUploading && (
+            <div className="flex items-center space-x-2 px-3 py-2 bg-blue-600/20 rounded-lg border border-blue-500/40">
+              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-xs text-blue-300">Subiendo archivo...</span>
+            </div>
+          )}
 
-            {/* Menú desplegable */}
-            {showMenu && (
-              <div className="absolute bottom-0 left-full ml-2 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700/50 z-50">
-                <div className="py-2">
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
-                    <FiUser className="w-4 h-4" />
-                    <span>{tChat('viewProfile')}</span>
-                  </button>
-
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>{tChat('settings')}</span>
-                  </button>
-                  <div className="border-t border-gray-700/50 my-1"></div>
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{tChat('help')}</span>
-                  </button>
-
-                  <button
-                    onClick={handleLocationSelect}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>{tChat('location')}</span>
-                  </button>
-                </div>
-              </div>
+          {/* Botón de adjuntar multimedia */}
+          <button
+            onClick={() => setShowMediaPicker(true)}
+            disabled={isUploading}
+            className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isUploading ? 'Subiendo archivo...' : tChat('attachMedia')}
+          >
+            {isUploading ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <FiPaperclip className="w-5 h-5" />
             )}
-          </div>
+          </button>
+
+          {/* Botón de ubicación */}
+          <button
+            onClick={handleLocationSelect}
+            className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center"
+            title={tChat('location')}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
 
           {/* Contenedor del textarea con botón de incógnito integrado */}
           <div className="flex-1 relative h-12">
@@ -824,11 +1006,21 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             )}
           </div>
          <button
-           onClick={handleSendMessage}
-           disabled={!newMessage.trim() || isSending}
-           className="h-12 w-12 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0 flex items-center justify-center"
+           onClick={newMessage.trim() ? handleSendMessage : () => setShowAudioRecorder(true)}
+           disabled={isSending || isUploading}
+           className={`h-12 w-12 rounded-lg flex-shrink-0 flex items-center justify-center transition-colors ${
+             newMessage.trim() 
+               ? 'bg-blue-600 text-white hover:bg-blue-700' 
+               : 'bg-gray-600 text-white hover:bg-gray-700'
+           } disabled:opacity-50 disabled:cursor-not-allowed`}
          >
-           <FiSend className="w-5 h-5" />
+           {isSending || isUploading ? (
+             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+           ) : newMessage.trim() ? (
+             <FiSend className="w-5 h-5" />
+           ) : (
+             <FiMic className="w-5 h-5" />
+           )}
          </button>
         </div>
       </div>
@@ -840,6 +1032,28 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           <LocationPicker
             onClose={() => setShowLocationPicker(false)}
             onLocationSelect={handleLocationConfirm}
+          />
+        )}
+      </AnimatePresence>
+      {/* #endregion */}
+
+      {/* #region Media Picker Modal */}
+      <AnimatePresence>
+        {showMediaPicker && (
+          <MediaPicker
+            onClose={() => setShowMediaPicker(false)}
+            onMediaSelect={handleMediaSelect}
+          />
+        )}
+      </AnimatePresence>
+      {/* #endregion */}
+
+      {/* #region Audio Recorder Modal */}
+      <AnimatePresence>
+        {showAudioRecorder && (
+          <AudioRecorder
+            onClose={() => setShowAudioRecorder(false)}
+            onAudioSend={handleAudioSend}
           />
         )}
       </AnimatePresence>
