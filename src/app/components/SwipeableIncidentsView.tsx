@@ -1,5 +1,6 @@
 'use client';
 
+import { useImageModal } from '@/lib/contexts';
 import { fetchIncidents } from '@/lib/services/incidents/incidentService';
 import { Neighborhood } from '@/lib/services/neighborhoods/neighborhoodService';
 import { Incident, IncidentFilters as IncidentFiltersType } from '@/lib/types/global';
@@ -11,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiFilter } from 'react-icons/fi';
 import IncidentFiltersContent from './IncidentFiltersContent';
 import IncidentsView from './IncidentsView';
+import LazyImage from './LazyImage';
 import { IncidentLoader } from './LoaderExamples';
 import MapSearchBar from './MapSearchBar';
 
@@ -22,6 +24,7 @@ interface SwipeableIncidentsViewProps {
 const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: SwipeableIncidentsViewProps) => {
   const { data: session } = useSession();
   const t = useTranslations('IncidentList');
+  const { openModal } = useImageModal();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(85);
@@ -29,6 +32,11 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
   const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
   const [showFiltersPopover, setShowFiltersPopover] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  // Estados para controlar la expansión completa del panel
+  // isFullyExpanded: true cuando el panel está al 100% de altura
+  // touchCount: cuenta los toques para habilitar expansión completa en el segundo toque
+  const [isFullyExpanded, setIsFullyExpanded] = useState(false);
+  const [touchCount, setTouchCount] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +81,50 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
     loadIncidents();
   }, [loadIncidents]);
 
+  // Scroll locking when bottom sheet is expanded
+  useEffect(() => {
+    if (isExpanded) {
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = '0';
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    };
+  }, [isExpanded]);
+
+  // Handle window resize to maintain proper positioning
+  useEffect(() => {
+    const handleResize = () => {
+      if (isExpanded) {
+        if (isFullyExpanded) {
+          setBottomSheetHeight(window.innerHeight);
+        } else {
+          // Consideramos el espacio necesario para evitar que las tabs cubran el contenido
+          const contentHeight = Math.max(400, incidents.length * 120 + 300 + 80); // +80 for tabs space
+          const maxHeight = Math.min(contentHeight, window.innerHeight * 0.85);
+          setBottomSheetHeight(maxHeight);
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isExpanded, incidents.length, isFullyExpanded]);
+
   // Handler para cambios de filtros
   const handleFiltersChange = useCallback((newFilters: IncidentFiltersType) => {
     if (!isEditorOrAdmin) {
@@ -110,6 +162,11 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
 
   // Detectar swipe horizontal para filtros
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Skip if we're in the bottom sheet area or if it's expanded
+    if (isExpanded || (e.target as HTMLElement).closest('[data-bottom-sheet]')) {
+      return;
+    }
+
     const touch = e.touches[0];
     const startX = touch.clientX;
     const startY = touch.clientY;
@@ -143,35 +200,65 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
 
     document.addEventListener('touchmove', handleTouchMove);
     document.addEventListener('touchend', handleTouchEnd);
-  }, [onFiltersOpen]);
+  }, [onFiltersOpen, isExpanded]);
 
   const handleBottomSheetDrag = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // Prevent drag if horizontal scrolling is detected
+    if (isDraggingHorizontal) return;
+
     const newHeight = bottomSheetHeight - info.offset.y;
     const minHeight = 80;
     // Aumentamos la altura máxima para que el panel tenga más fondo
-    const contentHeight = Math.max(400, incidents.length * 120 + 300);
+    // Consideramos el espacio necesario para evitar que las tabs cubran el contenido
+    const contentHeight = Math.max(400, incidents.length * 120 + 300 + 80); // +80 for tabs space
     const maxHeight = Math.min(contentHeight, window.innerHeight * 0.85);
 
-    setBottomSheetHeight(Math.max(minHeight, Math.min(newHeight, maxHeight)));
-  }, [bottomSheetHeight, incidents.length]);
+    // Smooth height transitions
+    const clampedHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
+    setBottomSheetHeight(clampedHeight);
+  }, [bottomSheetHeight, incidents.length, isDraggingHorizontal]);
 
   const handleBottomSheetDragEnd = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // Prevent drag end if horizontal scrolling was detected
+    if (isDraggingHorizontal) return;
+
     const velocity = info.velocity.y;
     const offset = info.offset.y;
     const minHeight = 80;
     // Aumentamos la altura máxima para que el panel tenga más fondo
-    const contentHeight = Math.max(400, incidents.length * 120 + 300);
+    // Consideramos el espacio necesario para evitar que las tabs cubran el contenido
+    const contentHeight = Math.max(400, incidents.length * 120 + 300 + 80); // +80 for tabs space
     const maxHeight = Math.min(contentHeight, window.innerHeight * 0.85);
 
     // Si se arrastra hacia arriba con suficiente velocidad o distancia, expandir
     if (velocity < -500 || offset < -100) {
-      setBottomSheetHeight(maxHeight);
-      setIsExpanded(true);
+      // Check if this is a forced upward gesture (high velocity or large offset)
+      if (velocity < -800 || offset < -150) {
+        // Force full expansion on second touch
+        if (touchCount >= 1) {
+          setBottomSheetHeight(window.innerHeight);
+          setIsExpanded(true);
+          setIsFullyExpanded(true);
+        } else {
+          // First touch: normal expansion
+          setBottomSheetHeight(maxHeight);
+          setIsExpanded(true);
+          setIsFullyExpanded(false);
+          setTouchCount(prev => prev + 1);
+        }
+      } else {
+        // Normal expansion
+        setBottomSheetHeight(maxHeight);
+        setIsExpanded(true);
+        setIsFullyExpanded(false);
+      }
     }
     // Si se arrastra hacia abajo, contraer
     else if (velocity > 500 || offset > 100) {
       setBottomSheetHeight(minHeight);
       setIsExpanded(false);
+      setIsFullyExpanded(false);
+      setTouchCount(0); // Reset touch count when collapsing
     }
     // Snap a la posición más cercana
     else {
@@ -179,28 +266,56 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
       if (bottomSheetHeight > midPoint) {
         setBottomSheetHeight(maxHeight);
         setIsExpanded(true);
+        setIsFullyExpanded(false);
       } else {
         setBottomSheetHeight(minHeight);
         setIsExpanded(false);
+        setIsFullyExpanded(false);
+        setTouchCount(0); // Reset touch count when collapsing
       }
     }
-  }, [bottomSheetHeight, incidents.length]);
+  }, [bottomSheetHeight, incidents.length, isDraggingHorizontal, touchCount]);
 
   // Función para alternar el estado del panel
   const togglePanel = useCallback(() => {
     const minHeight = 80;
     // Aumentamos la altura máxima para que el panel tenga más fondo
-    const contentHeight = Math.max(400, incidents.length * 120 + 300);
+    // Consideramos el espacio necesario para evitar que las tabs cubran el contenido
+    const contentHeight = Math.max(400, incidents.length * 120 + 300 + 80); // +80 for tabs space
     const maxHeight = Math.min(contentHeight, window.innerHeight * 0.85);
 
     if (isExpanded) {
       setBottomSheetHeight(minHeight);
       setIsExpanded(false);
+      setIsFullyExpanded(false);
+      setTouchCount(0); // Reset touch count when collapsing
     } else {
-      setBottomSheetHeight(maxHeight);
-      setIsExpanded(true);
+      // Check if user wants full expansion (second touch)
+      if (touchCount >= 1 && !isFullyExpanded) {
+        setBottomSheetHeight(window.innerHeight);
+        setIsExpanded(true);
+        setIsFullyExpanded(true);
+      } else {
+        setBottomSheetHeight(maxHeight);
+        setIsExpanded(true);
+        setIsFullyExpanded(false);
+        setTouchCount(prev => prev + 1);
+      }
     }
-  }, [isExpanded, incidents.length]);
+  }, [isExpanded, incidents.length, touchCount, isFullyExpanded]);
+
+  // Prevent scroll when dragging
+  const handleDragStart = useCallback(() => {
+    // Disable scroll during drag
+    document.body.style.userSelect = 'none';
+    document.body.style.touchAction = 'none';
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    // Re-enable scroll after drag
+    document.body.style.userSelect = '';
+    document.body.style.touchAction = '';
+  }, []);
 
   // Función para cerrar el panel al tocar fuera
   const handleOutsideClick = useCallback(() => {
@@ -208,6 +323,8 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
       const minHeight = 80;
       setBottomSheetHeight(minHeight);
       setIsExpanded(false);
+      setIsFullyExpanded(false);
+      setTouchCount(0); // Reset touch count when closing
     }
   }, [isExpanded]);
 
@@ -221,6 +338,33 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
       case 'violencia': return 'bg-purple-500';
       default: return 'bg-purple-500';
     }
+  };
+
+  // Helper function to get the first image from incident evidence
+  const getIncidentImage = (incident: Incident) => {
+    if (incident.evidenceUrls && incident.evidenceUrls.length > 0) {
+      // Find first image file
+      const imageUrl = incident.evidenceUrls.find(url =>
+        url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+      );
+      return imageUrl || null;
+    }
+    return null;
+  };
+
+  // Helper function to get file type
+  const getFileType = (url: string) => {
+    const extension = url.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension || '')) {
+      return 'image';
+    }
+    if (['mp4', 'avi', 'mov', 'wmv'].includes(extension || '')) {
+      return 'video';
+    }
+    if (['pdf'].includes(extension || '')) {
+      return 'pdf';
+    }
+    return 'other';
   };
 
   const getIncidentIcon = (type?: string) => {
@@ -425,25 +569,39 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
 
       {/* Bottom Sheet con lista de incidentes */}
       <motion.div
-        className={`fixed left-0 right-0 md:hidden backdrop-blur-lg rounded-t-2xl shadow-2xl ${isExpanded ? 'z-[160]' : 'z-[120]'}`}
+        data-bottom-sheet
+        className={`fixed left-0 right-0 md:hidden backdrop-blur-lg rounded-t-2xl shadow-2xl ${isExpanded ? 'z-[200]' : 'z-[150]'}`}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={0.1}
         onDrag={handleBottomSheetDrag}
         onDragEnd={handleBottomSheetDragEnd}
-        initial={{ y: 60 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        onDragStart={handleDragStart}
         onClick={togglePanel}
+        initial={{ y: 0 }}
+        animate={{
+          y: 0,
+          height: bottomSheetHeight,
+          bottom: isExpanded ? 0 : 80
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          height: { duration: 0.3 },
+          bottom: { duration: 0.3 }
+        }}
         style={{
           background: 'linear-gradient(180deg, rgba(25, 25, 25, 1) 0%, rgba(20, 20, 20, 1) 100%)',
           boxShadow: '0 1px 20px rgba(0, 0, 0, 0.5)',
           height: bottomSheetHeight,
-          bottom: isExpanded ? 0 : 80
+          bottom: isExpanded ? 0 : 80,
+          position: 'fixed',
+          willChange: 'transform, height, bottom'
         }}
       >
         {/* Handle del bottom sheet */}
-        <div className="flex justify-center py-3 cursor-grab active:cursor-grabbing">
+        <div className="flex justify-center py-2 cursor-grab active:cursor-grabbing">
           <div className="w-12 h-1.5 bg-gray-600 rounded-full" />
         </div>
 
@@ -506,7 +664,8 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                 background: 'rgba(255, 255, 255, 0.1)',
                 borderColor: 'rgba(255, 255, 255, 0.2)'
               }}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (selectedIncident) {
                   setSelectedIncident(null);
                 } else {
@@ -529,7 +688,21 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
         </div>
 
         {/* Lista de incidentes */}
-        <div className="flex-1 overflow-y-auto px-4 py-3" style={{ maxHeight: isExpanded ? '600px' : 'auto' }}>
+        <div
+          className="flex-1 overflow-y-auto px-4 py-3"
+          style={{
+            maxHeight: isFullyExpanded ? 'calc(100vh - 120px)' : (isExpanded ? 'calc(100% - 120px)' : 'auto'),
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
+            paddingBottom: isExpanded ? '80px' : '20px', // Add bottom padding to avoid tabs overlap
+            scrollPaddingBottom: '20px', // Ensure scroll shows content above tabs
+            scrollBehavior: 'smooth' // Smooth scrolling for better UX
+          }}
+          onTouchStart={(e) => {
+            // Allow normal scrolling within the list
+            e.stopPropagation();
+          }}
+        >
           {loading ? (
             <IncidentLoader message={t('loadingIncidents')} />
           ) : incidents.length === 0 ? (
@@ -543,88 +716,27 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
               <p className="text-sm text-gray-500 mt-1">{t('incidentsWillAppearHere')}</p>
             </div>
           ) : (
-            <div className="space-y-3 pb-4">
-              {selectedIncident ? (
-                // Mostrar información detallada del incidente seleccionado
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="rounded-2xl border"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(55, 65, 81, 0.8) 0%, rgba(75, 85, 99, 0.6) 100%)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(156, 163, 175, 0.3)',
-                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-                    padding: '20px'
-                  }}
-                >
-                  <div className="flex items-start space-x-4">
-                    <motion.div
-                      className={`p-4 rounded-xl ${getIncidentTypeColor(selectedIncident.type)} text-white shadow-lg relative overflow-hidden`}
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="w-8 h-8 relative z-10">
-                        {getIncidentIcon(selectedIncident.type)}
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-                    </motion.div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-3">
-                        <h4 className="font-manrope font-bold text-white text-lg truncate pr-2">
-                          {selectedIncident.type || t('incident')}
-                        </h4>
-                        <span className="text-xs font-medium px-3 py-2 rounded-lg flex-shrink-0 bg-gray-600/50 text-gray-300 border border-gray-500/30">
-                          {formatDate(selectedIncident.date)}
-                        </span>
-                      </div>
-                      <p className="text-gray-200 text-base mb-4 leading-relaxed">
-                        {selectedIncident.description}
-                      </p>
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                          </svg>
-                          <span className="text-sm text-gray-300">{selectedIncident.address}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-sm text-gray-300">{selectedIncident.time}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-600/30">
-                        <motion.span
-                          className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)',
-                            border: '1px solid rgba(16, 185, 129, 0.4)',
-                            color: '#10B981'
-                          }}
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          {t('verified')}
-                        </motion.span>
-                        <button
-                          onClick={() => setSelectedIncident(null)}
-                          className="text-gray-400 hover:text-white text-sm font-medium transition-colors flex items-center"
-                        >
-                          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          {t('close')}
-                        </button>
-                      </div>
-                    </div>
+            <div className="space-y-3">
+                            {selectedIncident ? (
+                // Mostrar mensaje simple cuando hay incidente seleccionado
+                <div className="text-center py-8 text-gray-400">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-800/50 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
                   </div>
-                </motion.div>
+                  <p className="text-white font-medium">{t('incidentSelected') || 'Incidente seleccionado'}</p>
+                  <p className="text-sm text-gray-500 mt-1">{t('useMapToViewDetails') || 'Usa el mapa para ver los detalles'}</p>
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => setSelectedIncident(null)}
+                      className="px-4 py-2 rounded-lg text-white bg-gray-600/40 border border-gray-500/40 hover:bg-gray-600/60"
+                    >
+                      {t('backToList') || 'Volver a la lista'}
+                    </button>
+                  </div>
+                </div>
               ) : (
                 // Mostrar lista normal de incidentes
                 (isExpanded ? incidents : incidents.slice(0, 3)).map((incident, index) => {
@@ -636,7 +748,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="rounded-2xl border cursor-pointer transition-all duration-300 group"
+                        className="rounded-2xl border cursor-pointer transition-all duration-300 group relative"
                         style={{
                           background: 'linear-gradient(135deg, rgba(55, 65, 81, 0.6) 0%, rgba(75, 85, 99, 0.4) 100%)',
                           backdropFilter: 'blur(20px)',
@@ -650,11 +762,59 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                           borderColor: 'rgba(156, 163, 175, 0.4)',
                           y: -2
                         }}
-                        onClick={() => handleIncidentSelect(incident)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Navegar directamente al incidente en el mapa
+                          if (onIncidentNavigate && incident.location?.coordinates) {
+                            const coords: [number, number] = [
+                              incident.location.coordinates[1],
+                              incident.location.coordinates[0]
+                            ];
+                            onIncidentNavigate(coords, incident);
+                          }
+                        }}
                       >
+                        {/* Indicador de que el item completo es clickeable */}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-600/20 text-blue-300 border border-blue-500/30 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Mapa
+                          </div>
+                        </div>
                         <div className="flex items-start space-x-4">
+                        {/* Imagen del incidente o icono por defecto */}
+                        {getIncidentImage(incident) ? (
                           <motion.div
-                            className={`p-3 rounded-xl ${getIncidentTypeColor(incident.type)} text-white shadow-lg relative overflow-hidden`}
+                            className="w-16 h-16 rounded-xl overflow-hidden shadow-lg relative flex-shrink-0"
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openModal(getIncidentImage(incident)!);
+                              }}
+                              className="w-full h-full"
+                            >
+                              <LazyImage
+                                src={getIncidentImage(incident)!}
+                                alt={`${incident.type || 'Incident'} image`}
+                                className="w-full h-full"
+                              />
+                              {/* Overlay para indicar que es clickeable */}
+                              <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                </svg>
+                              </div>
+                            </button>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            className={`p-3 rounded-xl ${getIncidentTypeColor(incident.type)} text-white shadow-lg relative overflow-hidden flex-shrink-0`}
                             whileHover={{ scale: 1.05 }}
                             transition={{ duration: 0.2 }}
                           >
@@ -664,8 +824,9 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                             {/* Efecto de brillo */}
                             <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </motion.div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-3">
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-3">
                               <h4
                                 className="font-manrope font-semibold text-white text-base truncate pr-2"
                               >
@@ -706,13 +867,37 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                             <div
                               className="pt-3 border-t border-gray-600/30"
                             >
-                              <motion.p
-                                className="text-xs text-center font-medium text-gray-300"
+                              <motion.button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Cerrar la lista y navegar al incidente en el mapa
+                                  setIsExpanded(false);
+                                  setIsFullyExpanded(false);
+                                  setTouchCount(0);
+                                  setSelectedIncident(null);
+                                  // Navegar al incidente en el mapa
+                                  if (onIncidentNavigate && incident.location?.coordinates) {
+                                    const coords: [number, number] = [
+                                      incident.location.coordinates[1],
+                                      incident.location.coordinates[0]
+                                    ];
+                                    onIncidentNavigate(coords, incident);
+                                  }
+                                }}
+                                className="w-full text-xs text-center font-medium text-blue-400 hover:text-blue-300 transition-all duration-300 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-blue-500/20 hover:scale-105 active:scale-95"
                                 whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
                                 transition={{ duration: 0.2 }}
                               >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
                                 {t('tapToViewOnMap')}
-                              </motion.p>
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </motion.button>
                             </div>
                           </div>
                         </div>
@@ -731,7 +916,7 @@ const SwipeableIncidentsView = ({ onFiltersOpen, onIncidentNavigate }: Swipeable
                 })
               )}
               {isExpanded && incidents.length > 3 && !selectedIncident && (
-                <div className="text-center py-2 text-gray-500 text-sm">
+                <div className="text-center py-4 text-gray-500 text-sm">
                   {t('totalIncidents', { count: incidents.length })}
                 </div>
               )}
