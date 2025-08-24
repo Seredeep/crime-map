@@ -241,9 +241,9 @@ const MapSearchBar = ({
           <div
             className="relative flex items-center transition-all focus:rounded-full duration-300 hover:scale-[1.01]"
             style={{
-              background: 'rgba(255, 255, 255, 0.03)',
+              background: 'rgba(0, 0, 0, 0.7)',
               backdropFilter: 'blur(20px)',
-              border: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               boxShadow: `
                 inset 0 0 10px rgba(255,255,255,0.04),
                 0 0 30px rgba(255,255,255,0.02),
@@ -256,7 +256,7 @@ const MapSearchBar = ({
           >
             {/* Ícono de búsqueda */}
             <div className="pl-5 pr-3">
-              <FiSearch className="w-5 h-5 text-gray-700" />
+              <FiSearch className="w-5 h-5 text-gray-300" />
             </div>
 
             {/* Input de búsqueda */}
@@ -270,7 +270,7 @@ const MapSearchBar = ({
                 userLocation ? `Buscar en ${neighborhood}...` :
                 t('placeholder')
               }
-              className="flex-1 py-2 px-3 focus:rounded-full bg-transparent text-gray-900 placeholder-gray-600 border-transparent focus:outline-none font-medium"
+              className="flex-1 py-2 px-3 focus:rounded-full bg-transparent text-white placeholder-gray-300 border-transparent focus:outline-none font-medium"
             />
 
             {/* Spinner de carga */}
@@ -321,9 +321,9 @@ const MapSearchBar = ({
                 transition={{ duration: 0.3 }}
                 className="absolute top-full left-0 right-0 mt-3 overflow-hidden z-10"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'rgba(0, 0, 0, 0.8)',
                   backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
                   boxShadow: `
                     inset 0 0 10px rgba(255,255,255,0.04),
                     0 0 30px rgba(255,255,255,0.02),
@@ -342,7 +342,7 @@ const MapSearchBar = ({
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
                       onClick={() => handleResultSelect(result)}
-                      className="w-full flex items-center space-x-4 p-4 hover:bg-white/10 transition-all duration-200 text-left border-b border-white/10 last:border-b-0 group"
+                      className="w-full flex items-center space-x-4 p-4 hover:bg-white/20 transition-all duration-200 text-left border-b border-white/20 last:border-b-0 group"
                     >
                       <div className={`p-2.5 rounded-xl backdrop-blur-sm transition-all duration-200 group-hover:scale-105 ${result.type === 'address'
                           ? 'bg-blue-500/20 text-blue-700 border border-blue-300/30'
@@ -355,20 +355,20 @@ const MapSearchBar = ({
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-900 truncate group-hover:text-gray-800 transition-colors">
+                        <h4 className="font-semibold text-white truncate group-hover:text-gray-200 transition-colors">
                           {result.title}
                         </h4>
-                        <p className="text-sm text-gray-600 truncate">
+                        <p className="text-sm text-gray-300 truncate">
                           {result.subtitle}
                         </p>
                         {result.type === 'incident' && result.incident?.date && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-400 mt-1">
                             {new Date(result.incident.date).toLocaleDateString('es-ES')}
                           </p>
                         )}
                         {/* Mostrar distancia si tenemos ubicación del usuario */}
                         {userLocation && result.coordinates && (
-                          <p className="text-xs text-green-600 mt-1">
+                          <p className="text-xs text-green-400 mt-1">
                             📍 {result.distance ? formatDistance(result.distance) : 'Cerca de tu barrio'}
                           </p>
                         )}
