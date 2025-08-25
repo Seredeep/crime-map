@@ -224,6 +224,8 @@
     "close": "Close"
   },
   "Incidents": {
+    "viewOnMap": "View on Map",
+    "incidentDetails": "Incident Details",
     "noIncidentsMatch": "No incidents match the selected filters",
     "changeStatusTo": "Change status to {status}",
     "reasonPlaceholder": "Reason for status change (optional)",
@@ -242,6 +244,8 @@
     "dateRange": "Date Range",
     "from": "From",
     "to": "To",
+    "incidents": "Incidents",
+    "otherIncidents": "Other Incidents",
     "incidentTypes": "Incident Types",
     "available": "available",
     "selected": "selected",
