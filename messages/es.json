@@ -177,6 +177,8 @@
     "multipleIncidents": "{count} incidentes recientes"
   },
   "Incidents": {
+    "viewOnMap": "Ver en el mapa",
+    "incidentDetails": "Detalles del incidente",
     "noIncidentsMatch": "No hay incidentes que coincidan con los filtros seleccionados",
     "changeStatusTo": "Cambiar estado a {status}",
     "reasonPlaceholder": "Razón del cambio de estado (opcional)",
@@ -187,6 +189,8 @@
     "refineResults": "Refina los resultados",
     "clear": "Limpiar",
     "cityState": "Ciudad/Estado",
+    "incidents": "Incidentes",
+    "otherIncidents": "Otros Incidentes",
     "allCities": "Todas las ciudades",
     "neighborhoodCity": "Barrio/Ciudad",
     "selectCityFirst": "Primero selecciona una ciudad",

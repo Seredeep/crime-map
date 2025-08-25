@@ -185,9 +185,6 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
           <div className="ml-2 flex-1">
             <p className="font-medium text-sm">Location:</p>
             {renderEditableField('address', incident.address)}
-            <div className="mt-1 text-xs text-gray-400">
-              GPS: {incident.location.coordinates[1].toFixed(6)}, {incident.location.coordinates[0].toFixed(6)}
-            </div>
           </div>
         </div>
       </div>
@@ -280,8 +277,6 @@ export default function IncidentDetails({ incident, onIncidentUpdate }: Incident
           </div>
         </div>
       )}
-      <p>Reported: {new Date(incident.createdAt).toLocaleString()}</p>
-      <p>Incident ID: {incident._id}</p>
     </div>
   );
 }
