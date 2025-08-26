@@ -97,7 +97,7 @@ export default function IncidentFilters({ filters, onFiltersChangeAction, onNeig
     }
 
     loadNeighborhoods();
-  }, [t, session, filters.neighborhoodId, onNeighborhoodSelect]);
+  }, [t, session, onNeighborhoodSelect, filters.neighborhoodId]);
 
   // Handle neighborhood selection change - memoized
   const handleNeighborhoodChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {

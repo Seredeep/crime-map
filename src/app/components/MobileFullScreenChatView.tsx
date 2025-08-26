@@ -118,7 +118,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data && result.data.messages) {
+        if (result.success && result.data?.messages) {
           const formattedMessages = result.data.messages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
@@ -147,7 +147,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         setLoading(false);
       });
     }
-  }, [session, loadChatInfo, loadMessages]);
+  }, [session?.user, loadChatInfo, loadMessages]);
 
   // Polling optimizado - solo cuando hay actividad
   useEffect(() => {
@@ -160,7 +160,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       }, 8000); // Polling menos agresivo
       return () => clearInterval(interval);
     }
-  }, [session, loading, loadMessages]);
+  }, [session?.user, loading, loadMessages]);
 
   // Auto-scroll a mensajes nuevos
   useEffect(() => {

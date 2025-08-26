@@ -500,6 +500,7 @@ export default function IncidentFiltersContent({
                 <motion.button
                   key={tag}
                   type="button"
+                  aria-label={tag}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.04 }}

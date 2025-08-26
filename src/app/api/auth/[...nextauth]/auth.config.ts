@@ -15,7 +15,7 @@ declare module 'next-auth' {
     email?: string | null;
     image?: string | null;
     role: Role;
-    enabled?: boolean;
+    enabled: boolean;
     onboarded?: boolean;
     neighborhood?: string;
     country?: string;
@@ -54,7 +54,7 @@ declare module 'next-auth/jwt' {
     email?: string | null;
     image?: string | null;
     role: Role;
-    enabled?: boolean;
+    enabled: boolean;
     onboarded?: boolean;
     createdAt?: Date;
     neighborhood?: string;

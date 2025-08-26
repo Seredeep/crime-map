@@ -1,7 +1,8 @@
 import { getToken } from 'next-auth/jwt';
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import { routing } from './i18n/routing';
+import { routing } from '../i18n/routing';
+import { rbacMiddleware } from './rbac';
 
 // Crear el middleware de i18n
 const intlMiddleware = createMiddleware(routing);
@@ -84,16 +85,8 @@ export async function middleware(request: NextRequest) {
     return intlResponse || NextResponse.next();
   }
 
-  // Para rutas de API no públicas, verificar autenticación
-  const token = await getToken({ req: request });
-  if (!token) {
-    return NextResponse.json(
-      { success: false, message: 'No autorizado' },
-      { status: 401 }
-    );
-  }
-
-  return NextResponse.next();
+  // Apply RBAC middleware for API routes
+  return rbacMiddleware(request);
 }
 
 export const config = {

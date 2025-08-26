@@ -18,7 +18,6 @@ export default function GeocodeSearch({
   placeholder,
   className = '',
   selectedAddress,
-  selectedCoordinates,
 }: GeocodeSearchProps) {
   const t = useTranslations('Forms');
   const finalPlaceholder = placeholder || t('searchPlaceholder');
