@@ -18,7 +18,6 @@ export default function GeocodeSearch({
   placeholder,
   className = '',
   selectedAddress,
-  selectedCoordinates,
 }: GeocodeSearchProps) {
   const t = useTranslations('Forms');
   const finalPlaceholder = placeholder || t('searchPlaceholder');
@@ -71,7 +70,7 @@ export default function GeocodeSearch({
     } finally {
       setIsLoading(false);
     }
-  }, [query, sessionToken]);
+  }, [query, sessionToken, t]);
 
   const handleSelectResult = async (result: GeocodingResult) => {
     // If the result doesn't have coordinates, fetch the full details

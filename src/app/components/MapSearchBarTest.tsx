@@ -201,7 +201,7 @@ export default function MapSearchBarTest() {
                 <li>Escribe el nombre de una calle</li>
                 <li>Incluye el número si lo conoces</li>
                 <li>Puedes buscar intersecciones</li>
-                <li>Ejemplo: "Avenida Luro 123"</li>
+                <li>Ejemplo: &quot;Avenida Luro 123&quot;</li>
                 <li>La búsqueda se centra en tu barrio</li>
               </ul>
             </div>
@@ -211,7 +211,7 @@ export default function MapSearchBarTest() {
                 <li>Escribe el tipo de incidente</li>
                 <li>Busca por descripción</li>
                 <li>Usa palabras clave</li>
-                <li>Ejemplo: "robo", "accidente", "vandalismo"</li>
+                <li>Ejemplo: &quot;robo&quot;, &quot;accidente&quot;, &quot;vandalismo&quot;</li>
                 <li>Se aplican los filtros activos</li>
                 <li>Se ordenan por proximidad a tu barrio</li>
               </ul>

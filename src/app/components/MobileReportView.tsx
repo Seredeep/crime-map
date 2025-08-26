@@ -7,7 +7,7 @@ import { DateTime } from 'luxon';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiAlertCircle, FiCalendar, FiCamera, FiCheckCircle, FiChevronLeft, FiChevronRight, FiClock, FiGrid, FiList, FiMapPin, FiSend, FiTag, FiType, FiX } from 'react-icons/fi';
 import GeocodeSearch from './GeocodeSearch';
 import Map from './Map';
@@ -114,6 +114,16 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Check if form has any data
+  const hasFormData = useMemo(() => {
+    return (
+      formData.description.trim() !== '' ||
+      formData.address.trim() !== '' ||
+      formData.evidence.length > 0 ||
+      formData.tags.length > 0
+    );
+  }, [formData]);
 
   useEffect(() => {
     setFormData(prev => ({
@@ -205,13 +215,13 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     handleSubmit();
   };
 
-  const handleBackClick = () => {
+  const handleBackClick = useCallback(() => {
     if (hasFormData) {
       setShowDiscardModal(true);
     } else {
       onBack();
     }
-  };
+  }, [hasFormData, onBack]);
 
   // Exponer la función handleBackClick para uso externo
   useEffect(() => {
@@ -293,7 +303,6 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   };
 
   const isFormValid = formData.description.trim() && formData.location && formData.tags.length > 0;
-  const hasFormData = formData.description.trim() || formData.location || formData.tags.length > 0 || formData.evidence.length > 0;
 
   const renderIncidentButton = (type: IncidentType, isCarousel = false) => {
     const isSelected = formData.tags.includes(type.id);

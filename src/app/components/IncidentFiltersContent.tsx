@@ -119,7 +119,7 @@ export default function IncidentFiltersContent({
     }
 
     loadNeighborhoods();
-  }, [t, session]);
+  }, [t, session, onNeighborhoodSelect, filters.neighborhoodId]);
 
   // Handle neighborhood selection change - memoized
   const handleNeighborhoodChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -500,6 +500,7 @@ export default function IncidentFiltersContent({
                 <motion.button
                   key={tag}
                   type="button"
+                  aria-label={tag}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.04 }}
@@ -510,7 +511,6 @@ export default function IncidentFiltersContent({
                       handleTagToggle(tag);
                     }
                   }}
-                  aria-pressed={isSelected}
                   aria-selected={isSelected}
                   role="option"
                   tabIndex={0}

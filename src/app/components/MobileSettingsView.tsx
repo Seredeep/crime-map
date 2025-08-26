@@ -195,6 +195,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       autoLocationEnabled,
       update,
       session,
+      configT,
     ]
   )
 

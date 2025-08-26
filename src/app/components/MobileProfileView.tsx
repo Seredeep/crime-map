@@ -146,7 +146,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       setIsSaving(false);
       console.log("Configuration save attempt finished.");
     }
-  }, [isSaving, notificationsEnabled, privacyPublic, autoLocationEnabled, update, session]);
+  }, [isSaving, notificationsEnabled, privacyPublic, autoLocationEnabled, update, session, configT]);
 
   const createToggleHandler = (
     setter: React.Dispatch<React.SetStateAction<boolean>>,
