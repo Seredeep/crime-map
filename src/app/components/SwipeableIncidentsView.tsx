@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FiFilter } from 'react-icons/fi'
 import IncidentDetails from './IncidentDetails'
-import IncidentFiltersContent from './IncidentFiltersContent'
+import IncidentFiltersPanel from './IncidentFiltersPanel'
 import IncidentsView from './IncidentsView'
 import LazyImage from './LazyImage'
 import { IncidentLoader } from './LoaderExamples'
@@ -615,83 +615,38 @@ const SwipeableIncidentsView = ({
                 </motion.div>
               </motion.div>
 
-              {/* Popover de filtros con nuevo estilo Claridad */}
-              <AnimatePresence>
-                {showFiltersPopover && (
-                  <>
-                    {/* Overlay para cerrar al hacer clic fuera */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[150]"
-                      onClick={() => setShowFiltersPopover(false)}
-                    />
-
-                    {/* Contenido del popover con estilo Claridad */}
-                    <motion.div
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      className="absolute top-full right-0 mt-3 w-[95vw] max-w-sm rounded-2xl shadow-2xl z-[200]"
-                      style={{
-                        background: 'rgba(0, 0, 0, 0.95)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: `
-                        0 20px 60px rgba(0, 0, 0, 0.5),
-                        0 8px 32px rgba(0, 0, 0, 0.3),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1)
-                      `,
-                        transform: 'translateX(-85%)',
-                      }}
-                    >
-                      <div className="p-6">
-                        <IncidentFiltersContent
-                          filters={filters}
-                          onFiltersChangeAction={handleFiltersChange}
-                          onNeighborhoodSelect={handleNeighborhoodSelect}
-                          onClose={() => setShowFiltersPopover(false)}
-                        />
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            className="flex-1 px-4 py-2 rounded-lg text-white bg-gray-600/40 border border-gray-500/40"
-                            onClick={() => {
-                              // Clear filters consistently
-                              const today = new Date()
-                              const defaultDate = new Date('2013-01-01')
-                              const cleared = {
-                                dateFrom: defaultDate
-                                  .toISOString()
-                                  .split('T')[0],
-                                dateTo: today.toISOString().split('T')[0],
-                                neighborhoodId: undefined,
-                                status: 'verified' as const,
-                                tags: undefined,
-                                time: undefined,
-                                timeFrom: undefined,
-                                timeTo: undefined,
-                              }
-                              setSelectedNeighborhood(null)
-                              setFilters(cleared)
-                              setShowFiltersPopover(false)
-                            }}
-                          >
-                            {t('Actions.clear')}
-                          </button>
-                          <button
-                            className="flex-1 px-4 py-2 rounded-lg text-white bg-blue-600 border border-blue-500"
-                            onClick={() => setShowFiltersPopover(false)}
-                          >
-                            {t('Actions.apply')}
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+              {/* Panel de filtros reutilizable con patrón de aplicación diferida */}
+              <IncidentFiltersPanel
+                open={showFiltersPopover}
+                value={filters}
+                onApply={(next) => {
+                  const adjusted = { ...next }
+                  if (!isEditorOrAdmin) {
+                    adjusted.status = 'verified'
+                  }
+                  setFilters(adjusted)
+                }}
+                onOpenChange={setShowFiltersPopover}
+                onClear={() => {
+                  const today = new Date()
+                  const defaultDate = new Date('2013-01-01')
+                  const cleared = {
+                    dateFrom: defaultDate.toISOString().split('T')[0],
+                    dateTo: today.toISOString().split('T')[0],
+                    neighborhoodId: undefined,
+                    status: 'verified' as const,
+                    tags: undefined,
+                    time: undefined,
+                    timeFrom: undefined,
+                    timeTo: undefined,
+                  }
+                  setSelectedNeighborhood(null)
+                  setFilters(cleared)
+                }}
+                onNeighborhoodSelect={handleNeighborhoodSelect}
+                mapNeighborhoodId="propertiesId"
+                sections={{ city: true, neighborhood: true, dates: true, tags: true }}
+              />
             </div>
           </div>
         </div>
