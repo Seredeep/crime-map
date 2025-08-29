@@ -94,7 +94,7 @@ export default function MapSearchBarTest() {
           </div>
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-700">
-              💡 Estos filtros se aplican automáticamente a la búsqueda de incidentes
+              {'💡'} Estos filtros se aplican automáticamente a la búsqueda de incidentes
             </p>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function MapSearchBarTest() {
                 </p>
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-xs text-blue-700">
-                    💡 Esta ubicación se puede usar para centrar el mapa o crear un marcador
+                    {'💡'} Esta ubicación se puede usar para centrar el mapa o crear un marcador
                   </p>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function MapSearchBarTest() {
                 </p>
                 <div className="mt-4 p-3 bg-red-50 rounded-lg">
                   <p className="text-xs text-red-700">
-                    💡 Este ID se puede usar para obtener los detalles completos del incidente
+                    {'💡'} Este ID se puede usar para obtener los detalles completos del incidente
                   </p>
                 </div>
               </div>
@@ -192,7 +192,7 @@ export default function MapSearchBarTest() {
         {/* Instrucciones */}
         <div className="mt-8 bg-blue-50 rounded-xl p-6 border border-blue-200">
           <h3 className="text-lg font-semibold text-blue-800 mb-4">
-            💡 Instrucciones de Uso
+            {'💡'} Instrucciones de Uso
           </h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm text-blue-700">
             <div>
@@ -201,7 +201,7 @@ export default function MapSearchBarTest() {
                 <li>Escribe el nombre de una calle</li>
                 <li>Incluye el número si lo conoces</li>
                 <li>Puedes buscar intersecciones</li>
-                <li>Ejemplo: "Avenida Luro 123"</li>
+                <li>Ejemplo: &quot;Avenida Luro 123&quot;</li>
                 <li>La búsqueda se centra en tu barrio</li>
               </ul>
             </div>
@@ -211,7 +211,7 @@ export default function MapSearchBarTest() {
                 <li>Escribe el tipo de incidente</li>
                 <li>Busca por descripción</li>
                 <li>Usa palabras clave</li>
-                <li>Ejemplo: "robo", "accidente", "vandalismo"</li>
+                <li>Ejemplo: &quot;robo&quot;, &quot;accidente&quot;, &quot;vandalismo&quot;</li>
                 <li>Se aplican los filtros activos</li>
                 <li>Se ordenan por proximidad a tu barrio</li>
               </ul>

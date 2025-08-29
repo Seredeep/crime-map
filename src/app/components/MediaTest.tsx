@@ -178,7 +178,7 @@ export default function MediaTest() {
 
         {/* Audio Recording Section */}
         <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-          <h3 className="text-xl font-semibold text-center">🎵 Grabación de Audio</h3>
+          <h3 className="text-xl font-semibold text-center">{'🎵'} Grabación de Audio</h3>
 
           <div className="flex space-x-2">
             <button
@@ -223,7 +223,7 @@ export default function MediaTest() {
 
         {/* File Upload Section */}
         <div className="space-y-4 p-4 border border-gray-200 rounded-lg">
-          <h3 className="text-xl font-semibold text-center">📁 Subida de Archivos</h3>
+          <h3 className="text-xl font-semibold text-center">{'📁'} Subida de Archivos</h3>
 
           <div className="space-y-3">
             <div>
@@ -235,9 +235,9 @@ export default function MediaTest() {
                 onChange={(e) => setFileType(e.target.value as 'image' | 'video' | 'document')}
                 className="w-full p-2 border border-gray-300 rounded"
               >
-                <option value="image">🖼️ Imagen</option>
-                <option value="video">🎥 Video</option>
-                <option value="document">📄 Documento</option>
+                <option value="image">{'🖼️'} Imagen</option>
+                <option value="video">{'🎥'} Video</option>
+                <option value="document">{'📄'} Documento</option>
               </select>
             </div>
 
@@ -295,7 +295,7 @@ export default function MediaTest() {
           <li>• <strong>Audio:</strong> Graba un audio y súbelo para probar la funcionalidad</li>
           <li>• <strong>Archivos:</strong> Selecciona imágenes, videos o documentos para subir</li>
           <li>• <strong>Verificación:</strong> Revisa la consola del navegador para ver los logs</li>
-          <li>• <strong>Supabase:</strong> Los archivos se suben al bucket 'chat-media'</li>
+          <li>• <strong>Supabase:</strong> Los archivos se suben al bucket &quot;chat-media&quot;</li>
         </ul>
       </div>
     </div>

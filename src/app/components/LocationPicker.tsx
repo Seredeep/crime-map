@@ -322,7 +322,9 @@ const LocationPicker = ({ onLocationSelect, onClose }: LocationPickerProps) => {
           return () => {
             try {
               document.head.removeChild(script);
-              delete window.initMap;
+              if ('initMap' in window) {
+                delete (window as any).initMap;
+              }
             } catch (error) {
               console.warn('Error cleaning up Google Maps script:', error);
             }

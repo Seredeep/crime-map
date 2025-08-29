@@ -4,14 +4,14 @@ import { Neighborhood, fetchNeighborhoods } from '@/lib/services/neighborhoods';
 import { IncidentFilters as FiltersType } from '@/lib/types/global';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Calendar,
-  CheckCircle,
-  Clock,
-  Clock3,
-  MapPin,
-  Tags,
-  Trash2,
-  X
+    Calendar,
+    CheckCircle,
+    Clock,
+    Clock3,
+    MapPin,
+    Tags,
+    Trash2,
+    X
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -107,7 +107,7 @@ export default function IncidentFiltersContent({
     }
 
     loadNeighborhoods();
-  }, [t, session]);
+  }, [t, session, filters.neighborhoodId, onNeighborhoodSelect]);
 
   // Handle neighborhood selection change - memoized
   const handleNeighborhoodChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {

@@ -7,24 +7,24 @@ import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  FiAlertTriangle,
-  FiBell,
-  FiCamera,
-  FiCheckCircle,
-  FiChevronLeft,
-  FiChevronRight,
-  FiClock,
-  FiGlobe,
-  FiHelpCircle,
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-  FiSmartphone,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-  FiZap,
+    FiAlertTriangle,
+    FiBell,
+    FiCamera,
+    FiCheckCircle,
+    FiChevronLeft,
+    FiChevronRight,
+    FiClock,
+    FiGlobe,
+    FiHelpCircle,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiSmartphone,
+    FiUser,
+    FiUsers,
+    FiXCircle,
+    FiZap,
 } from 'react-icons/fi'
 import IncidentQueue from './IncidentQueue'
 import LanguageSelector from './LanguageSelector'
@@ -195,6 +195,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       autoLocationEnabled,
       update,
       session,
+      configT,
     ]
   )
 

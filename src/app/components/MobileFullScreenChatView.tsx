@@ -3,6 +3,7 @@
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers } from 'react-icons/fi';
 import AudioRecorder from './AudioRecorder';
@@ -912,9 +913,11 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                       <div className="mb-2">
                         {message.metadata.media.type === 'image' && (
                           <div className="relative bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
-                            <img
+                            <Image
                               src={message.metadata?.media?.url || ''}
                               alt="Imagen"
+                              width={400}
+                              height={300}
                               className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                               onClick={() => message.metadata?.media?.url && window.open(message.metadata.media.url, '_blank')}
                             />
