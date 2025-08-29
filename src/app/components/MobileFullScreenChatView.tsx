@@ -4,11 +4,12 @@ import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiSend, FiUser, FiUsers, FiPaperclip, FiMic } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers } from 'react-icons/fi';
+import AudioRecorder from './AudioRecorder';
 import LazyImage from './LazyImage';
 import LocationPicker from './LocationPicker';
+import LocationPreview from './LocationPreview';
 import MediaPicker from './MediaPicker';
-import AudioRecorder from './AudioRecorder';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -47,6 +48,7 @@ interface Message {
       url: string;
       filename?: string;
       size?: number;
+      duration?: number;
     };
   };
   senderProfileImage?: string;
@@ -74,6 +76,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [isSwiping, setIsSwiping] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showLocationPreview, setShowLocationPreview] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address?: string } | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showAudioRecorder, setShowAudioRecorder] = useState(false);
@@ -273,9 +276,37 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       try {
         // Si hay una ubicación seleccionada, incluirla en el mensaje
         if (selectedLocation) {
-          // Crear un mensaje especial con ubicación
-          const locationMessage = `📍 Ubicación: ${selectedLocation.address || `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}\n\n${newMessage}`;
-          await sendMessage(locationMessage);
+          // Generar URL del mapa estático
+          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+          if (apiKey) {
+            const baseUrl = 'https://maps.googleapis.com/maps/api/staticmap';
+            const params = new URLSearchParams({
+              center: `${selectedLocation.lat},${selectedLocation.lng}`,
+              zoom: '15',
+              size: '300x200',
+              scale: '2',
+              maptype: 'roadmap',
+              markers: `color:red|label:L|${selectedLocation.lat},${selectedLocation.lng}`,
+              key: apiKey
+            });
+
+            const staticMapUrl = `${baseUrl}?${params.toString()}`;
+
+            // Enviar mensaje con imagen del mapa
+            await sendMessageWithMedia(
+              `${newMessage}\n\n📍 Ubicación: ${selectedLocation.address || `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}`,
+              {
+                type: 'image',
+                url: staticMapUrl,
+                filename: 'location-map.png',
+                size: 0
+              }
+            );
+          } else {
+            // Fallback sin imagen si no hay API key
+            const locationMessage = `📍 Ubicación: ${selectedLocation.address || `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}\n\n${newMessage}`;
+            await sendMessage(locationMessage);
+          }
           setSelectedLocation(null); // Limpiar ubicación después de enviar
         } else {
           await sendMessage(newMessage);
@@ -293,38 +324,54 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
   };
 
+  // Función helper para generar mensajes según el tipo de medio
+  const getMediaMessage = (type: 'image' | 'video' | 'document') => {
+    switch (type) {
+      case 'image':
+        return '🖼️ Imagen';
+      case 'video':
+        return '🎥 Video';
+      case 'document':
+        return '📄 Documento';
+      default:
+        return '📎 Archivo';
+    }
+  };
+
   const handleMediaSelect = async (file: File, type: 'image' | 'video' | 'document') => {
     try {
       setIsUploading(true);
-      
+
       // Crear FormData para subir el archivo
       const formData = new FormData();
       formData.append('file', file);
       formData.append('type', type);
-      
-      // Subir archivo a Firebase Storage (esto se implementará en el backend)
+
+      // Subir archivo a Supabase Storage
       const uploadResponse = await fetch('/api/chat/upload-media', {
         method: 'POST',
         body: formData,
       });
-      
+
       if (uploadResponse.ok) {
         const uploadResult = await uploadResponse.json();
-        
+        console.log(`${type} uploaded successfully:`, uploadResult);
+
         // Enviar mensaje con el archivo adjunto
-        await sendMessageWithMedia(newMessage || `📎 ${type === 'image' ? 'Imagen' : type === 'video' ? 'Video' : 'Documento'}`, {
+        await sendMessageWithMedia(newMessage || getMediaMessage(type), {
           type,
           url: uploadResult.url,
           filename: file.name,
           size: file.size
         });
-        
+
         setNewMessage('');
       } else {
-        throw new Error('Error al subir archivo');
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || `Error al subir ${type}`);
       }
     } catch (error) {
-      console.error('Error al procesar archivo multimedia:', error);
+      console.error(`Error al procesar ${type}:`, error);
       setError(tErrors('sendMessageError'));
     } finally {
       setIsUploading(false);
@@ -334,32 +381,55 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const handleAudioSend = async (audioBlob: Blob) => {
     try {
       setIsUploading(true);
-      
+
+      // Obtener la duración real del audio antes de enviarlo
+      let audioDuration = null;
+      try {
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+
+        // Esperar a que se cargue el metadata del audio
+        await new Promise((resolve, reject) => {
+          audio.addEventListener('loadedmetadata', resolve);
+          audio.addEventListener('error', reject);
+          audio.load();
+        });
+
+        audioDuration = audio.duration;
+        URL.revokeObjectURL(audioUrl);
+        console.log('Audio duration detected:', audioDuration);
+      } catch (error) {
+        console.warn('No se pudo obtener la duración del audio:', error);
+      }
+
       // Crear FormData para subir el audio
       const formData = new FormData();
-      formData.append('file', audioBlob, 'audio.wav');
+      formData.append('file', audioBlob, 'audio.webm');
       formData.append('type', 'audio');
-      
-      // Subir audio a Firebase Storage
+
+      // Subir audio a Supabase Storage
       const uploadResponse = await fetch('/api/chat/upload-media', {
         method: 'POST',
         body: formData,
       });
-      
+
       if (uploadResponse.ok) {
         const uploadResult = await uploadResponse.json();
-        
+        console.log('Audio uploaded successfully:', uploadResult);
+
         // Enviar mensaje con el audio adjunto
         await sendMessageWithMedia(newMessage || '🎵 Audio', {
           type: 'audio',
           url: uploadResult.url,
-          filename: 'audio.wav',
-          size: audioBlob.size
+          filename: 'audio.webm',
+          size: audioBlob.size,
+          duration: audioDuration || uploadResult.duration
         });
-        
+
         setNewMessage('');
       } else {
-        throw new Error('Error al subir audio');
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || 'Error al subir audio');
       }
     } catch (error) {
       console.error('Error al procesar audio:', error);
@@ -369,11 +439,30 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
   };
 
-  const sendMessageWithMedia = async (message: string, media: { type: 'image' | 'video' | 'audio' | 'document'; url: string; filename?: string; size?: number }): Promise<boolean> => {
+  const formatAudioDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    const parts = [];
+    if (h > 0) {
+      parts.push(`${h}h`);
+    }
+    if (m > 0) {
+      parts.push(`${m}m`);
+    }
+    if (s > 0 || parts.length === 0) { // Show seconds only if no hours or minutes
+      parts.push(`${s}s`);
+    }
+    return parts.join('');
+  };
+
+  const sendMessageWithMedia = async (message: string, media: { type: 'image' | 'video' | 'audio' | 'document'; url: string; filename?: string; size?: number; duration?: number }): Promise<boolean> => {
     if (!session?.user || !message.trim()) return false;
 
     try {
       setIsSending(true);
+
       const response = await fetch('/api/chat/send-message', {
         method: 'POST',
         headers: {
@@ -392,7 +481,13 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 snippet: replyingTo.message.slice(0, 140)
               }
             } : {}),
-            media
+            media: {
+              type: media.type,
+              url: media.url,
+              filename: media.filename,
+              size: media.size,
+              duration: media.duration
+            }
           }
         }),
       });
@@ -525,8 +620,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const handleLocationConfirm = (location: { lat: number; lng: number; address?: string }) => {
     setSelectedLocation(location);
     setShowLocationPicker(false);
-    // Aquí podrías abrir un modal o componente para confirmar la ubicación
-    // Por ahora, simplemente la guardamos en el estado
+    setShowLocationPreview(true);
+  };
+
+  const handleLocationPreviewConfirm = () => {
+    setShowLocationPreview(false);
+    // La ubicación ya está en selectedLocation, listo para usar
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -812,41 +911,59 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                     {message.metadata?.media && (
                       <div className="mb-2">
                         {message.metadata.media.type === 'image' && (
-                          <div className="relative">
+                          <div className="relative bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
                             <img
                               src={message.metadata?.media?.url || ''}
                               alt="Imagen"
                               className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                               onClick={() => message.metadata?.media?.url && window.open(message.metadata.media.url, '_blank')}
                             />
+                            <div className="text-xs text-gray-400 mt-2 flex items-center justify-between">
+                              <span>🖼️ {message.metadata?.media?.filename || 'imagen'}</span>
+                              {message.metadata?.media?.size && (
+                                <span>{(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB</span>
+                              )}
+                            </div>
                           </div>
                         )}
-                        
+
                         {message.metadata?.media?.type === 'video' && (
-                          <div className="relative">
+                          <div className="relative bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
                             <video
                               src={message.metadata?.media?.url || ''}
                               controls
                               className="max-w-full h-auto rounded-lg"
                               preload="metadata"
                             />
+                            <div className="text-xs text-gray-400 mt-2 flex items-center justify-between">
+                              <span>🎥 {message.metadata?.media?.filename || 'video'}</span>
+                              {message.metadata?.media?.size && (
+                                <span>{(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB</span>
+                              )}
+                            </div>
                           </div>
                         )}
-                        
+
                         {message.metadata?.media?.type === 'audio' && (
-                          <div className="bg-gray-800/50 p-3 rounded-lg">
+                          <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
                             <audio
                               src={message.metadata?.media?.url || ''}
                               controls
                               className="w-full"
                               preload="metadata"
                             />
-                            <div className="text-xs text-gray-400 mt-1">
-                              🎵 Audio • {message.metadata?.media?.filename || 'audio.wav'}
+                            <div className="text-xs text-gray-400 mt-2 flex items-center justify-between">
+                              <span>🎵 {message.metadata?.media?.filename || 'audio.webm'}</span>
+                              {message.metadata?.media?.duration && (
+                                <span>• {formatAudioDuration(message.metadata.media.duration)}</span>
+                              )}
+                              {message.metadata?.media?.size && (
+                                <span>• {(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB</span>
+                              )}
                             </div>
                           </div>
                         )}
-                        
+
                         {message.metadata?.media?.type === 'document' && (
                           <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
                             <div className="flex items-center space-x-3">
@@ -994,23 +1111,36 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
             {/* Indicador de ubicación seleccionada */}
             {selectedLocation && (
-              <button
-                onClick={() => setSelectedLocation(null)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-md hover:bg-gray-700/50 transition-colors z-10"
-                title="Eliminar ubicación seleccionada"
-              >
-                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                </svg>
-              </button>
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                <div className="flex items-center space-x-1 px-2 py-1 bg-green-600/20 border border-green-500/40 rounded-md max-w-[120px]">
+                  <svg className="w-3 h-3 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <span className="text-xs text-green-400 font-medium truncate">
+                    {selectedLocation.address ?
+                      selectedLocation.address.split(',')[0] :
+                      'Ubicación'
+                    }
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedLocation(null)}
+                  className="p-1 rounded-md hover:bg-gray-700/50 transition-colors flex-shrink-0"
+                  title="Eliminar ubicación seleccionada"
+                >
+                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             )}
           </div>
          <button
            onClick={newMessage.trim() ? handleSendMessage : () => setShowAudioRecorder(true)}
            disabled={isSending || isUploading}
            className={`h-12 w-12 rounded-lg flex-shrink-0 flex items-center justify-center transition-colors ${
-             newMessage.trim() 
-               ? 'bg-blue-600 text-white hover:bg-blue-700' 
+             newMessage.trim()
+               ? 'bg-blue-600 text-white hover:bg-blue-700'
                : 'bg-gray-600 text-white hover:bg-gray-700'
            } disabled:opacity-50 disabled:cursor-not-allowed`}
          >
@@ -1032,6 +1162,18 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           <LocationPicker
             onClose={() => setShowLocationPicker(false)}
             onLocationSelect={handleLocationConfirm}
+          />
+        )}
+      </AnimatePresence>
+      {/* #endregion */}
+
+      {/* #region Location Preview Modal */}
+      <AnimatePresence>
+        {showLocationPreview && selectedLocation && (
+          <LocationPreview
+            location={selectedLocation}
+            onClose={() => setShowLocationPreview(false)}
+            onConfirm={handleLocationPreviewConfirm}
           />
         )}
       </AnimatePresence>

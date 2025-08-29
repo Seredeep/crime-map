@@ -210,7 +210,18 @@
     "stopRecording": "Detener grabación",
     "audioRecorded": "Audio grabado",
     "retry": "Reintentar",
-    "send": "Enviar"
+    "send": "Enviar",
+    "locationPreview": "Vista Previa de Ubicación",
+    "selectedLocation": "📍 Ubicación Seleccionada",
+    "coordinates": "Coordenadas",
+    "copyCoordinates": "Copiar",
+    "openInGoogleMaps": "Abrir en Google Maps",
+    "confirmLocation": "Confirmar Ubicación",
+    "generatingLocationPreview": "Generando vista previa de ubicación...",
+    "locationPreviewError": "Error generando vista previa de ubicación",
+    "googleMapsApiKeyNotConfigured": "Google Maps API key no configurada",
+    "error": "Error",
+    "close": "Cerrar"
   },
   "Incidents": {
     "noIncidentsMatch": "No hay incidentes que coincidan con los filtros seleccionados",
