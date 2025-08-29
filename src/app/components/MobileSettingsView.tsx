@@ -28,6 +28,10 @@ import {
 } from 'react-icons/fi'
 import IncidentQueue from './IncidentQueue'
 import LanguageSelector from './LanguageSelector'
+import {
+  ensurePushPermissionAndRegister,
+  unregisterPushToken,
+} from '@/lib/services/notifications/pushClient'
 
 interface MobileSettingsViewProps {
   className?: string
@@ -213,10 +217,38 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       })
     }
 
-  const toggleNotifications = createToggleHandler(
-    setNotificationsEnabled,
-    'notificationsEnabled'
-  )
+  const toggleNotifications = async () => {
+    const enabling = !notificationsEnabled
+    console.log('Toggling push notifications. Enabling =', enabling)
+
+    if (enabling) {
+      // Request permission and register token
+      const result = await ensurePushPermissionAndRegister()
+      if (result.ok) {
+        setNotificationsEnabled(true)
+        await handleSettingChange({ notificationsEnabled: true })
+        showToast(configT('pushEnabled'), 'success')
+      } else {
+        console.warn('Push enable failed:', result.reason)
+        setNotificationsEnabled(false)
+        showToast(
+          result.reason === 'permission-denied'
+            ? configT('notificationsPermissionDenied')
+            : configT('couldNotEnablePush'),
+          'error'
+        )
+      }
+    } else {
+      // Disable: best-effort unregister
+      const ok = await unregisterPushToken()
+      if (!ok) {
+        console.warn('Unregister push token failed on server, proceeding to disable locally')
+      }
+      setNotificationsEnabled(false)
+      await handleSettingChange({ notificationsEnabled: false })
+      showToast(configT('pushDisabled'), 'success')
+    }
+  }
   const togglePrivacy = createToggleHandler(setPrivacyPublic, 'privacyPublic')
 
   const toggleAutoLocation = () => {

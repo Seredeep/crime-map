@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiSend, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
+import NotificationToaster from '../../lib/components/NotificationToaster';
+import { useNotificationsStore } from '../../lib/contexts/notificationsStore';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -56,6 +58,9 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Track seen messages to detect new arrivals for in-app notifications
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const addNotification = useNotificationsStore((s) => s.add);
 
   const loadChatInfo = useCallback(async () => {
     if (!session?.user) return;
@@ -96,6 +101,27 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             timestamp: new Date(msg.timestamp),
             isOwn: msg.userId === session.user?.id || msg.userName === session.user?.name
           }));
+          // Detect new messages since last fetch
+          const seen = seenMessageIdsRef.current;
+          const incoming = formattedMessages.filter((m: any) => !seen.has(m.id));
+
+          // Update seen set with all current messages
+          formattedMessages.forEach((m: any) => seen.add(m.id));
+
+          // Notify only for messages authored by others
+          incoming
+            .filter((m: any) => !m.isOwn)
+            .forEach((m: any) => {
+              const isPanic = m.type === 'panic';
+              addNotification({
+                type: isPanic ? 'panic' : 'chat',
+                title: isPanic ? 'Alerta de pánico' : m.userName || 'Nuevo mensaje',
+                message: isPanic ? (m?.metadata?.address || 'Nueva alerta de pánico') : m.message,
+                data: { messageId: m.id, chatId: chat?._id },
+                autoHideMs: isPanic ? 7000 : 4500,
+              });
+            });
+
           setMessages(formattedMessages);
           setIsConnected(true);
           setError(null);
@@ -341,6 +367,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         boxShadow: '0 0 50px rgba(0, 0, 0, 0.5)'
       }}
     >
+      {/* Notifications Toaster */}
+      <NotificationToaster />
       {/* #region Header */}
       <div className="bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50 px-4 py-4 flex items-center justify-between z-10">
         <button

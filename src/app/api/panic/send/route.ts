@@ -3,6 +3,8 @@ import clientPromise from '@/lib/config/db/mongodb';
 import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
+import { firestore } from '@/lib/config/db/firebase';
+import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 
 export async function POST(req: Request) {
   try {
@@ -58,6 +60,30 @@ export async function POST(req: Request) {
       messageId: messageId,
       time: new Date().toISOString()
     });
+
+    // Trigger push notifications (high priority) to other participants
+    try {
+      const chatDoc = await firestore.collection('chats').doc(String(chatId)).get();
+      const chatData = chatDoc.exists ? (chatDoc.data() as any) : null;
+      const participantIds: string[] = chatData?.participants || [];
+      const targets = participantIds.map(String).filter((id) => id !== String(userId));
+
+      if (targets.length) {
+        const payload = {
+          title: `🚨 Pánico en ${neighborhood}`,
+          body: metadata?.address || 'Alerta de pánico activada',
+          data: {
+            type: 'panic',
+            chatId: String(chatId),
+            messageId: String(messageId),
+          },
+          android: { priority: 'high', channelId: 'panic' },
+        } as const;
+        await sendPushToUsers(targets, payload);
+      }
+    } catch (e) {
+      console.warn('No se pudieron enviar notificaciones push de pánico:', e);
+    }
 
     return NextResponse.json({
       success: true,

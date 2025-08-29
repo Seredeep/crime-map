@@ -2,6 +2,8 @@ import clientPromise from '@/lib/config/db/mongodb';
 import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { firestore } from '@/lib/config/db/firebase';
+import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +59,32 @@ export async function POST(request: NextRequest) {
     );
 
     console.log(`💬 Mensaje enviado a Firestore: ${user.name || user.email} → ${user.chatId}`);
+
+    // Trigger push notifications to other chat participants (best-effort)
+    try {
+      const chatDoc = await firestore.collection('chats').doc(user.chatId).get();
+      const chatData = chatDoc.exists ? chatDoc.data() as any : null;
+      const participantIds: string[] = chatData?.participants || [];
+      const targets = participantIds
+        .map(String)
+        .filter((id) => id !== user._id.toString());
+
+      if (targets.length) {
+        const payload = {
+          title: chatData?.neighborhood ? `Chat ${chatData.neighborhood}` : 'Nuevo mensaje',
+          body: type === 'panic' ? 'Alerta de pánico' : message.trim().slice(0, 120),
+          data: {
+            type: type === 'panic' ? 'panic' : 'chat',
+            chatId: String(user.chatId),
+            messageId: String(messageId),
+          },
+          android: { priority: type === 'panic' ? 'high' : 'normal', channelId: type === 'panic' ? 'panic' : 'default' },
+        } as const;
+        await sendPushToUsers(targets, payload);
+      }
+    } catch (e) {
+      console.warn('No se pudieron enviar notificaciones push:', e);
+    }
 
     return NextResponse.json({
       success: true,

@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     androidScheme: 'http',
-    url: 'https://demo.claridad.ar/en/',
+    url: 'https://localhost:3000/en/',
     cleartext: false
   },
   plugins: {
@@ -59,9 +59,7 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true,
     buildOptions: {
       keystorePath: 'C:/Users/sanch/OneDrive/Escritorio/Development/crime-map/android/app/my-release-key.keystore',
-      keystorePassword: 'claridad123',
       keystoreAlias: 'claridad-key',
-      keystoreAliasPassword: 'claridad123'
     }
   },
   ios: {
