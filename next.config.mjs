@@ -12,8 +12,12 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Usar export solo para Capacitor builds
-  ...(process.env.CAPACITOR_BUILD && { output: 'export' }),
+  // Usar export solo para Capacitor builds en PRODUCCIÓN
+  ...(
+    process.env.CAPACITOR_BUILD && process.env.NODE_ENV === 'production'
+      ? { output: 'export' }
+      : {}
+  ),
   eslint: {
     ignoreDuringBuilds: true, // Temporalmente desactivamos ESLint durante el build
   },
