@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { FiCamera, FiImage, FiFile, FiX } from 'react-icons/fi';
+import { FiCamera, FiFile, FiImage, FiX } from 'react-icons/fi';
 
 interface MediaPickerProps {
   onClose: () => void;
@@ -20,7 +20,7 @@ const MediaPicker = ({ onClose, onMediaSelect }: MediaPickerProps) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      
+
       // Crear preview para imágenes y videos
       if (type === 'image' || type === 'video') {
         const url = URL.createObjectURL(file);
@@ -33,7 +33,7 @@ const MediaPicker = ({ onClose, onMediaSelect }: MediaPickerProps) => {
 
   const handleSend = () => {
     if (selectedFile) {
-      const type = selectedFile.type.startsWith('image/') ? 'image' : 
+      const type = selectedFile.type.startsWith('image/') ? 'image' :
                    selectedFile.type.startsWith('video/') ? 'video' : 'document';
       onMediaSelect(selectedFile, type);
       onClose();

@@ -210,7 +210,18 @@
     "stopRecording": "Stop recording",
     "audioRecorded": "Audio recorded",
     "retry": "Retry",
-    "send": "Send"
+    "send": "Send",
+    "locationPreview": "Location Preview",
+    "selectedLocation": "📍 Selected Location",
+    "coordinates": "Coordinates",
+    "copyCoordinates": "Copy",
+    "openInGoogleMaps": "Open in Google Maps",
+    "confirmLocation": "Confirm Location",
+    "generatingLocationPreview": "Generating location preview...",
+    "locationPreviewError": "Error generating location preview",
+    "googleMapsApiKeyNotConfigured": "Google Maps API key not configured",
+    "error": "Error",
+    "close": "Close"
   },
   "Incidents": {
     "noIncidentsMatch": "No incidents match the selected filters",

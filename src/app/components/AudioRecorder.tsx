@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FiMic, FiMicOff, FiPlay, FiSquare, FiX } from 'react-icons/fi';
 
 interface AudioRecorderProps {
@@ -16,7 +16,7 @@ const AudioRecorder = ({ onClose, onAudioSend }: AudioRecorderProps) => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -48,7 +48,7 @@ const AudioRecorder = ({ onClose, onAudioSend }: AudioRecorderProps) => {
         setAudioBlob(audioBlob);
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
-        
+
         // Detener el stream
         stream.getTracks().forEach(track => track.stop());
       };
@@ -70,7 +70,7 @@ const AudioRecorder = ({ onClose, onAudioSend }: AudioRecorderProps) => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
+
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
       }

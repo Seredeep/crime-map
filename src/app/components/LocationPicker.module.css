@@ -1,0 +1,68 @@
+/* LocationPicker.module.css */
+.mapContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Prevenir selección de texto */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.mapContainer > div {
+  /* Asegurar que el mapa ocupe todo el contenedor */
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Prevenir que los controles del mapa interfieran */
+.mapContainer :global(.gm-control-active) {
+  pointer-events: auto !important;
+}
+
+/* Estilos para el modal */
+.modalContainer {
+  /* Prevenir gestos no deseados */
+  touch-action: pan-y;
+  /* Mejorar el rendimiento en dispositivos móviles */
+  will-change: transform;
+  /* Prevenir scroll del body */
+  overscroll-behavior: contain;
+}
+
+/* Contenedor del mapa con mejor control de gestos */
+.mapWrapper {
+  position: relative;
+  flex: 1;
+  /* Prevenir propagación de eventos táctiles */
+  touch-action: manipulation;
+  /* Mejorar el rendimiento */
+  transform: translateZ(0);
+}
+
+/* Estilos para el input de búsqueda */
+.searchInput {
+  /* Prevenir zoom en iOS */
+  font-size: 16px;
+  /* Mejorar la usabilidad táctil */
+  touch-action: manipulation;
+}
+
+/* Botones con mejor respuesta táctil */
+.actionButton {
+  /* Mejorar la respuesta táctil */
+  touch-action: manipulation;
+  /* Prevenir selección de texto */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Indicador de ubicación seleccionada */
+.locationIndicator {
+  /* Mejorar la visibilidad */
+  backdrop-filter: blur(10px);
+  /* Sombra para mejor contraste */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
