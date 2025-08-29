@@ -510,7 +510,6 @@ export default function IncidentFiltersContent({
                       handleTagToggle(tag);
                     }
                   }}
-                  aria-pressed={isSelected}
                   aria-selected={isSelected}
                   role="option"
                   tabIndex={0}

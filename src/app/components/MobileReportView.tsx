@@ -1,6 +1,5 @@
 'use client';
 
-import { CAROUSEL_CONFIG, TIME_CONFIG, UI_MESSAGES } from '@/lib/config';
 import { GeocodingResult } from '@/lib/services/geo';
 import { GET_REGION_INCIDENT_TYPES, IncidentType, Region } from '@/lib/services/incidents';
 import { motion } from 'framer-motion';
@@ -95,7 +94,8 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   };
 
   const userRegion = getUserRegion();
-  const uiMessages = UI_MESSAGES(tUI);
+  // TODO: Re-enable UI_MESSAGES when properly configured
+  // const uiMessages = UI_MESSAGES(tUI);
   const incidentTypes = GET_REGION_INCIDENT_TYPES(tIncidentTypes, userRegion);
 
   const [formData, setFormData] = useState<IncidentFormData>({
@@ -123,31 +123,22 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     }));
   }, []);
 
-  const handleBackClick = useCallback(() => {
-    const hasFormData = formData.description.trim() || formData.location || formData.tags.length > 0 || formData.evidence.length > 0;
-    if (hasFormData) {
-      setShowDiscardModal(true);
-    } else {
-      onBack();
-    }
-  }, [formData, onBack]);
+  // TODO: Move this useEffect after handleBackClick is defined
+  // useEffect(() => {
+  //   // Si el componente padre necesita acceso a la función de back
+  //   (window as any).handleReportBackClick = handleBackClick;
 
-  // Exponer la función handleBackClick para uso externo
-  useEffect(() => {
-    // Si el componente padre necesita acceso a la función de back
-    (window as any).handleReportBackClick = handleBackClick;
-
-    return () => {
-      delete (window as any).handleReportBackClick;
-    };
-  }, [formData, handleBackClick]);
+  //   return () => {
+  //     delete (window as any).handleReportBackClick;
+  //   };
+  // }, [formData, handleBackClick]);
 
   // Auto-scroll SOLO cuando NO hay elementos seleccionados
   useEffect(() => {
     if (formData.tags.length === 0 && viewMode === 'carousel') {
       const interval = setInterval(() => {
-        setScrollPosition(prev => prev + CAROUSEL_CONFIG.SCROLL_SPEED);
-      }, CAROUSEL_CONFIG.SCROLL_INTERVAL);
+                 setScrollPosition(prev => prev + 1);
+             }, 50);
       return () => clearInterval(interval);
     }
   }, [formData.tags.length, viewMode]);
@@ -214,6 +205,25 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     handleSubmit();
   };
 
+  const handleBackClick = useCallback(() => {
+    const hasFormData = formData.description.trim() || formData.location || formData.tags.length > 0 || formData.evidence.length > 0;
+    if (hasFormData) {
+      setShowDiscardModal(true);
+    } else {
+      onBack();
+    }
+  }, [formData, onBack]);
+
+  // Exponer la función handleBackClick para uso externo
+  useEffect(() => {
+    // Si el componente padre necesita acceso a la función de back
+    (window as any).handleReportBackClick = handleBackClick;
+
+    return () => {
+      delete (window as any).handleReportBackClick;
+    };
+  }, [formData, handleBackClick]);
+
   const handleDiscardAndBack = () => {
     setShowDiscardModal(false);
     onBack();
@@ -224,19 +234,19 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     setSubmitMessage(null);
 
     if (!formData.description.trim()) {
-      setSubmitMessage({ type: 'error', message: uiMessages.ERRORS.DESCRIPTION_REQUIRED });
+      setSubmitMessage({ type: 'error', message: 'La descripción es requerida' });
       setIsSubmitting(false);
       return;
     }
 
     if (!formData.location) {
-      setSubmitMessage({ type: 'error', message: uiMessages.ERRORS.LOCATION_REQUIRED });
+      setSubmitMessage({ type: 'error', message: 'La ubicación es requerida' });
       setIsSubmitting(false);
       return;
     }
 
     if (formData.tags.length === 0) {
-      setSubmitMessage({ type: 'error', message: uiMessages.ERRORS.TAGS_REQUIRED });
+      setSubmitMessage({ type: 'error', message: 'Debes seleccionar al menos un tipo de incidente' });
       setIsSubmitting(false);
       return;
     }
@@ -259,24 +269,24 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
       const data = await response.json();
 
       if (response.ok) {
-        setSubmitMessage({ type: 'success', message: uiMessages.SUCCESS.INCIDENT_REPORTED });
+        setSubmitMessage({ type: 'success', message: 'Incidente reportado exitosamente' });
         setFormData({
           description: '',
           address: '',
-          time: DateTime.now().toFormat(TIME_CONFIG.TIME_FORMAT),
-          date: DateTime.now().toFormat(TIME_CONFIG.DATE_FORMAT),
+          time: DateTime.now().toFormat('HH:mm'),
+          date: DateTime.now().toFormat('yyyy-MM-dd'),
           evidence: [],
           location: null,
           tags: [],
         });
-        setTimeout(() => onBack(), TIME_CONFIG.REDIRECT_DELAY);
+        setTimeout(() => onBack(), 2000);
       } else {
-        throw new Error(data.message || uiMessages.ERRORS.SUBMIT_ERROR);
+        throw new Error(data.message || 'Error al enviar el incidente');
       }
     } catch (error) {
       setSubmitMessage({
         type: 'error',
-        message: error instanceof Error ? error.message : uiMessages.ERRORS.SUBMIT_ERROR
+        message: error instanceof Error ? error.message : 'Error al enviar el incidente'
       });
     } finally {
       setIsSubmitting(false);
@@ -457,12 +467,12 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                 <div className="overflow-hidden rounded-xl cursor-grab active:cursor-grabbing">
                   <motion.div
                     className="flex py-2 gap-3"
-                    animate={{ x: `${-scrollPosition * CAROUSEL_CONFIG.ELEMENT_SPACING}px` }}
-                    transition={{ type: "tween", duration: CAROUSEL_CONFIG.TRANSITION_DURATION, ease: "easeOut" }}
+                                         animate={{ x: `${-scrollPosition * 5}px` }}
+                                         transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
                     drag="x"
                     dragConstraints={{ left: -1000, right: 0 }}
                   >
-                    {Array.from({ length: CAROUSEL_CONFIG.CAROUSEL_COPIES }, (_, copyIndex) =>
+                                         {Array.from({ length: 3 }, (_, copyIndex) =>
                       incidentTypes.map((type: IncidentType) => (
                         <div key={`${type.id}-${copyIndex}`} className="flex-shrink-0">
                           {renderIncidentButton(type, true)}
@@ -772,7 +782,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                   background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
                   backdropFilter: 'blur(20px)'
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: any) => e.stopPropagation()}
               >
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -836,7 +846,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
                   background: 'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
                   backdropFilter: 'blur(20px)'
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: any) => e.stopPropagation()}
               >
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">

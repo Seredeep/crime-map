@@ -28,12 +28,11 @@ export const FORM_LIMITS = {
 // #region Tags Comunes (Legacy - para compatibilidad)
 /**
  * @deprecated Usar ACTIVE_INCIDENT_TYPES de services/incidents en su lugar
+ * Tags relevantes para tipos de incidentes
  */
 export const COMMON_TAGS = [
-  'noche', 'dia', 'fin_de_semana', 'feriado',
-  'zona_comercial', 'zona_residencial', 'transporte_publico',
-  'multitud', 'solitario', 'testigos', 'camara_seguridad',
-  'policia_presente', 'iluminacion_deficiente', 'lugar_transitado'
+  'robo', 'asalto', 'vandalismo', 'disturbio',
+  'amenaza', 'sospechoso', 'violencia', 'otro'
 ] as const;
 // #endregion
 

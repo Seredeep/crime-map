@@ -41,8 +41,6 @@ yarn-error.log*
 
 # Firebase service account keys
 service-account-key.json
-
-
 *.json.key
 credentials/
 

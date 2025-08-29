@@ -300,7 +300,7 @@ export default function Home() {
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.1}
-                  onDragEnd={(_, info) => {
+                  onDragEnd={(_: any, info: any) => {
                     // Si se arrastra más del 50% hacia la derecha, cerrar
                     if (info.offset.x > 150) {
                       handleCloseReportForm();
