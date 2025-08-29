@@ -17,9 +17,9 @@ FIREBASE_PROJECT_ID=tu-proyecto-firebase
 ```
 
 ### 2. Configuración de Firebase
-Para que Firebase Admin SDK funcione, necesitas configurar las credenciales. Tienes dos opciones:
+Para que Firebase Admin SDK funcione, necesitas configurar las credenciales. Tienes tres opciones:
 
-#### Opción A: Usar Application Default Credentials (Recomendado)
+#### Opción A: Usar Application Default Credentials (Recomendado para desarrollo local)
 ```bash
 # Instalar Firebase CLI
 npm install -g firebase-tools
@@ -31,17 +31,27 @@ firebase login
 firebase use tu-proyecto-firebase
 ```
 
-#### Opción B: Usar Service Account Key
+#### Opción B: Usar Service Account Key via Variable de Entorno (Recomendado para producción)
+Esta es la opción más segura y flexible para despliegues en la nube:
+
+1. Ve a Firebase Console > Project Settings > Service Accounts
+2. Genera una nueva clave privada (descarga el archivo JSON)
+3. Convierte el archivo JSON a Base64:
+   ```bash
+   # Ejecuta el script de conversión incluido
+   node scripts/convert-service-account-to-base64.js
+   ```
+4. Copia el valor Base64 generado y configúralo como variable de entorno:
+   ```env
+   FIREBASE_SERVICE_ACCOUNT_BASE64=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...
+   FIREBASE_PROJECT_ID=tu-proyecto-firebase
+   ```
+
+#### Opción C: Usar Service Account Key como archivo (Compatibilidad hacia atrás)
 1. Ve a Firebase Console > Project Settings > Service Accounts
 2. Genera una nueva clave privada
 3. Guarda el archivo JSON como `service-account-key.json` en la raíz del proyecto
-4. Modifica el script para usar:
-```typescript
-admin.initializeApp({
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  credential: admin.credential.cert(require('../service-account-key.json')),
-});
-```
+4. El sistema automáticamente usará este archivo si no encuentra la variable de entorno
 
 ## 🚀 Uso
 
