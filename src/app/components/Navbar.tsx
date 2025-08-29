@@ -232,32 +232,6 @@ const Navbar = ({
         </div>
       </nav>
 
-      {/* Mobile Navbar */}
-      <motion.nav
-        initial={{ y: -64 }}
-        animate={{ y: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 right-0 z-[130] md:hidden backdrop-blur-lg shadow-lg"
-        style={{
-          background:
-            'linear-gradient(180deg, rgba(20, 20, 20, 1) 0%, rgba(15, 15, 15, 1) 100%)',
-          boxShadow: '0 1px 20px rgba(0, 0, 0, 0.5)',
-        }}
-      >
-        <div className="flex items-center justify-between h-16 px-4">
-          {/* Lado izquierdo - Logo de Claridad */}
-          <div className="flex items-center space-x-3">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="flex items-center"
-            >
-              <ClaridadLogo size="md" showText={true} />
-            </motion.div>
-          </div>
-        </div>
-      </motion.nav>
     </>
   )
 }

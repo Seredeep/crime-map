@@ -3,12 +3,10 @@ require('dotenv').config({ path: '../.env.local' });
 const admin = require('firebase-admin');
 
 // Inicializar Firebase si no está inicializado
-if (!admin.apps.length) {
-  const serviceAccount = require('../service-account-key.json');
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
+const { initializeFirebaseAdmin } = require('./firebase-service-account');
+
+// Inicializar Firebase
+initializeFirebaseAdmin();
 
 const firestore = admin.firestore();
 

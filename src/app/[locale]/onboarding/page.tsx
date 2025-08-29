@@ -161,7 +161,7 @@ export default function OnboardingPage() {
       }
     };
     fetchNeighborhoods();
-  }, []);
+  }, [session, t]);
 
   // Filtrar barrios por país y ciudad
   useEffect(() => {

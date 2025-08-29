@@ -110,7 +110,7 @@ const MobileBottomTabs = ({
                     background: isActive ? 'linear-gradient(90deg, #FFFFFF 0%, #F3F4F6 100%)' : 'transparent',
                     boxShadow: isActive ? '0 0 8px rgba(255, 255, 255, 0.4)' : 'none',
                     x: '-50%'
-                  }}
+                  } as React.CSSProperties}
                   initial={false}
                   transition={{
                     type: "spring",
@@ -134,7 +134,7 @@ const MobileBottomTabs = ({
                   } : {
                     background: 'rgba(255, 255, 255, 0.03)',
                     border: '1px solid rgba(255, 255, 255, 0.05)'
-                  }}
+                  } as React.CSSProperties}
                   whileTap={{ scale: 0.95 }}
                   animate={{
                     scale: isActive ? 1.05 : 1,
@@ -165,7 +165,7 @@ const MobileBottomTabs = ({
                   }`}
                   style={isActive ? {
                     textShadow: '0 0 4px rgba(255, 255, 255, 0.3)'
-                  } : {}}
+                  } : {} as React.CSSProperties}
                   animate={{
                     opacity: isActive ? 1 : 0.8,
                     y: isActive ? -1 : 0
@@ -180,7 +180,7 @@ const MobileBottomTabs = ({
                   className="absolute inset-0 rounded-xl"
                   style={{
                     background: 'radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%)'
-                  }}
+                  } as React.CSSProperties}
                   initial={{ scale: 0, opacity: 0 }}
                   whileTap={{
                     scale: 1.3,

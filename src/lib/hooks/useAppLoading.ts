@@ -1,12 +1,11 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 export function useAppLoading() {
   const t = useTranslations('AppLoading');
-  
-  const loadingSteps = [
+  const loadingSteps = useMemo(() => [
     { progress: 10, message: t('startingClaridad') },
     { progress: 25, message: t('connectingCommunity') },
     { progress: 40, message: t('loadingChats') },
@@ -14,7 +13,8 @@ export function useAppLoading() {
     { progress: 70, message: t('checkingNotifications') },
     { progress: 85, message: t('preparingPanicAlerts') },
     { progress: 100, message: t('readyToChat') },
-  ];
+  ], [t]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState(loadingSteps[0].message);
@@ -32,7 +32,8 @@ export function useAppLoading() {
       }
     }
     nextStep();
-  }, []);
+  }, [loadingSteps]);
+
 
   const finishLoading = () => {
     setIsLoading(false);

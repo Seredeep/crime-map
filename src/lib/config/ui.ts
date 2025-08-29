@@ -12,109 +12,127 @@ import { IncidentColor } from '../services/incidents/types';
 /**
  * Color configuration for incident types
  * Includes CSS classes for borders, backgrounds, text and hover states
+ * Reduced palette for a more professional and less flashy appearance
  */
 export const INCIDENT_COLORS: Record<IncidentColor, {
   border: string;
   bg: string;
   text: string;
   hover: string;
+  gradient: string;
 }> = {
   red: {
-    border: 'border-red-500',
-    bg: 'bg-red-500/15',
-    text: 'text-red-400',
-    hover: 'hover:bg-red-500/25'
+    border: 'border-red-600',
+    bg: 'bg-red-600/10',
+    text: 'text-red-500',
+    hover: 'hover:bg-red-600/20',
+    gradient: 'from-red-600 to-red-700'
   },
   orange: {
-    border: 'border-orange-500',
-    bg: 'bg-orange-500/15',
-    text: 'text-orange-400',
-    hover: 'hover:bg-orange-500/25'
+    border: 'border-orange-600',
+    bg: 'bg-orange-600/10',
+    text: 'text-orange-500',
+    hover: 'hover:bg-orange-600/20',
+    gradient: 'from-orange-600 to-orange-700'
   },
   yellow: {
-    border: 'border-yellow-500',
-    bg: 'bg-yellow-500/15',
-    text: 'text-yellow-400',
-    hover: 'hover:bg-yellow-500/25'
+    border: 'border-amber-600',
+    bg: 'bg-amber-600/10',
+    text: 'text-amber-500',
+    hover: 'hover:bg-amber-600/20',
+    gradient: 'from-amber-600 to-amber-700'
   },
   blue: {
-    border: 'border-blue-500',
-    bg: 'bg-blue-500/15',
-    text: 'text-blue-400',
-    hover: 'hover:bg-blue-500/25'
+    border: 'border-blue-600',
+    bg: 'bg-blue-600/10',
+    text: 'text-blue-500',
+    hover: 'hover:bg-blue-600/20',
+    gradient: 'from-blue-600 to-blue-700'
   },
   purple: {
-    border: 'border-purple-500',
-    bg: 'bg-purple-500/15',
-    text: 'text-purple-400',
-    hover: 'hover:bg-purple-500/25'
+    border: 'border-purple-600',
+    bg: 'bg-purple-600/10',
+    text: 'text-purple-500',
+    hover: 'hover:bg-purple-600/20',
+    gradient: 'from-purple-600 to-purple-700'
   },
   pink: {
-    border: 'border-pink-500',
-    bg: 'bg-pink-500/15',
-    text: 'text-pink-400',
-    hover: 'hover:bg-pink-500/25'
+    border: 'border-pink-600',
+    bg: 'bg-pink-600/10',
+    text: 'text-pink-500',
+    hover: 'hover:bg-pink-600/20',
+    gradient: 'from-pink-600 to-pink-700'
   },
   gray: {
-    border: 'border-gray-500',
-    bg: 'bg-gray-500/15',
-    text: 'text-gray-400',
-    hover: 'hover:bg-gray-500/25'
+    border: 'border-gray-600',
+    bg: 'bg-gray-600/10',
+    text: 'text-gray-500',
+    hover: 'hover:bg-gray-600/20',
+    gradient: 'from-gray-600 to-gray-700'
   },
   green: {
-    border: 'border-green-500',
-    bg: 'bg-green-500/15',
-    text: 'text-green-400',
-    hover: 'hover:bg-green-500/25'
+    border: 'border-green-600',
+    bg: 'bg-green-600/10',
+    text: 'text-green-500',
+    hover: 'hover:bg-green-600/20',
+    gradient: 'from-green-600 to-green-700'
   },
   cyan: {
-    border: 'border-cyan-500',
-    bg: 'bg-cyan-500/15',
-    text: 'text-cyan-400',
-    hover: 'hover:bg-cyan-500/25'
+    border: 'border-cyan-600',
+    bg: 'bg-cyan-600/10',
+    text: 'text-cyan-500',
+    hover: 'hover:bg-cyan-600/20',
+    gradient: 'from-cyan-600 to-cyan-700'
   },
   teal: {
-    border: 'border-teal-500',
-    bg: 'bg-teal-500/15',
-    text: 'text-teal-400',
-    hover: 'hover:bg-teal-500/25'
+    border: 'border-teal-600',
+    bg: 'bg-teal-600/10',
+    text: 'text-teal-500',
+    hover: 'hover:bg-teal-600/20',
+    gradient: 'from-teal-600 to-teal-700'
   },
   indigo: {
-    border: 'border-indigo-500',
-    bg: 'bg-indigo-500/15',
-    text: 'text-indigo-400',
-    hover: 'hover:bg-indigo-500/25'
+    border: 'border-indigo-600',
+    bg: 'bg-indigo-600/10',
+    text: 'text-indigo-500',
+    hover: 'hover:bg-indigo-600/20',
+    gradient: 'from-indigo-600 to-indigo-700'
   },
   violet: {
-    border: 'border-violet-500',
-    bg: 'bg-violet-500/15',
-    text: 'text-violet-400',
-    hover: 'hover:bg-violet-500/25'
+    border: 'border-violet-600',
+    bg: 'bg-violet-600/10',
+    text: 'text-violet-500',
+    hover: 'hover:bg-violet-600/20',
+    gradient: 'from-violet-600 to-violet-700'
   },
   rose: {
-    border: 'border-rose-500',
-    bg: 'bg-rose-500/15',
-    text: 'text-rose-400',
-    hover: 'hover:bg-rose-500/25'
+    border: 'border-rose-600',
+    bg: 'bg-rose-600/10',
+    text: 'text-rose-500',
+    hover: 'hover:bg-rose-600/20',
+    gradient: 'from-rose-600 to-rose-700'
   },
   emerald: {
-    border: 'border-emerald-500',
-    bg: 'bg-emerald-500/15',
-    text: 'text-emerald-400',
-    hover: 'hover:bg-emerald-500/25'
+    border: 'border-emerald-600',
+    bg: 'bg-emerald-600/10',
+    text: 'text-emerald-500',
+    hover: 'hover:bg-emerald-600/20',
+    gradient: 'from-emerald-600 to-emerald-700'
   },
   amber: {
-    border: 'border-amber-500',
-    bg: 'bg-amber-500/15',
-    text: 'text-amber-400',
-    hover: 'hover:bg-amber-500/25'
+    border: 'border-amber-600',
+    bg: 'bg-amber-600/10',
+    text: 'text-amber-500',
+    hover: 'hover:bg-amber-600/20',
+    gradient: 'from-amber-600 to-amber-700'
   },
   lime: {
-    border: 'border-lime-500',
-    bg: 'bg-lime-500/15',
-    text: 'text-lime-400',
-    hover: 'hover:bg-lime-500/25'
-  }
+    border: 'border-lime-600',
+    bg: 'bg-lime-600/10',
+    text: 'text-lime-500',
+    hover: 'hover:bg-lime-600/20',
+    gradient: 'from-lime-600 to-lime-700'
+  },
 } as const;
 // #endregion
 

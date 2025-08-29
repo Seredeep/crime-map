@@ -50,6 +50,10 @@ export async function fetchIncidents(filters?: IncidentFilters): Promise<Inciden
     if (filters) {
       const params = new URLSearchParams();
 
+      if (filters.city) {
+        params.append('city', filters.city);
+      }
+
       if (filters.neighborhoodId) {
         params.append('neighborhoodId', filters.neighborhoodId);
       }

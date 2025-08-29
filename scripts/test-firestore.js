@@ -1,19 +1,14 @@
 const admin = require('firebase-admin');
 const dotenv = require('dotenv');
 const path = require('path');
+const { initializeFirebaseAdmin } = require('./firebase-service-account');
 
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
 async function testFirestore() {
   try {
     console.log('🧪 Probando conexión a Firestore...');
-    if (!admin.apps.length) {
-      const serviceAccountPath = path.join(__dirname, '..', 'service-account-key.json');
-      admin.initializeApp({
-        projectId: process.env.FIREBASE_PROJECT_ID || 'claridad-c703b',
-        credential: admin.credential.cert(serviceAccountPath),
-      });
-    }
+    initializeFirebaseAdmin();
     const firestore = admin.firestore();
     const testDoc = {
       message: 'Mensaje de prueba',

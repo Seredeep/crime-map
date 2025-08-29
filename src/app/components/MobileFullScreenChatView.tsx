@@ -3,9 +3,16 @@
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiSend, FiUser, FiUsers } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers } from 'react-icons/fi';
+import AudioRecorder from './AudioRecorder';
 import LazyImage from './LazyImage';
+import LocationPicker from './LocationPicker';
+import LocationPreview from './LocationPreview';
+import MediaPicker from './MediaPicker';
+import NotificationToaster from '../../lib/components/NotificationToaster';
+import { useNotificationsStore } from '../../lib/contexts/notificationsStore';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -39,6 +46,13 @@ interface Message {
     location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
     address?: string;
     replyTo?: { id: string; userId: string; userName: string; snippet: string };
+    media?: {
+      type: 'image' | 'video' | 'audio' | 'document';
+      url: string;
+      filename?: string;
+      size?: number;
+      duration?: number;
+    };
   };
   senderProfileImage?: string;
 }
@@ -64,8 +78,17 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showLocationPreview, setShowLocationPreview] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address?: string } | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Track seen messages to detect new arrivals for in-app notifications
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const addNotification = useNotificationsStore((s) => s.add);
 
   const loadChatInfo = useCallback(async () => {
     if (!session?.user) return;
@@ -100,12 +123,33 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
       if (response.ok) {
         const result = await response.json();
-        if (result.success && result.data && result.data.messages) {
+        if (result.success && result.data?.messages) {
           const formattedMessages = result.data.messages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
             isOwn: msg.userId === session.user?.id || msg.userName === session.user?.name
           }));
+          // Detect new messages since last fetch
+          const seen = seenMessageIdsRef.current;
+          const incoming = formattedMessages.filter((m: any) => !seen.has(m.id));
+
+          // Update seen set with all current messages
+          formattedMessages.forEach((m: any) => seen.add(m.id));
+
+          // Notify only for messages authored by others
+          incoming
+            .filter((m: any) => !m.isOwn)
+            .forEach((m: any) => {
+              const isPanic = m.type === 'panic';
+              addNotification({
+                type: isPanic ? 'panic' : 'chat',
+                title: isPanic ? 'Alerta de pánico' : m.userName || 'Nuevo mensaje',
+                message: isPanic ? (m?.metadata?.address || 'Nueva alerta de pánico') : m.message,
+                data: { messageId: m.id, chatId: chat?._id },
+                autoHideMs: isPanic ? 7000 : 4500,
+              });
+            });
+
           setMessages(formattedMessages);
           setIsConnected(true);
           setError(null);
@@ -129,7 +173,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         setLoading(false);
       });
     }
-  }, [session, loadChatInfo, loadMessages]);
+  }, [session?.user, loadChatInfo, loadMessages]);
 
   // Polling optimizado - solo cuando hay actividad
   useEffect(() => {
@@ -142,7 +186,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       }, 8000); // Polling menos agresivo
       return () => clearInterval(interval);
     }
-  }, [session, loading, loadMessages]);
+  }, [session?.user, loading, loadMessages]);
 
   // Auto-scroll a mensajes nuevos
   useEffect(() => {
@@ -257,7 +301,44 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const handleSendMessage = async () => {
     if (newMessage.trim() && !isSending) {
       try {
-        await sendMessage(newMessage);
+        // Si hay una ubicación seleccionada, incluirla en el mensaje
+        if (selectedLocation) {
+          // Generar URL del mapa estático
+          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+          if (apiKey) {
+            const baseUrl = 'https://maps.googleapis.com/maps/api/staticmap';
+            const params = new URLSearchParams({
+              center: `${selectedLocation.lat},${selectedLocation.lng}`,
+              zoom: '15',
+              size: '300x200',
+              scale: '2',
+              maptype: 'roadmap',
+              markers: `color:red|label:L|${selectedLocation.lat},${selectedLocation.lng}`,
+              key: apiKey
+            });
+
+            const staticMapUrl = `${baseUrl}?${params.toString()}`;
+
+            // Enviar mensaje con imagen del mapa
+            await sendMessageWithMedia(
+              `${newMessage}\n\n📍 Ubicación: ${selectedLocation.address || `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}`,
+              {
+                type: 'image',
+                url: staticMapUrl,
+                filename: 'location-map.png',
+                size: 0
+              }
+            );
+          } else {
+            // Fallback sin imagen si no hay API key
+            const locationMessage = `📍 Ubicación: ${selectedLocation.address || `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`}\n\n${newMessage}`;
+            await sendMessage(locationMessage);
+          }
+          setSelectedLocation(null); // Limpiar ubicación después de enviar
+        } else {
+          await sendMessage(newMessage);
+        }
+
         setNewMessage('');
 
         // Reset textarea height
@@ -267,6 +348,191 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       } catch (error) {
         console.error('Error al enviar mensaje:', error);
       }
+    }
+  };
+
+  // Función helper para generar mensajes según el tipo de medio
+  const getMediaMessage = (type: 'image' | 'video' | 'document') => {
+    switch (type) {
+      case 'image':
+        return '🖼️ Imagen';
+      case 'video':
+        return '🎥 Video';
+      case 'document':
+        return '📄 Documento';
+      default:
+        return '📎 Archivo';
+    }
+  };
+
+  const handleMediaSelect = async (file: File, type: 'image' | 'video' | 'document') => {
+    try {
+      setIsUploading(true);
+
+      // Crear FormData para subir el archivo
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', type);
+
+      // Subir archivo a Supabase Storage
+      const uploadResponse = await fetch('/api/chat/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (uploadResponse.ok) {
+        const uploadResult = await uploadResponse.json();
+        console.log(`${type} uploaded successfully:`, uploadResult);
+
+        // Enviar mensaje con el archivo adjunto
+        await sendMessageWithMedia(newMessage || getMediaMessage(type), {
+          type,
+          url: uploadResult.url,
+          filename: file.name,
+          size: file.size
+        });
+
+        setNewMessage('');
+      } else {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || `Error al subir ${type}`);
+      }
+    } catch (error) {
+      console.error(`Error al procesar ${type}:`, error);
+      setError(tErrors('sendMessageError'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleAudioSend = async (audioBlob: Blob) => {
+    try {
+      setIsUploading(true);
+
+      // Obtener la duración real del audio antes de enviarlo
+      let audioDuration = null;
+      try {
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+
+        // Esperar a que se cargue el metadata del audio
+        await new Promise((resolve, reject) => {
+          audio.addEventListener('loadedmetadata', resolve);
+          audio.addEventListener('error', reject);
+          audio.load();
+        });
+
+        audioDuration = audio.duration;
+        URL.revokeObjectURL(audioUrl);
+        console.log('Audio duration detected:', audioDuration);
+      } catch (error) {
+        console.warn('No se pudo obtener la duración del audio:', error);
+      }
+
+      // Crear FormData para subir el audio
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.webm');
+      formData.append('type', 'audio');
+
+      // Subir audio a Supabase Storage
+      const uploadResponse = await fetch('/api/chat/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (uploadResponse.ok) {
+        const uploadResult = await uploadResponse.json();
+        console.log('Audio uploaded successfully:', uploadResult);
+
+        // Enviar mensaje con el audio adjunto
+        await sendMessageWithMedia(newMessage || '🎵 Audio', {
+          type: 'audio',
+          url: uploadResult.url,
+          filename: 'audio.webm',
+          size: audioBlob.size,
+          duration: audioDuration || uploadResult.duration
+        });
+
+        setNewMessage('');
+      } else {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || 'Error al subir audio');
+      }
+    } catch (error) {
+      console.error('Error al procesar audio:', error);
+      setError(tErrors('sendMessageError'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const formatAudioDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    const parts = [];
+    if (h > 0) {
+      parts.push(`${h}h`);
+    }
+    if (m > 0) {
+      parts.push(`${m}m`);
+    }
+    if (s > 0 || parts.length === 0) { // Show seconds only if no hours or minutes
+      parts.push(`${s}s`);
+    }
+    return parts.join('');
+  };
+
+  const sendMessageWithMedia = async (message: string, media: { type: 'image' | 'video' | 'audio' | 'document'; url: string; filename?: string; size?: number; duration?: number }): Promise<boolean> => {
+    if (!session?.user || !message.trim()) return false;
+
+    try {
+      setIsSending(true);
+
+      const response = await fetch('/api/chat/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message.trim(),
+          type: 'normal',
+          metadata: {
+            ...(anonymous ? { anonymous: true } : {}),
+            ...(replyingTo ? {
+              replyTo: {
+                id: replyingTo.id,
+                userId: replyingTo.userId,
+                userName: replyingTo.userName,
+                snippet: replyingTo.message.slice(0, 140)
+              }
+            } : {}),
+            media: {
+              type: media.type,
+              url: media.url,
+              filename: media.filename,
+              size: media.size,
+              duration: media.duration
+            }
+          }
+        }),
+      });
+
+      if (response.ok) {
+        await loadMessages();
+        setReplyingTo(null);
+        return true;
+      } else {
+        setError(tErrors('sendMessageError'));
+        return false;
+      }
+    } catch (error) {
+      console.error('Error enviando mensaje con multimedia:', error);
+      setError(tErrors('sendMessageError'));
+      return false;
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -372,6 +638,22 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   };
 
   const clearReply = () => setReplyingTo(null);
+
+  const handleLocationSelect = () => {
+    setShowLocationPicker(true);
+    setShowMenu(false);
+  };
+
+  const handleLocationConfirm = (location: { lat: number; lng: number; address?: string }) => {
+    setSelectedLocation(location);
+    setShowLocationPicker(false);
+    setShowLocationPreview(true);
+  };
+
+  const handleLocationPreviewConfirm = () => {
+    setShowLocationPreview(false);
+    // La ubicación ya está en selectedLocation, listo para usar
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -485,8 +767,10 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         background: 'rgba(17, 24, 39, 0.98)',
         backdropFilter: 'blur(20px)',
         boxShadow: '0 0 50px rgba(0, 0, 0, 0.5)'
-      }}
+      } as React.CSSProperties}
     >
+      {/* Notifications Toaster */}
+      <NotificationToaster />
       {/* #region Header */}
       <div className="bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50 px-4 py-4 flex items-center justify-between z-10">
         <button
@@ -651,6 +935,92 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                         <div className="text-xs opacity-80 truncate">{message.metadata.replyTo.snippet}</div>
                       </div>
                     )}
+
+                    {/* Contenido multimedia */}
+                    {message.metadata?.media && (
+                      <div className="mb-2">
+                        {message.metadata.media.type === 'image' && (
+                          <div className="relative bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
+                            <Image
+                              src={message.metadata?.media?.url || ''}
+                              alt="Imagen"
+                              width={400}
+                              height={300}
+                              className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => message.metadata?.media?.url && window.open(message.metadata.media.url, '_blank')}
+                            />
+                            <div className="text-xs text-gray-400 mt-2 flex items-center justify-between">
+                              <span>🖼️ {message.metadata?.media?.filename || 'imagen'}</span>
+                              {message.metadata?.media?.size && (
+                                <span>{(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {message.metadata?.media?.type === 'video' && (
+                          <div className="relative bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
+                            <video
+                              src={message.metadata?.media?.url || ''}
+                              controls
+                              className="max-w-full h-auto rounded-lg"
+                              preload="metadata"
+                            />
+                            <div className="text-xs text-gray-400 mt-2 flex items-center justify-between">
+                              <span>🎥 {message.metadata?.media?.filename || 'video'}</span>
+                              {message.metadata?.media?.size && (
+                                <span>{(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {message.metadata?.media?.type === 'audio' && (
+                          <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
+                            <audio
+                              src={message.metadata?.media?.url || ''}
+                              controls
+                              className="w-full"
+                              preload="metadata"
+                            />
+                            <div className="text-xs text-gray-400 mt-2 flex items-center justify-between">
+                              <span>🎵 {message.metadata?.media?.filename || 'audio.webm'}</span>
+                              {message.metadata?.media?.duration && (
+                                <span>• {formatAudioDuration(message.metadata.media.duration)}</span>
+                              )}
+                              {message.metadata?.media?.size && (
+                                <span>• {(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {message.metadata?.media?.type === 'document' && (
+                          <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-600/50">
+                            <div className="flex items-center space-x-3">
+                              <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-white truncate">
+                                  {message.metadata?.media?.filename || 'Documento'}
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {message.metadata?.media?.size ? `${(message.metadata.media.size / 1024 / 1024).toFixed(2)} MB` : 'Documento'}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => message.metadata?.media?.url && window.open(message.metadata.media.url, '_blank')}
+                                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                              >
+                                Abrir
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {message.type === 'panic' ? (
                       <>
                         <span className="font-semibold">{tChat('panicAlert')}</span>
@@ -702,44 +1072,39 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           </div>
         )}
         <div className="flex items-center space-x-2">
-          {/* Menú desplegable con 3 puntitos */}
-          <div className="relative menu-container">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </button>
+          {/* Indicador de carga cuando se está subiendo un archivo */}
+          {isUploading && (
+            <div className="flex items-center space-x-2 px-3 py-2 bg-blue-600/20 rounded-lg border border-blue-500/40">
+              <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-xs text-blue-300">Subiendo archivo...</span>
+            </div>
+          )}
 
-            {/* Menú desplegable */}
-            {showMenu && (
-              <div className="absolute bottom-0 left-full ml-2 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700/50 z-50">
-                <div className="py-2">
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
-                    <FiUser className="w-4 h-4" />
-                    <span>{tChat('viewProfile')}</span>
-                  </button>
-
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>{tChat('settings')}</span>
-                  </button>
-                  <div className="border-t border-gray-700/50 my-1"></div>
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors flex items-center space-x-3">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{tChat('help')}</span>
-                  </button>
-                </div>
-              </div>
+          {/* Botón de adjuntar multimedia */}
+          <button
+            onClick={() => setShowMediaPicker(true)}
+            disabled={isUploading}
+            className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isUploading ? 'Subiendo archivo...' : tChat('attachMedia')}
+          >
+            {isUploading ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <FiPaperclip className="w-5 h-5" />
             )}
-          </div>
+          </button>
+
+          {/* Botón de ubicación */}
+          <button
+            onClick={handleLocationSelect}
+            className="h-12 w-12 rounded-lg border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all duration-200 flex items-center justify-center"
+            title={tChat('location')}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
 
           {/* Contenedor del textarea con botón de incógnito integrado */}
           <div className="flex-1 relative h-12">
@@ -750,7 +1115,13 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 setNewMessage(e.target.value);
               }}
               onKeyPress={handleKeyPress}
-              placeholder={anonymous ? `${tChat('writeMessage')} (${tChat('incognitoModeActive')})` : tChat('writeMessage')}
+              placeholder={
+                selectedLocation
+                  ? `${tChat('writeMessage')} (ubicación seleccionada)`
+                  : anonymous
+                    ? `${tChat('writeMessage')} (${tChat('incognitoModeActive')})`
+                    : tChat('writeMessage')
+              }
               className="w-full h-12 px-12 py-3 bg-gray-800 rounded-lg text-white resize-none scrollbar-hide outline-none text-sm leading-6"
             />
 
@@ -768,16 +1139,97 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 <FiUser className="w-4 h-4 text-gray-400" />
               )}
             </button>
+
+            {/* Indicador de ubicación seleccionada */}
+            {selectedLocation && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                <div className="flex items-center space-x-1 px-2 py-1 bg-green-600/20 border border-green-500/40 rounded-md max-w-[120px]">
+                  <svg className="w-3 h-3 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  </svg>
+                  <span className="text-xs text-green-400 font-medium truncate">
+                    {selectedLocation.address ?
+                      selectedLocation.address.split(',')[0] :
+                      'Ubicación'
+                    }
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedLocation(null)}
+                  className="p-1 rounded-md hover:bg-gray-700/50 transition-colors flex-shrink-0"
+                  title="Eliminar ubicación seleccionada"
+                >
+                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
          <button
-           onClick={handleSendMessage}
-           disabled={!newMessage.trim() || isSending}
-           className="h-12 w-12 bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex-shrink-0 flex items-center justify-center"
+           onClick={newMessage.trim() ? handleSendMessage : () => setShowAudioRecorder(true)}
+           disabled={isSending || isUploading}
+           className={`h-12 w-12 rounded-lg flex-shrink-0 flex items-center justify-center transition-colors ${
+             newMessage.trim()
+               ? 'bg-blue-600 text-white hover:bg-blue-700'
+               : 'bg-gray-600 text-white hover:bg-gray-700'
+           } disabled:opacity-50 disabled:cursor-not-allowed`}
          >
-           <FiSend className="w-5 h-5" />
+           {isSending || isUploading ? (
+             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+           ) : newMessage.trim() ? (
+             <FiSend className="w-5 h-5" />
+           ) : (
+             <FiMic className="w-5 h-5" />
+           )}
          </button>
         </div>
       </div>
+      {/* #endregion */}
+
+      {/* #region Location Picker Modal */}
+      <AnimatePresence>
+        {showLocationPicker && (
+          <LocationPicker
+            onClose={() => setShowLocationPicker(false)}
+            onLocationSelect={handleLocationConfirm}
+          />
+        )}
+      </AnimatePresence>
+      {/* #endregion */}
+
+      {/* #region Location Preview Modal */}
+      <AnimatePresence>
+        {showLocationPreview && selectedLocation && (
+          <LocationPreview
+            location={selectedLocation}
+            onClose={() => setShowLocationPreview(false)}
+            onConfirm={handleLocationPreviewConfirm}
+          />
+        )}
+      </AnimatePresence>
+      {/* #endregion */}
+
+      {/* #region Media Picker Modal */}
+      <AnimatePresence>
+        {showMediaPicker && (
+          <MediaPicker
+            onClose={() => setShowMediaPicker(false)}
+            onMediaSelect={handleMediaSelect}
+          />
+        )}
+      </AnimatePresence>
+      {/* #endregion */}
+
+      {/* #region Audio Recorder Modal */}
+      <AnimatePresence>
+        {showAudioRecorder && (
+          <AudioRecorder
+            onClose={() => setShowAudioRecorder(false)}
+            onAudioSend={handleAudioSend}
+          />
+        )}
+      </AnimatePresence>
       {/* #endregion */}
 
       {/* #region Participants Modal */}

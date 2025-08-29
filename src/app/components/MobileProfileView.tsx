@@ -7,22 +7,22 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  FiAlertTriangle,
-  FiBell,
-  FiCamera,
-  FiCheckCircle,
-  FiChevronRight,
-  FiClock,
-  FiHelpCircle,
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-  FiSmartphone,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-  FiZap
+    FiAlertTriangle,
+    FiBell,
+    FiCamera,
+    FiCheckCircle,
+    FiChevronRight,
+    FiClock,
+    FiHelpCircle,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiSmartphone,
+    FiUser,
+    FiUsers,
+    FiXCircle,
+    FiZap
 } from 'react-icons/fi';
 import IncidentQueue from './IncidentQueue';
 
@@ -146,7 +146,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       setIsSaving(false);
       console.log("Configuration save attempt finished.");
     }
-  }, [isSaving, notificationsEnabled, privacyPublic, autoLocationEnabled, update, session]);
+  }, [isSaving, notificationsEnabled, privacyPublic, autoLocationEnabled, update, session, configT]);
 
   const createToggleHandler = (
     setter: React.Dispatch<React.SetStateAction<boolean>>,

@@ -7,27 +7,31 @@ import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  FiAlertTriangle,
-  FiBell,
-  FiCamera,
-  FiCheckCircle,
-  FiChevronLeft,
-  FiChevronRight,
-  FiClock,
-  FiGlobe,
-  FiHelpCircle,
-  FiLogOut,
-  FiMapPin,
-  FiSettings,
-  FiShield,
-  FiSmartphone,
-  FiUser,
-  FiUsers,
-  FiXCircle,
-  FiZap,
+    FiAlertTriangle,
+    FiBell,
+    FiCamera,
+    FiCheckCircle,
+    FiChevronLeft,
+    FiChevronRight,
+    FiClock,
+    FiGlobe,
+    FiHelpCircle,
+    FiLogOut,
+    FiMapPin,
+    FiSettings,
+    FiShield,
+    FiSmartphone,
+    FiUser,
+    FiUsers,
+    FiXCircle,
+    FiZap,
 } from 'react-icons/fi'
 import IncidentQueue from './IncidentQueue'
 import LanguageSelector from './LanguageSelector'
+import {
+  ensurePushPermissionAndRegister,
+  unregisterPushToken,
+} from '@/lib/services/notifications/pushClient'
 
 interface MobileSettingsViewProps {
   className?: string
@@ -195,6 +199,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       autoLocationEnabled,
       update,
       session,
+      configT,
     ]
   )
 
@@ -212,10 +217,38 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
       })
     }
 
-  const toggleNotifications = createToggleHandler(
-    setNotificationsEnabled,
-    'notificationsEnabled'
-  )
+  const toggleNotifications = async () => {
+    const enabling = !notificationsEnabled
+    console.log('Toggling push notifications. Enabling =', enabling)
+
+    if (enabling) {
+      // Request permission and register token
+      const result = await ensurePushPermissionAndRegister()
+      if (result.ok) {
+        setNotificationsEnabled(true)
+        await handleSettingChange({ notificationsEnabled: true })
+        showToast(configT('pushEnabled'), 'success')
+      } else {
+        console.warn('Push enable failed:', result.reason)
+        setNotificationsEnabled(false)
+        showToast(
+          result.reason === 'permission-denied'
+            ? configT('notificationsPermissionDenied')
+            : configT('couldNotEnablePush'),
+          'error'
+        )
+      }
+    } else {
+      // Disable: best-effort unregister
+      const ok = await unregisterPushToken()
+      if (!ok) {
+        console.warn('Unregister push token failed on server, proceeding to disable locally')
+      }
+      setNotificationsEnabled(false)
+      await handleSettingChange({ notificationsEnabled: false })
+      showToast(configT('pushDisabled'), 'success')
+    }
+  }
   const togglePrivacy = createToggleHandler(setPrivacyPublic, 'privacyPublic')
 
   const toggleAutoLocation = () => {
@@ -987,7 +1020,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
   }
 
   return (
-    <div className={`w-full min-h-screen bg-gray-900 ${className}`}>
+    <div className={`w-full pt-6 min-h-screen bg-gray-900 ${className}`}>
       {toast && (
         <Toast
           message={toast.message}
@@ -1346,7 +1379,7 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
                     whileTap={{ scale: 0.98 }}
                   >
                     <FiLogOut className="w-5 h-5 text-red-400" />
-                    <span className="text-red-400 font-semibold">Sign Out</span>
+                    <span className="text-red-400 font-semibold">{t('signOut')}</span>
                   </motion.button>
                 </motion.div>
               )}
@@ -1370,8 +1403,11 @@ const MobileSettingsView = ({ className = '' }: MobileSettingsViewProps) => {
                   <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center mr-3">
                     <FiCheckCircle className="w-4 h-4 text-blue-400" />
                   </div>
-                  Verification Queue
+                  {t('incidentVerificationQueue')}
                 </h3>
+                <p className="text-gray-400 text-sm mb-4">
+                  {t('reviewAndApproveIncidents')}
+                </p>
                 <IncidentQueue />
               </motion.div>
             </motion.div>
