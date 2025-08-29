@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     androidScheme: 'http',
-    url: 'https://localhost:3000/en/',
+    url: 'https://demo.claridad.ar',
     cleartext: false
   },
   plugins: {
