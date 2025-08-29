@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
 import { FiExternalLink, FiMapPin, FiX } from 'react-icons/fi';
 
 interface LocationPreviewProps {
@@ -17,11 +18,7 @@ const LocationPreview = ({ location, onClose, onConfirm }: LocationPreviewProps)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    generateStaticMapUrl();
-  }, [location]);
-
-  const generateStaticMapUrl = () => {
+  const generateStaticMapUrl = useCallback(() => {
     try {
       setIsLoading(true);
       setError(null);
@@ -59,7 +56,11 @@ const LocationPreview = ({ location, onClose, onConfirm }: LocationPreviewProps)
       setError(t('locationPreviewError'));
       setIsLoading(false);
     }
-  };
+  }, [location, t]);
+
+  useEffect(() => {
+    generateStaticMapUrl();
+  }, [generateStaticMapUrl]);
 
   const openInGoogleMaps = () => {
     const url = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
@@ -143,9 +144,11 @@ const LocationPreview = ({ location, onClose, onConfirm }: LocationPreviewProps)
         <div className="p-6">
           {/* Mapa estático */}
           <div className="relative mb-4">
-            <img
+            <Image
               src={staticMapUrl}
               alt="Vista previa de ubicación"
+              width={400}
+              height={300}
               className="w-full h-48 object-cover rounded-lg border border-gray-700/50"
             />
             {/* Overlay con información */}

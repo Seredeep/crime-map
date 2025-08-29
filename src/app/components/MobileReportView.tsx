@@ -8,7 +8,7 @@ import { DateTime } from 'luxon';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertCircle, FiCalendar, FiCamera, FiCheckCircle, FiChevronLeft, FiChevronRight, FiClock, FiGrid, FiList, FiMapPin, FiSend, FiTag, FiType, FiX } from 'react-icons/fi';
 import GeocodeSearch from './GeocodeSearch';
 import Map from './Map';
@@ -123,6 +123,15 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     }));
   }, []);
 
+  const handleBackClick = useCallback(() => {
+    const hasFormData = formData.description.trim() || formData.location || formData.tags.length > 0 || formData.evidence.length > 0;
+    if (hasFormData) {
+      setShowDiscardModal(true);
+    } else {
+      onBack();
+    }
+  }, [formData, onBack]);
+
   // Exponer la función handleBackClick para uso externo
   useEffect(() => {
     // Si el componente padre necesita acceso a la función de back
@@ -131,7 +140,7 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
     return () => {
       delete (window as any).handleReportBackClick;
     };
-  }, [formData]);
+  }, [formData, handleBackClick]);
 
   // Auto-scroll SOLO cuando NO hay elementos seleccionados
   useEffect(() => {
@@ -203,14 +212,6 @@ const MobileReportView = ({ onBack, className = '' }: MobileReportViewProps) => 
   const handleConfirmSubmit = () => {
     setShowConfirmModal(false);
     handleSubmit();
-  };
-
-  const handleBackClick = () => {
-    if (hasFormData) {
-      setShowDiscardModal(true);
-    } else {
-      onBack();
-    }
   };
 
   const handleDiscardAndBack = () => {

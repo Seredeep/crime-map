@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { FiCamera, FiFile, FiImage, FiX } from 'react-icons/fi';
 
@@ -126,9 +127,11 @@ const MediaPicker = ({ onClose, onMediaSelect }: MediaPickerProps) => {
             {/* Preview para imágenes */}
             {preview && selectedFile.type.startsWith('image/') && (
               <div className="relative">
-                <img
+                <Image
                   src={preview}
                   alt="Preview"
+                  width={400}
+                  height={192}
                   className="w-full h-48 object-cover rounded-lg"
                 />
               </div>
