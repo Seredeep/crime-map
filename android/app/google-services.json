@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "739008601105",
+    "project_id": "claridad-c703b",
+    "storage_bucket": "claridad-c703b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739008601105:android:dcc50c230e016a5e2025b0",
+        "android_client_info": {
+          "package_name": "com.claridad.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe3WG9wcw5iP6sNNBkIHE4t4mUo1vT1j8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

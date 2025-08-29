@@ -20,6 +20,8 @@ import {
   FiZap
 } from 'react-icons/fi';
 
+import { INCIDENT_COLORS } from '@/lib/config/ui';
+
 import { BiSolidCar } from 'react-icons/bi';
 import { GiRevolver } from 'react-icons/gi';
 import {
@@ -85,6 +87,7 @@ interface EvidenceFile {
 
 
 export interface IncidentFilters {
+  city?: string;
   neighborhoodId?: string;
   date?: string;
   dateFrom?: string;
@@ -105,13 +108,14 @@ export interface IncidentFilters {
 // #region Base Incident Types
 /**
  * Base incident types - common to all regions
+ * Each type has a carefully selected color for consistent visual representation
  */
 export const BASE_INCIDENT_TYPES: IncidentType[] = [
   {
     id: 'amenaza',
     label: 'Threat',
     icon: FiAlertTriangle,
-    color: 'yellow',
+    color: 'amber', // Warning color for threats
     description: 'Verbal or written intimidation or threat',
     priority: 3,
     urgent: false,
@@ -121,7 +125,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'asalto',
     label: 'Assault',
     icon: FiShield,
-    color: 'red',
+    color: 'red', // Critical danger color
     description: 'Physical attack or direct threat to people',
     priority: 5,
     urgent: true,
@@ -131,7 +135,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'disturbio',
     label: 'Disturbance',
     icon: FiVolumeX,
-    color: 'amber',
+    color: 'orange', // Disruption color
     description: 'Public order disruption or disturbing noises',
     priority: 2,
     urgent: false,
@@ -141,7 +145,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'hurto',
     label: 'Theft',
     icon: MdOutlineDirectionsRun,
-    color: 'orange',
+    color: 'blue', // Neutral theft color
     description: 'Theft of goods without violence',
     priority: 3,
     urgent: false,
@@ -151,7 +155,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'otro',
     label: 'Other',
     icon: FiHelpCircle,
-    color: 'gray',
+    color: 'gray', // Neutral color for uncategorized
     description: 'Other types of uncategorized incidents',
     priority: 1,
     urgent: false,
@@ -161,7 +165,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'robo',
     label: 'Robbery',
     icon: FiLock,
-    color: 'rose',
+    color: 'purple', // Serious crime color
     description: 'Theft of goods with violence or intimidation',
     priority: 4,
     urgent: true,
@@ -171,7 +175,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'sospechoso',
     label: 'Suspicious Activity',
     icon: FiEye,
-    color: 'pink',
+    color: 'cyan', // Alert color for suspicious behavior
     description: 'Behavior or situation that raises suspicion',
     priority: 2,
     urgent: false,
@@ -181,7 +185,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'vandalismo',
     label: 'Vandalism',
     icon: FiTool,
-    color: 'violet',
+    color: 'teal', // Property damage color
     description: 'Intentional damage to public or private property',
     priority: 2,
     urgent: false,
@@ -191,7 +195,7 @@ export const BASE_INCIDENT_TYPES: IncidentType[] = [
     id: 'violencia',
     label: 'Violence',
     icon: FiZap,
-    color: 'indigo',
+    color: 'indigo', // Serious violence color
     description: 'Violent acts or physical aggressions',
     priority: 5,
     urgent: true,
@@ -210,7 +214,7 @@ export const ARGENTINA_INCIDENT_TYPES: IncidentType[] = [
     id: 'motochorro',
     label: 'Motochorro',
     icon: MdOutlineDirectionsBike,
-    color: 'emerald',
+    color: 'emerald', // Motorcycle crime color
     description: 'Robbery carried out from motorcycle',
     priority: 5,
     urgent: true,
@@ -227,7 +231,7 @@ export const MEXICO_INCIDENT_TYPES: IncidentType[] = [
     id: 'secuestro_express',
     label: 'Express Kidnapping',
     icon: BiSolidCar,
-    color: 'indigo',
+    color: 'indigo', // Serious crime color
     description: 'Short-duration kidnapping for extortion',
     priority: 5,
     urgent: true,
@@ -237,7 +241,7 @@ export const MEXICO_INCIDENT_TYPES: IncidentType[] = [
     id: 'extorsion',
     label: 'Extortion',
     icon: FiPhone,
-    color: 'teal',
+    color: 'teal', // Financial crime color
     description: 'Threats to obtain money or benefits',
     priority: 4,
     urgent: true,
@@ -254,7 +258,7 @@ export const COLOMBIA_INCIDENT_TYPES: IncidentType[] = [
     id: 'atraco',
     label: 'Armed Robbery',
     icon: GiRevolver,
-    color: 'pink',
+    color: 'pink', // Armed crime color
     description: 'Armed robbery',
     priority: 5,
     urgent: true,
@@ -264,7 +268,7 @@ export const COLOMBIA_INCIDENT_TYPES: IncidentType[] = [
     id: 'cosquilleo',
     label: 'Pickpocketing',
     icon: MdOutlinePersonSearch,
-    color: 'lime',
+    color: 'lime', // Stealth crime color
     description: 'Theft through distraction or deception',
     priority: 3,
     urgent: false,
@@ -281,7 +285,7 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
     id: 'lanza',
     label: 'Lanza',
     icon: FiTarget,
-    color: 'yellow',
+    color: 'yellow', // Stealth theft color
     description: 'Specialized and stealthy theft',
     priority: 3,
     urgent: false,
@@ -291,7 +295,7 @@ export const CHILE_INCIDENT_TYPES: IncidentType[] = [
     id: 'portonazo',
     label: 'Home Invasion Robbery',
     icon: FiLock,
-    color: 'purple',
+    color: 'purple', // Home invasion color
     description: 'Robbery when entering home',
     priority: 4,
     urgent: true,
@@ -436,5 +440,32 @@ export const REGION_INCIDENT_TYPES: Record<Region, IncidentType[]> = {
   colombia: COLOMBIA_INCIDENT_TYPES,
   chile: CHILE_INCIDENT_TYPES,
   general: BASE_INCIDENT_TYPES
+};
+// #endregion
+
+// #region Color Helper Functions
+/**
+ * Get incident color configuration for consistent UI usage
+ * @param incidentType - The incident type object
+ * @returns Color configuration object
+ */
+export const getIncidentColorConfig = (incidentType: IncidentType) => {
+  return INCIDENT_COLORS[incidentType.color];
+};
+
+/**
+ * Get incident color classes for consistent styling
+ * @param incidentType - The incident type object
+ * @returns Object with CSS classes for different states
+ */
+export const getIncidentColorClasses = (incidentType: IncidentType) => {
+  const colors = getIncidentColorConfig(incidentType);
+  return {
+    border: colors.border,
+    background: colors.bg,
+    text: colors.text,
+    hover: colors.hover,
+    gradient: colors.gradient
+  };
 };
 // #endregion

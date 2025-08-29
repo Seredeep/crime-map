@@ -37,7 +37,7 @@
     "linear:upload": "node scripts/linear-upload.js"
   },
   "dependencies": {
-    "@auth/core": "^0.40.0",
+    "@auth/core": "^0.34.2",
     "@auth/mongodb-adapter": "3.8.0",
     "@capacitor/android": "^7.4.2",
     "@capacitor/app": "^7.0.1",
@@ -48,6 +48,7 @@
     "@capacitor/ios": "^7.4.2",
     "@capacitor/keyboard": "^7.0.1",
     "@capacitor/local-notifications": "^7.0.1",
+    "@capacitor/push-notifications": "^7.0.2",
     "@capacitor/splash-screen": "^7.0.1",
     "@capacitor/status-bar": "^7.0.1",
     "@headlessui/react": "^2.2.4",
