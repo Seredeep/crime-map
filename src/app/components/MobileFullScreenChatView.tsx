@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { firestoreClient } from '@/lib/config/firebase-client';
+import { collection, limit as fsLimit, onSnapshot, orderBy, query, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers } from 'react-icons/fi';
 import NotificationToaster from '../../lib/components/NotificationToaster';
 import { useNotificationsStore } from '../../lib/contexts/notificationsStore';
@@ -79,11 +81,24 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   // Track seen messages to detect new arrivals for in-app notifications
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
   const addNotification = useNotificationsStore((s) => s.add);
+  // Usar dependencias estables para evitar re-renders por sesión
+  const userId = session?.user?.id ?? null;
+  // Guards y throttling
+  const isFetchingChatRef = useRef(false);
+  const lastChatFetchAtRef = useRef(0);
+  const isFetchingMessagesRef = useRef(false);
+  const lastMessagesFetchAtRef = useRef(0);
+  const initializedRef = useRef(false);
 
   const loadChatInfo = useCallback(async () => {
-    if (!session?.user) return;
+    if (!userId) return;
 
     try {
+      // Throttle cada 60s
+      const now = Date.now();
+      if (now - lastChatFetchAtRef.current < 60000) return;
+      if (isFetchingChatRef.current) return;
+      isFetchingChatRef.current = true;
       const response = await fetch('/api/chat/mine');
 
       if (!response.ok) {
@@ -102,13 +117,21 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     } catch (error) {
       console.error('Error al cargar información del chat:', error);
       setError(tErrors('chatLoadError'));
+    } finally {
+      isFetchingChatRef.current = false;
+      lastChatFetchAtRef.current = Date.now();
     }
-  }, [session, tErrors]);
+  }, [userId, tErrors]);
 
   const loadMessages = useCallback(async () => {
-    if (!session?.user) return;
+    if (!userId) return;
 
     try {
+      // Throttle cada 8s (alineado con el intervalo)
+      const now = Date.now();
+      if (now - lastMessagesFetchAtRef.current < 8000) return;
+      if (isFetchingMessagesRef.current) return;
+      isFetchingMessagesRef.current = true;
       const response = await fetch('/api/chat/firestore-messages');
 
       if (response.ok) {
@@ -117,7 +140,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
           const formattedMessages = result.data.messages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
-            isOwn: msg.userId === session.user?.id || msg.userName === session.user?.name
+            isOwn: msg.userId === session?.user?.id || msg.userName === session?.user?.name
           }));
           // Detect new messages since last fetch
           const seen = seenMessageIdsRef.current;
@@ -149,34 +172,76 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       console.error('Error al cargar mensajes:', error);
       setError(tErrors('messagesLoadError'));
       setIsConnected(false);
+    } finally {
+      isFetchingMessagesRef.current = false;
+      lastMessagesFetchAtRef.current = Date.now();
     }
-  }, [session, tErrors]);
+  }, [userId, tErrors, session?.user?.name]);
 
-  // Cargar información del chat y mensajes en paralelo
+  // Cargar información del chat y mensajes en paralelo sólo una vez por sesión
   useEffect(() => {
-    if (session?.user) {
+    if (userId && !initializedRef.current) {
+      initializedRef.current = true;
       setLoading(true);
-      Promise.all([
-        loadChatInfo(),
-        loadMessages()
-      ]).finally(() => {
-        setLoading(false);
-      });
+      Promise.all([loadChatInfo(), loadMessages()])
+        .finally(() => setLoading(false));
     }
-  }, [session?.user, loadChatInfo, loadMessages]);
+  }, [userId, loadChatInfo, loadMessages]);
 
-  // Polling optimizado - solo cuando hay actividad
+  // Suscripción en tiempo real a Firestore para mensajes
   useEffect(() => {
-    if (session?.user && !loading) {
-      const interval = setInterval(() => {
-        // Solo hacer polling si la ventana está activa
-        if (!document.hidden) {
-          loadMessages();
-        }
-      }, 8000); // Polling menos agresivo
-      return () => clearInterval(interval);
-    }
-  }, [session?.user, loading, loadMessages]);
+    if (!userId || !chat?._id) return;
+
+    // Consulta: mensajes del chat ordenados por timestamp asc
+    const q = query(
+      collection(firestoreClient, 'chats', chat._id, 'messages'),
+      orderBy('timestamp', 'asc'),
+      fsLimit(500)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+      const formattedMessages = snapshot.docs.map((doc) => {
+        const data: any = doc.data();
+        return {
+          id: doc.id,
+          message: data.message,
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp),
+          type: data.type,
+          userId: data.userId,
+          userName: data.userName,
+          metadata: data.metadata,
+          isOwn: data.userId === session?.user?.id || data.userName === session?.user?.name,
+        } as any;
+      });
+
+      // Detectar nuevos para notificación in-app
+      const seen = seenMessageIdsRef.current;
+      const incoming = formattedMessages.filter((m: any) => !seen.has(m.id));
+      formattedMessages.forEach((m: any) => seen.add(m.id));
+      incoming
+        .filter((m: any) => !m.isOwn)
+        .forEach((m: any) => {
+          const isPanic = m.type === 'panic';
+          addNotification({
+            type: isPanic ? 'panic' : 'chat',
+            title: isPanic ? 'Alerta de pánico' : m.userName || 'Nuevo mensaje',
+            message: isPanic ? (m?.metadata?.address || 'Nueva alerta de pánico') : m.message,
+            data: { messageId: m.id, chatId: chat?._id },
+            autoHideMs: isPanic ? 7000 : 4500,
+          });
+        });
+
+      setMessages(formattedMessages as any);
+      setIsConnected(true);
+      setError(null);
+    }, (err: unknown) => {
+      console.error('onSnapshot error:', err);
+      // Fallback: intentar una carga manual si falla la suscripción
+      loadMessages();
+    });
+
+    return () => unsubscribe();
+  }, [userId, chat?._id, session?.user?.id, session?.user?.name, addNotification, loadMessages]);
 
   // Auto-scroll a mensajes nuevos
   useEffect(() => {

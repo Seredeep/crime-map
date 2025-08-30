@@ -5,7 +5,9 @@ import { LastChatMessage } from '@/lib/services/chat/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { firestoreClient } from '@/lib/config/firebase-client';
+import { collection, limit as fsLimit, onSnapshot, orderBy, query, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { FiCompass, FiHome, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
@@ -142,15 +144,31 @@ const MobileCommunitiesView = () => {
   const [isLoadingMessage, setIsLoadingMessage] = useState(true);
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Usar un dato estable como dependencia en lugar del objeto completo de session
+  const userEmail = session?.user?.email ?? null;
+  // Evitar llamadas concurrentes y limitar frecuencia
+  const isFetchingRef = useRef(false);
+  const lastFetchAtRef = useRef(0);
 
   // Cargar datos del chat (incluyendo el último mensaje) desde la API
   const loadChatData = useCallback(async () => {
-    if (!session?.user?.email) {
+    if (!userEmail) {
       setIsLoadingMessage(false);
       setError(null);
       return;
     }
 
+    // Throttle: evitar consultas más de una vez cada 15s
+    const now = Date.now();
+    if (now - lastFetchAtRef.current < 15000) {
+      return;
+    }
+
+    // Guardar para evitar solapamiento de fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+    isFetchingRef.current = true;
     setIsLoadingMessage(true);
     setError(null);
     try {
@@ -172,22 +190,63 @@ const MobileCommunitiesView = () => {
       setChatInfo(null);
     } finally {
       setIsLoadingMessage(false);
+      isFetchingRef.current = false;
+      lastFetchAtRef.current = Date.now();
     }
-  }, [session]);
+  }, [userEmail]);
 
   useEffect(() => {
-    if (session?.user && activeTab === 'chat') {
+    if (userEmail && activeTab === 'chat') {
       loadChatData();
-      // Opcional: implementar un polling aquí para actualizaciones periódicas
-      const intervalId = setInterval(() => {
-        if (!document.hidden) { // Solo hacer polling si la ventana está activa
-          loadChatData();
-        }
-      }, 8000); // Polling cada 8 segundos
-
-      return () => clearInterval(intervalId);
     }
-  }, [session, activeTab, loadChatData]);
+  }, [userEmail, activeTab, loadChatData]);
+
+  // Suscripción en tiempo real al último mensaje del chat para el card
+  useEffect(() => {
+    if (!userEmail || !chatInfo?.chatId) return;
+
+    const q = query(
+      collection(firestoreClient, 'chats', chatInfo.chatId, 'messages'),
+      orderBy('timestamp', 'desc'),
+      fsLimit(1)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        const doc = snapshot.docs[0];
+        if (!doc) return;
+        const data: any = doc.data();
+        const lastMessageAtDate = data.timestamp?.toDate
+          ? data.timestamp.toDate()
+          : new Date(data.timestamp);
+        const lastMessage = {
+          id: doc.id,
+          message: data.message,
+          timestamp: lastMessageAtDate.toISOString(),
+          type: data.type,
+          userId: data.userId,
+          userName: data.userName,
+          metadata: data.metadata,
+        } as any;
+
+        setChatInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                lastMessage,
+                lastMessageAt: lastMessageAtDate.toISOString(),
+              }
+            : prev
+        );
+      },
+      (err: unknown) => {
+        console.error('onSnapshot lastMessage error:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [userEmail, chatInfo?.chatId]);
 
 
   // Detectar cuando la ventana está activa/inactiva

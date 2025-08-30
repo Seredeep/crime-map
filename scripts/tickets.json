@@ -1,9 +1,14 @@
 [
   {
-    "title": "Incidents: Fix modal state persistence bug",
-    "description": "When clicking 'ver más' on an incident, the modal opens correctly. However, after closing the modal, the incident remains visually 'selected' and other incidents disappear from view. They only reappear after reopening and closing the modal again. This suggests a state management issue where the incident selection state is not being properly reset when the modal closes."
+    "title": "Auth: Fix Google authentication",
+    "description": "Users cannot sign in with Google reliably. Review NextAuth Google provider configuration, OAuth client ID/secret, callback URL (including Capacitor/Android/iOS deep links), and session strategy. Ensure PKCE if required, verify console project settings, and test on web and mobile builds."
+  },
+  {
+    "title": "Chat: Fix UI issues and improve message input",
+    "description": "1. Fix input field expanding when sending messages, requiring a chat re-entry to reset. 2. Remove deprecated 'manzana' and 'lote' fields from participant list. 3. Improve message input UX by better organizing the action options (camera, gallery, etc.) in a more intuitive way. 4. Fix chat scroll position to start at bottom on first render. 5. Prevent old notifications from re-rendering on chat entry. 6. Improve overall chat UI/UX with better organization of message actions and participant information."
+  },
+  {
+    "title": "Chat: Add System message type and incident notifications",
+    "description": "1. Add 'System' as a new message type in the chat system. 2. Implement system messages that automatically appear when an incident is created or modified. 3. Add thread detection to properly organize related messages. This will help users track incident-related communications more effectively."
   }
 ]
-
-
-
