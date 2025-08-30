@@ -124,7 +124,7 @@ export async function sendMessageToFirestore(
   userId: string,
   userName: string,
   message: string,
-  type: 'normal' | 'panic' = 'normal',
+  type: 'normal' | 'panic' | 'system' | 'incident' = 'normal',
   metadata: any = {}
 ): Promise<string> {
   try {
@@ -168,29 +168,42 @@ export async function sendMessageToFirestore(
  */
 export async function getChatMessagesFromFirestore(
   chatId: string,
-  limit: number = 0
+  limit: number = 0,
+  lastMessageTimestamp?: Date
 ): Promise<FirestoreMessage[]> {
   try {
-    const messagesSnapshot = await firestore
+    // Initialize the base query with proper typing
+    const messagesRef = firestore
       .collection('chats')
       .doc(chatId)
-      .collection('messages')
-      .orderBy('timestamp', 'desc')
-      .limit(limit)
-      .get();
+      .collection('messages') as admin.firestore.CollectionReference<FirestoreMessage>;
 
-    const messages: FirestoreMessage[] = [];
-    messagesSnapshot.forEach((doc: any) => {
+    let query: admin.firestore.Query<FirestoreMessage>;
+
+    // If we have a lastMessageTimestamp, only fetch newer messages
+    if (lastMessageTimestamp) {
+      query = messagesRef
+        .where('timestamp', '>', lastMessageTimestamp)
+        .orderBy('timestamp', 'asc');
+    } else if (limit > 0) {
+      // Only apply limit when not using pagination
+      query = messagesRef.orderBy('timestamp', 'desc').limit(limit);
+    } else {
+      query = messagesRef.orderBy('timestamp', 'desc');
+    }
+
+    const messagesSnapshot = await query.get();
+    const messages = messagesSnapshot.docs.map(doc => {
       const data = doc.data();
-      messages.push({
+      return {
         id: doc.id,
         message: data.message,
         timestamp: data.timestamp,
         type: data.type,
         userId: data.userId,
         userName: data.userName,
-        metadata: data.metadata
-      } as FirestoreMessage);
+        metadata: data.metadata || {}
+      } as FirestoreMessage;
     });
 
     return messages.reverse(); // Ordenar por timestamp ascendente

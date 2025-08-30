@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "post:incident": "node scripts/post-incident.js",
     "load-neighborhoods": "cd scripts && node load-neighborhoods-local.js",
     "import-incidents": "cd scripts && ts-node importIncidents.ts",
     "dev-utils": "node scripts/dev-utils.js",

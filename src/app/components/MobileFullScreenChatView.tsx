@@ -1,12 +1,12 @@
 'use client';
 
+import { firestoreClient } from '@/lib/config/firebase-client';
+import { collection, limit as fsLimit, onSnapshot, orderBy, query, where, type DocumentData, type QuerySnapshot } from 'firebase/firestore';
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { firestoreClient } from '@/lib/config/firebase-client';
-import { collection, limit as fsLimit, onSnapshot, orderBy, query, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
 import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers } from 'react-icons/fi';
 import NotificationToaster from '../../lib/components/NotificationToaster';
 import { useNotificationsStore } from '../../lib/contexts/notificationsStore';
@@ -43,7 +43,7 @@ interface Message {
   userName: string;
   message: string;
   timestamp: Date;
-  type: 'normal' | 'panic';
+  type: 'normal' | 'panic' | 'system' | 'incident';
   isOwn: boolean;
   metadata?: MessageMetadata;
   senderProfileImage?: string;
@@ -56,6 +56,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const tChat = useTranslations('Chat');
   const [chat, setChat] = useState<ChatInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [lastMessageTimestamp, setLastMessageTimestamp] = useState<Date | null>(null);
+
   const [newMessage, setNewMessage] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showParticipants, setShowParticipants] = useState(false);
@@ -76,6 +78,13 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 20,
+    hasMore: true,
+    isLoading: false
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Track seen messages to detect new arrivals for in-app notifications
@@ -123,31 +132,49 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
   }, [userId, tErrors]);
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async (loadMore = false) => {
     if (!userId) return;
 
     try {
-      // Throttle cada 8s (alineado con el intervalo)
+      // Throttle cada 8s (solo para actualizaciones automáticas, no para carga manual)
       const now = Date.now();
-      if (now - lastMessagesFetchAtRef.current < 8000) return;
+      if (!loadMore && now - lastMessagesFetchAtRef.current < 8000) return;
       if (isFetchingMessagesRef.current) return;
       isFetchingMessagesRef.current = true;
-      const response = await fetch('/api/chat/firestore-messages');
+
+      setPagination(prev => ({ ...prev, isLoading: true }));
+
+      const page = loadMore ? pagination.page + 1 : 1;
+      const limit = pagination.pageSize;
+
+      const url = new URL('/api/chat/firestore-messages', window.location.origin);
+      url.searchParams.append('limit', limit.toString());
+
+      // Si es una carga de más mensajes, usa el timestamp del mensaje más antiguo
+      if (loadMore && messages.length > 0) {
+        const oldestMessage = messages[0];
+        url.searchParams.append('beforeTimestamp', oldestMessage.timestamp.toISOString());
+      }
+
+      const response = await fetch(url.toString());
 
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data?.messages) {
-          const formattedMessages = result.data.messages.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-            isOwn: msg.userId === session?.user?.id || msg.userName === session?.user?.name
-          }));
+          const newMessages = result.data.messages
+            .filter((msg: any) => !messages.some((m: any) => m.id === msg.id)) // Filter out messages we already have
+            .map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+              isOwn: msg.userId === session?.user?.id || msg.userName === session?.user?.name
+            }));
+          if (newMessages.length === 0) return; // No new messages
           // Detect new messages since last fetch
           const seen = seenMessageIdsRef.current;
-          const incoming = formattedMessages.filter((m: any) => !seen.has(m.id));
+          const incoming = newMessages.filter((m: any) => !seen.has(m.id));
 
           // Update seen set with all current messages
-          formattedMessages.forEach((m: any) => seen.add(m.id));
+          newMessages.forEach((m: any) => seen.add(m.id));
 
           // Notify only for messages authored by others
           incoming
@@ -163,7 +190,30 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
               });
             });
 
-          setMessages(formattedMessages);
+          // Update messages based on load more or initial load
+          setMessages(prevMessages => {
+            // If loading more, prepend new messages, otherwise replace
+            const updatedMessages = loadMore
+              ? [...newMessages, ...prevMessages]
+              : newMessages;
+
+            // Update pagination state
+            setPagination(prev => ({
+              ...prev,
+              page,
+              hasMore: newMessages.length >= limit,
+              isLoading: false
+            }));
+
+            // Update last message timestamp if we have messages
+            if (updatedMessages.length > 0) {
+              const latestMessage = updatedMessages[updatedMessages.length - 1];
+              setLastMessageTimestamp(latestMessage.timestamp);
+            }
+
+            return updatedMessages;
+          });
+
           setIsConnected(true);
           setError(null);
         }
@@ -196,47 +246,80 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
 
     // Consulta: mensajes del chat ordenados por timestamp asc
+    // Only get messages newer than our last known message
     const q = query(
       collection(firestoreClient, 'chats', chat.chatId, 'messages'),
       orderBy('timestamp', 'asc'),
+      lastMessageTimestamp ?
+        where('timestamp', '>', lastMessageTimestamp) :
+        where('timestamp', '>', new Date(0)),
       fsLimit(500)
     );
     console.info('ChatView:onSnapshot SUBSCRIBE', { chatId: chat.chatId });
 
     const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
       console.debug('ChatView:onSnapshot RECEIVED', { size: snapshot.size, chatId: chat.chatId });
-      const formattedMessages = snapshot.docs.map((doc) => {
-        const data: any = doc.data();
-        return {
-          id: doc.id,
-          message: data.message,
-          timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp),
-          type: data.type,
-          userId: data.userId,
-          userName: data.userName,
-          metadata: data.metadata,
-          isOwn: data.userId === session?.user?.id || data.userName === session?.user?.name,
-        } as any;
-      });
 
-      // Detectar nuevos para notificación in-app
+      // Process only new messages
+      const newMessages = snapshot.docs
+        .filter(doc => !messages.some(m => m.id === doc.id)) // Filter out messages we already have
+        .map((doc) => {
+          const data: any = doc.data();
+          return {
+            id: doc.id,
+            message: data.message,
+            timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp),
+            type: data.type,
+            userId: data.userId,
+            userName: data.userName,
+            metadata: data.metadata || {},
+            isOwn: data.userId === session?.user?.id || data.userName === session?.user?.name,
+          } as Message;
+        });
+
+      if (newMessages.length === 0) return; // No new messages
+
+      // Update seen messages set
       const seen = seenMessageIdsRef.current;
-      const incoming = formattedMessages.filter((m: any) => !seen.has(m.id));
-      formattedMessages.forEach((m: any) => seen.add(m.id));
-      incoming
-        .filter((m: any) => !m.isOwn)
-        .forEach((m: any) => {
+      newMessages.forEach(m => seen.add(m.id));
+
+      // Notify only for new messages from others
+      newMessages
+        .filter(m => !m.isOwn)
+        .forEach(m => {
           const isPanic = m.type === 'panic';
           addNotification({
             type: isPanic ? 'panic' : 'chat',
             title: isPanic ? 'Alerta de pánico' : m.userName || 'Nuevo mensaje',
-            message: isPanic ? (m?.metadata?.address || 'Nueva alerta de pánico') : m.message,
-            data: { messageId: m.id, chatId: chat?.chatId },
+            message: isPanic ? (m.metadata?.address || 'Nueva alerta de pánico') : m.message,
+            data: { messageId: m.id, chatId: chat.chatId },
             autoHideMs: isPanic ? 7000 : 4500,
           });
         });
 
-      setMessages(formattedMessages as any);
+      // Update messages state with new messages
+      setMessages(prevMessages => {
+        // Create a map of existing messages by ID for quick lookup
+        const messageMap = new Map(prevMessages.map(msg => [msg.id, msg]));
+
+        // Add or update messages from the snapshot
+        newMessages.forEach(msg => {
+          messageMap.set(msg.id, msg);
+        });
+
+        // Convert back to array and sort by timestamp
+        const updatedMessages = Array.from(messageMap.values())
+          .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+        // Update last message timestamp if we have messages
+        if (updatedMessages.length > 0) {
+          const latestMessage = updatedMessages[updatedMessages.length - 1];
+          setLastMessageTimestamp(latestMessage.timestamp);
+        }
+
+        return updatedMessages;
+      });
+
       setIsConnected(true);
       setError(null);
     }, (err: unknown) => {
@@ -251,10 +334,61 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     };
   }, [userId, chat?.chatId, session?.user?.id, session?.user?.name, addNotification, loadMessages]);
 
-  // Auto-scroll a mensajes nuevos
+  // Function to handle loading more messages
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore || !pagination.hasMore || !messages.length) return;
+
+    try {
+      setIsLoadingMore(true);
+      const oldestMessage = messages[0];
+
+      // Load older messages
+      const url = new URL('/api/chat/firestore-messages', window.location.origin);
+      url.searchParams.append('beforeTimestamp', oldestMessage.timestamp.toISOString());
+
+      const response = await fetch(url.toString());
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data?.messages?.length) {
+          const newMessages = result.data.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+            isOwn: msg.userId === session?.user?.id || msg.userName === session?.user?.name
+          }));
+
+          setMessages(prevMessages => {
+            // Filter out any duplicates that might already be in the list
+            const existingIds = new Set(prevMessages.map(m => m.id));
+            const uniqueNewMessages = newMessages.filter((msg: any) => !existingIds.has(msg.id));
+
+            // Combine and sort messages
+            const combined = [...uniqueNewMessages, ...prevMessages];
+            return combined.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+          });
+
+          // Update pagination state
+          setPagination(prev => ({
+            ...prev,
+            hasMore: newMessages.length >= prev.pageSize,
+            page: prev.page + 1
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading more messages:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, messages, pagination.hasMore, pagination.pageSize, session?.user?.id, session?.user?.name]);
+
+  // Auto-scroll a mensajes nuevos (solo cuando se añaden mensajes nuevos, no al cargar más)
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Only auto-scroll if we're not loading more messages
+    if (!isLoadingMore) {
+      scrollToBottom();
+    }
+  }, [messages, isLoadingMore]);
 
   // Cleanup de timers al desmontar
   useEffect(() => {
@@ -547,6 +681,34 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     return parts.join('');
   };
 
+  // Helper para convertir Firestore Timestamp u otros formatos a Date
+  const tsToDate = (v: any): Date | null => {
+    if (!v) return null;
+    if (v instanceof Date) return v;
+    if (typeof v?.toDate === 'function') return v.toDate();
+    if (typeof v === 'string') {
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof v?.seconds === 'number') {
+      // Timestamp serializado { seconds, nanoseconds }
+      return new Date(v.seconds * 1000);
+    }
+    return null;
+  };
+
+  const formatRemaining = (future: Date | null) => {
+    if (!future) return '';
+    const now = new Date();
+    const diff = future.getTime() - now.getTime();
+    if (diff <= 0) return 'expirado';
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    if (hours > 0) return `${hours}h ${remMins}m`;
+    return `${remMins}m`;
+  };
+
   const sendMessageWithMedia = async (message: string, media: { type: 'image' | 'video' | 'audio' | 'document'; url: string; filename?: string; size?: number; duration?: number }): Promise<boolean> => {
     if (!session?.user || !message.trim()) return false;
 
@@ -702,6 +864,8 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
   const clearReply = () => setReplyingTo(null);
 
+
+
   const handleLocationSelect = () => {
     setShowLocationPicker(true);
     setShowMenu(false);
@@ -856,7 +1020,25 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       {/* #endregion */}
 
       {/* #region Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide flex flex-col">
+        {pagination.hasMore && (
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="px-4 py-2 bg-gray-800/50 text-white rounded-full text-sm font-medium hover:bg-gray-700/70 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {isLoadingMore ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                  <span>{tChat('loading')}...</span>
+                </>
+              ) : (
+                <span>{tChat('loadMore')}</span>
+              )}
+            </button>
+          </div>
+        )}
         {messages.map((message, index) => {
           const showDate = index === 0 || message.timestamp.toDateString() !== messages[index - 1].timestamp.toDateString();
           const isOwn = isMessageOwn(message);
@@ -1093,6 +1275,37 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                         </span>
                         <br />
                         <span className="text-xs text-gray-300 mt-1 block">
+                          {formatTime(message.timestamp)}
+                        </span>
+                      </>
+                    ) : message.type === 'incident' ? (
+                      <>
+                        {(() => {
+                          const inc: any = message.metadata?.incident || {};
+                          const activeUntil = tsToDate(inc?.activeUntil) || tsToDate((message as any)?.metadata?.activeUntil) || null;
+                          return (
+                            <div className="bg-gray-800/60 border border-yellow-600/50 rounded-xl p-3 mb-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-semibold text-yellow-300">Incidente: {inc?.type || '-'}</span>
+                                <span className="text-xs text-yellow-200/90">{activeUntil ? `⏳ ${formatRemaining(activeUntil)}` : ''}</span>
+                              </div>
+                              {inc?.description && (
+                                <div className="text-sm text-gray-100 mb-1">{inc.description}</div>
+                              )}
+                              {inc?.location?.coordinates && Array.isArray(inc.location.coordinates) && (
+                                <div className="text-xs text-gray-400">📍 {inc.location.coordinates[1]?.toFixed?.(5)}, {inc.location.coordinates[0]?.toFixed?.(5)}</div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        <span className={`text-xs text-gray-300 mt-1 block ${isOwn ? 'text-right' : 'text-left'}`}>
+                          {formatTime(message.timestamp)}
+                        </span>
+                      </>
+                    ) : message.type === 'system' ? (
+                      <>
+                        <span className="text-sm leading-tight block opacity-90">{message.message}</span>
+                        <span className={`text-xs text-gray-400 mt-1 block ${isOwn ? 'text-right' : 'text-left'}`}>
                           {formatTime(message.timestamp)}
                         </span>
                       </>

@@ -51,7 +51,7 @@ export interface Message {
   userName: string;
   message: string;
   timestamp: Date | string;
-  type: 'normal' | 'panic';
+  type: 'normal' | 'panic' | 'system' | 'incident';
   isOwn?: boolean;
   metadata?: MessageMetadata;
 }
@@ -73,7 +73,7 @@ export interface FirestoreMessage {
   id?: string;
   message: string;
   timestamp: any; // Firestore Timestamp
-  type: 'normal' | 'panic';
+  type: 'normal' | 'panic' | 'system' | 'incident';
   userId: string;
   userName: string;
   metadata?: MessageMetadata;

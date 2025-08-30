@@ -10,5 +10,9 @@
   {
     "title": "Chat: Add System message type and incident notifications",
     "description": "1. Add 'System' as a new message type in the chat system. 2. Implement system messages that automatically appear when an incident is created or modified. 3. Add thread detection to properly organize related messages. This will help users track incident-related communications more effectively."
+  },
+  {
+    "title": "Incidents: Create Firestore incident and broadcast to neighborhood chat (track active 1h)",
+    "description": "Create a function that: 1) creates a new incident document in Firestore, 2) immediately posts a system message in the respective neighborhood chat channel referencing the incident (created/modified), and 3) marks the incident as active for 1 hour (auto-expire). One of the incident parameters is the neighborhood channel; the channel must track active incidents and update when they expire or are modified."
   }
 ]
