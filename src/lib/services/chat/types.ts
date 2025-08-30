@@ -5,7 +5,7 @@
  * Tipos e interfaces específicas para el sistema de chat
  */
 
-import { User } from "@/lib/types/global";
+import { MessageMetadata, User } from "@/lib/types/global";
 
 // #region Chats y Mensajería
 /**
@@ -53,7 +53,7 @@ export interface Message {
   timestamp: Date | string;
   type: 'normal' | 'panic';
   isOwn?: boolean;
-  metadata?: Record<string, any>;
+  metadata?: MessageMetadata;
 }
 
 /**
@@ -76,7 +76,7 @@ export interface FirestoreMessage {
   type: 'normal' | 'panic';
   userId: string;
   userName: string;
-  metadata?: any;
+  metadata?: MessageMetadata;
 }
 
 export interface FirestoreChat {

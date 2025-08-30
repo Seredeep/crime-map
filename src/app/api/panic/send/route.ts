@@ -1,10 +1,11 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
+import { firestore } from '@/lib/config/db/firebase';
 import clientPromise from '@/lib/config/db/mongodb';
 import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
+import { handleNewMessage } from '@/lib/services/chat/messageProcessor';
+import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
-import { firestore } from '@/lib/config/db/firebase';
-import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 
 export async function POST(req: Request) {
   try {
@@ -50,6 +51,18 @@ export async function POST(req: Request) {
       'panic',
       metadata
     );
+
+    // Process new panic message
+    await handleNewMessage({
+      messageId,
+      chatId: chatId.toString(),
+      userId: userId.toString(),
+      userName: userName || session.user.name || 'Usuario desconocido',
+      message: panicMessageText,
+      type: 'panic',
+      metadata,
+      timestamp: new Date()
+    });
 
     console.log(`🚨 COMPLETE PANIC ALERT - Neighborhood ${neighborhood}:`, {
       user: userName || session.user.name,

@@ -6,13 +6,14 @@ import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers } from 'react-icons/fi';
+import NotificationToaster from '../../lib/components/NotificationToaster';
+import { useNotificationsStore } from '../../lib/contexts/notificationsStore';
+import { MessageMetadata } from '../../lib/types/global';
 import AudioRecorder from './AudioRecorder';
 import LazyImage from './LazyImage';
 import LocationPicker from './LocationPicker';
 import LocationPreview from './LocationPreview';
 import MediaPicker from './MediaPicker';
-import NotificationToaster from '../../lib/components/NotificationToaster';
-import { useNotificationsStore } from '../../lib/contexts/notificationsStore';
 
 interface MobileFullScreenChatViewProps {
   onBack: () => void;
@@ -42,18 +43,7 @@ interface Message {
   timestamp: Date;
   type: 'normal' | 'panic';
   isOwn: boolean;
-  metadata?: {
-    location?: { lat: number; lng: number; accuracy?: number; timestamp?: number; fallback?: boolean };
-    address?: string;
-    replyTo?: { id: string; userId: string; userName: string; snippet: string };
-    media?: {
-      type: 'image' | 'video' | 'audio' | 'document';
-      url: string;
-      filename?: string;
-      size?: number;
-      duration?: number;
-    };
-  };
+  metadata?: MessageMetadata;
   senderProfileImage?: string;
 }
 

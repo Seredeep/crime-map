@@ -1,9 +1,10 @@
+import { firestore } from '@/lib/config/db/firebase';
 import clientPromise from '@/lib/config/db/mongodb';
 import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
+import { handleNewMessage } from '@/lib/services/chat/messageProcessor';
+import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore } from '@/lib/config/db/firebase';
-import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,6 +69,18 @@ export async function POST(request: NextRequest) {
       type,
       finalMetadata
     );
+
+    // Process new message
+    await handleNewMessage({
+      messageId,
+      chatId: user.chatId,
+      userId: user._id.toString(),
+      userName: publicUserName,
+      message: message.trim(),
+      type,
+      metadata: finalMetadata,
+      timestamp: new Date()
+    });
 
     console.log(`💬 Mensaje enviado a Firestore: ${user.name || user.email} → ${user.chatId}`);
 
