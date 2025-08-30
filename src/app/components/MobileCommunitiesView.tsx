@@ -9,7 +9,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { FiCompass, FiHome, FiUsers } from 'react-icons/fi';
 import LazyImage from './LazyImage';
 import MobileFullScreenChatView from './MobileFullScreenChatView';
-// NO IMPORTAR firestore AQUÍ. firestore es para el backend.
 // #endregion
 
 // #region Tipos e interfaces

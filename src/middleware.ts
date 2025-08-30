@@ -1,8 +1,8 @@
 import { getToken } from 'next-auth/jwt';
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import { routing } from '../i18n/routing';
-import { rbacMiddleware } from './rbac';
+import { routing } from './i18n/routing';
+import { rbacMiddleware } from './middleware/rbac';
 
 // Crear el middleware de i18n
 const intlMiddleware = createMiddleware(routing);
@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
 
     // Si el middleware de i18n retorna una respuesta (redirect), retornarla
     if (intlResponse instanceof Response && intlResponse.status !== 200) {
-      return intlResponse;
+      return intlResponse as NextResponse;
     }
 
     // Detectar correctamente el locale del pathname
@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
 
     // If it's auth or onboarding page, allow access
     if (isAuthPage || isOnboardingPage) {
-      return intlResponse || NextResponse.next();
+      return (intlResponse as NextResponse) || NextResponse.next();
     }
 
     // Check authentication for protected pages
@@ -74,22 +74,22 @@ export async function middleware(request: NextRequest) {
     }
 
     // If authenticated but hasn't completed onboarding
-    if (token && token.onboarded === false && !isOnboardingPage && !isAuthPage) {
+    if (token && (token as any).onboarded === false && !isOnboardingPage && !isAuthPage) {
       console.log('🔀 Redirigiendo al onboarding:', {
         pathname: pathnameWithoutLocale,
-        onboarded: token.onboarded,
+        onboarded: (token as any).onboarded,
         isOnboardingPage
       });
       return NextResponse.redirect(new URL(`/${locale}/onboarding`, request.url));
     }
 
     // Si ya completó onboarding y trata de acceder a onboarding
-    if (token && token.onboarded === true && isOnboardingPage) {
+    if (token && (token as any).onboarded === true && isOnboardingPage) {
       console.log('🔀 Redirecting to main page from onboarding');
       return NextResponse.redirect(new URL(`/${locale}/`, request.url));
     }
 
-    return intlResponse || NextResponse.next();
+    return (intlResponse as NextResponse) || NextResponse.next();
   }
 
   // Apply RBAC middleware for API routes

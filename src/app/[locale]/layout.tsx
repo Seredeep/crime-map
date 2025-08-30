@@ -49,7 +49,6 @@ export async function generateMetadata({
 // #endregion
 
 
-
 // #region Viewport Configuration
 export const viewport: Viewport = {
   width: "device-width",
