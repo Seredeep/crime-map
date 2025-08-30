@@ -203,17 +203,22 @@ const MobileCommunitiesView = () => {
 
   // Suscripción en tiempo real al último mensaje del chat para el card
   useEffect(() => {
-    if (!userEmail || !chatInfo?.chatId) return;
+    if (!userEmail || !chatInfo?.chatId) {
+      console.debug('Communities:onSnapshot SKIPPED - missing identifiers', { hasUserEmail: !!userEmail, chatId: chatInfo?.chatId });
+      return;
+    }
 
     const q = query(
       collection(firestoreClient, 'chats', chatInfo.chatId, 'messages'),
       orderBy('timestamp', 'desc'),
       fsLimit(1)
     );
+    console.info('Communities:onSnapshot SUBSCRIBE', { chatId: chatInfo.chatId });
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot: QuerySnapshot<DocumentData>) => {
+        console.debug('Communities:onSnapshot RECEIVED', { size: snapshot.size, chatId: chatInfo.chatId });
         const doc = snapshot.docs[0];
         if (!doc) return;
         const data: any = doc.data();
@@ -241,11 +246,14 @@ const MobileCommunitiesView = () => {
         );
       },
       (err: unknown) => {
-        console.error('onSnapshot lastMessage error:', err);
+        console.error('Communities:onSnapshot ERROR', err);
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      console.info('Communities:onSnapshot UNSUBSCRIBE', { chatId: chatInfo.chatId });
+      unsubscribe();
+    };
   }, [userEmail, chatInfo?.chatId]);
 
 

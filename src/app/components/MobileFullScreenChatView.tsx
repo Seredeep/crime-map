@@ -32,7 +32,7 @@ interface ChatParticipant {
 }
 
 interface ChatInfo {
-  _id: string;
+  chatId: string;
   neighborhood: string;
   participants: ChatParticipant[];
 }
@@ -99,7 +99,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       if (now - lastChatFetchAtRef.current < 60000) return;
       if (isFetchingChatRef.current) return;
       isFetchingChatRef.current = true;
-      const response = await fetch('/api/chat/mine');
+      const response = await fetch('/api/chat/my-chat');
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -158,7 +158,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 type: isPanic ? 'panic' : 'chat',
                 title: isPanic ? 'Alerta de pánico' : m.userName || 'Nuevo mensaje',
                 message: isPanic ? (m?.metadata?.address || 'Nueva alerta de pánico') : m.message,
-                data: { messageId: m.id, chatId: chat?._id },
+                data: { messageId: m.id, chatId: chat?.chatId },
                 autoHideMs: isPanic ? 7000 : 4500,
               });
             });
@@ -176,7 +176,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       isFetchingMessagesRef.current = false;
       lastMessagesFetchAtRef.current = Date.now();
     }
-  }, [userId, tErrors, session?.user?.name, chat?._id, addNotification, session?.user?.id]);
+  }, [userId, tErrors, session?.user?.name, chat?.chatId, addNotification, session?.user?.id]);
 
   // Cargar información del chat y mensajes en paralelo sólo una vez por sesión
   useEffect(() => {
@@ -190,16 +190,21 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
   // Suscripción en tiempo real a Firestore para mensajes
   useEffect(() => {
-    if (!userId || !chat?._id) return;
+    if (!userId || !chat?.chatId) {
+      console.debug('ChatView:onSnapshot SKIPPED - missing identifiers', { hasUserId: !!userId, chatId: chat?.chatId });
+      return;
+    }
 
     // Consulta: mensajes del chat ordenados por timestamp asc
     const q = query(
-      collection(firestoreClient, 'chats', chat._id, 'messages'),
+      collection(firestoreClient, 'chats', chat.chatId, 'messages'),
       orderBy('timestamp', 'asc'),
       fsLimit(500)
     );
+    console.info('ChatView:onSnapshot SUBSCRIBE', { chatId: chat.chatId });
 
     const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+      console.debug('ChatView:onSnapshot RECEIVED', { size: snapshot.size, chatId: chat.chatId });
       const formattedMessages = snapshot.docs.map((doc) => {
         const data: any = doc.data();
         return {
@@ -226,7 +231,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             type: isPanic ? 'panic' : 'chat',
             title: isPanic ? 'Alerta de pánico' : m.userName || 'Nuevo mensaje',
             message: isPanic ? (m?.metadata?.address || 'Nueva alerta de pánico') : m.message,
-            data: { messageId: m.id, chatId: chat?._id },
+            data: { messageId: m.id, chatId: chat?.chatId },
             autoHideMs: isPanic ? 7000 : 4500,
           });
         });
@@ -235,13 +240,16 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       setIsConnected(true);
       setError(null);
     }, (err: unknown) => {
-      console.error('onSnapshot error:', err);
+      console.error('ChatView:onSnapshot ERROR', err);
       // Fallback: intentar una carga manual si falla la suscripción
       loadMessages();
     });
 
-    return () => unsubscribe();
-  }, [userId, chat?._id, session?.user?.id, session?.user?.name, addNotification, loadMessages]);
+    return () => {
+      console.info('ChatView:onSnapshot UNSUBSCRIBE', { chatId: chat.chatId });
+      unsubscribe();
+    };
+  }, [userId, chat?.chatId, session?.user?.id, session?.user?.name, addNotification, loadMessages]);
 
   // Auto-scroll a mensajes nuevos
   useEffect(() => {
