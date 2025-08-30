@@ -169,7 +169,8 @@ export async function sendMessageToFirestore(
 export async function getChatMessagesFromFirestore(
   chatId: string,
   limit: number = 0,
-  lastMessageTimestamp?: Date
+  lastMessageTimestamp?: Date,
+  beforeTimestamp?: Date
 ): Promise<FirestoreMessage[]> {
   try {
     // Initialize the base query with proper typing
@@ -180,13 +181,20 @@ export async function getChatMessagesFromFirestore(
 
     let query: admin.firestore.Query<FirestoreMessage>;
 
-    // If we have a lastMessageTimestamp, only fetch newer messages
+    // Newer-than window (realtime incremental)
     if (lastMessageTimestamp) {
       query = messagesRef
         .where('timestamp', '>', lastMessageTimestamp)
         .orderBy('timestamp', 'asc');
+    } else if (beforeTimestamp) {
+      // Older-than window (pagination backwards)
+      const pageSize = Math.max(1, limit || 50);
+      query = messagesRef
+        .where('timestamp', '<', beforeTimestamp)
+        .orderBy('timestamp', 'desc')
+        .limit(pageSize);
     } else if (limit > 0) {
-      // Only apply limit when not using pagination
+      // Initial load: latest N
       query = messagesRef.orderBy('timestamp', 'desc').limit(limit);
     } else {
       query = messagesRef.orderBy('timestamp', 'desc');

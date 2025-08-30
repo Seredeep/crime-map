@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers } from 'react-icons/fi';
+import { FiAlertTriangle, FiArrowLeft, FiMic, FiPaperclip, FiSend, FiUser, FiUsers, FiMoreHorizontal } from 'react-icons/fi';
 import NotificationToaster from '../../lib/components/NotificationToaster';
 import { useNotificationsStore } from '../../lib/contexts/notificationsStore';
 import { MessageMetadata } from '../../lib/types/global';
@@ -79,6 +79,15 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Prevent concurrent Load More requests (guards rapid clicks/renders)
+  const isLoadingMoreRef = useRef(false);
+  // Threads
+  const [threadRoot, setThreadRoot] = useState<Message | null>(null);
+  const [threadMessage, setThreadMessage] = useState('');
+  const [threadMessages, setThreadMessages] = useState<Message[]>([]);
+  const [actionMenuForId, setActionMenuForId] = useState<string | null>(null);
+  // Track thread replies per message id to show an indicator in main feed
+  const [threadReplyCounts, setThreadReplyCounts] = useState<Record<string, number>>({});
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 20,
@@ -89,6 +98,10 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Track seen messages to detect new arrivals for in-app notifications
   const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  // Track all fetched message IDs (including thread replies) to avoid double-counting thread reply totals
+  const seenAllMessageIdsRef = useRef<Set<string>>(new Set());
+  // Independent pagination cursor for older fetches, advances even when only thread replies arrive
+  const olderCursorRef = useRef<Date | null>(null);
   const addNotification = useNotificationsStore((s) => s.add);
   // Usar dependencias estables para evitar re-renders por sesión
   const userId = session?.user?.id ?? null;
@@ -161,14 +174,56 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data?.messages) {
-          const newMessages = result.data.messages
+          const rawMsgs: any[] = result.data.messages;
+          const rawCount = rawMsgs.length;
+          // Compute reply counts only for unseen items and track min timestamp to advance cursor
+          const replyCounts: Record<string, number> = {};
+          let minDate: Date | null = null;
+          for (const m of rawMsgs) {
+            const ts = new Date(m.timestamp);
+            if (!minDate || ts < minDate) minDate = ts;
+            if (!seenAllMessageIdsRef.current.has(m.id)) {
+              const tid = m?.metadata?.threadId;
+              if (tid) replyCounts[tid] = (replyCounts[tid] ?? 0) + 1;
+            }
+          }
+          // Mark all as seen globally to avoid recounting
+          rawMsgs.forEach(m => seenAllMessageIdsRef.current.add(m.id));
+          // Advance independent older cursor
+          if (minDate) {
+            if (!olderCursorRef.current || minDate < olderCursorRef.current) {
+              olderCursorRef.current = minDate;
+            }
+          }
+          const newMessages = rawMsgs
             .filter((msg: any) => !messages.some((m: any) => m.id === msg.id)) // Filter out messages we already have
             .map((msg: any) => ({
               ...msg,
               timestamp: new Date(msg.timestamp),
               isOwn: msg.userId === session?.user?.id || msg.userName === session?.user?.name
+            }))
+            // Exclude thread replies from the main chat list
+            .filter((m: any) => !m?.metadata?.threadId);
+          if (newMessages.length === 0) {
+            // Still update pagination using rawCount so the Load More button state is correct
+            setPagination(prev => ({
+              ...prev,
+              page,
+              hasMore: rawCount >= limit,
+              isLoading: false
             }));
-          if (newMessages.length === 0) return; // No new messages
+            return;
+          }
+          // Merge thread reply counts
+          if (Object.keys(replyCounts).length) {
+            setThreadReplyCounts((prev) => {
+              const next = loadMore ? { ...prev } : {};
+              for (const [tid, c] of Object.entries(replyCounts)) {
+                next[tid] = (next[tid] ?? 0) + (c as number);
+              }
+              return next;
+            });
+          }
           // Detect new messages since last fetch
           const seen = seenMessageIdsRef.current;
           const incoming = newMessages.filter((m: any) => !seen.has(m.id));
@@ -201,7 +256,9 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             setPagination(prev => ({
               ...prev,
               page,
-              hasMore: newMessages.length >= limit,
+              // Use raw server page size to decide if there might be more older messages,
+              // even if we filtered out thread replies locally
+              hasMore: rawCount >= limit,
               isLoading: false
             }));
 
@@ -238,6 +295,18 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     }
   }, [userId, loadChatInfo, loadMessages]);
 
+  // Reset pagination and counters when chat changes (prevents stale hasMore after reopen)
+  useEffect(() => {
+    if (!chat?.chatId) return;
+    setPagination({ page: 1, pageSize: 20, hasMore: true, isLoading: false });
+    setLastMessageTimestamp(null);
+    setIsLoadingMore(false);
+    setThreadReplyCounts({});
+    seenMessageIdsRef.current = new Set();
+    seenAllMessageIdsRef.current = new Set();
+    olderCursorRef.current = null;
+  }, [chat?.chatId]);
+
   // Suscripción en tiempo real a Firestore para mensajes
   useEffect(() => {
     if (!userId || !chat?.chatId) {
@@ -260,6 +329,26 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
       console.debug('ChatView:onSnapshot RECEIVED', { size: snapshot.size, chatId: chat.chatId });
 
+      // Build reply counts from docs that were not seen before to avoid double counting
+      const replyCounts: Record<string, number> = {};
+      snapshot.docs.forEach(doc => {
+        const data: any = doc.data();
+        const id = doc.id;
+        if (seenAllMessageIdsRef.current.has(id)) return;
+        const tid = data?.metadata?.threadId;
+        if (tid) replyCounts[tid] = (replyCounts[tid] ?? 0) + 1;
+      });
+
+      if (Object.keys(replyCounts).length) {
+        setThreadReplyCounts(prev => {
+          const next = { ...prev };
+          for (const [tid, c] of Object.entries(replyCounts)) {
+            next[tid] = (next[tid] ?? 0) + (c as number);
+          }
+          return next;
+        });
+      }
+
       // Process only new messages
       const newMessages = snapshot.docs
         .filter(doc => !messages.some(m => m.id === doc.id)) // Filter out messages we already have
@@ -275,9 +364,14 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             metadata: data.metadata || {},
             isOwn: data.userId === session?.user?.id || data.userName === session?.user?.name,
           } as Message;
-        });
+        })
+        // Exclude thread replies from the main chat list
+        .filter((m) => !(m as any)?.metadata?.threadId);
 
-      if (newMessages.length === 0) return; // No new messages
+      // Mark all snapshot docs as seen globally (for both roots and replies)
+      snapshot.docs.forEach(doc => seenAllMessageIdsRef.current.add(doc.id));
+
+      if (newMessages.length === 0) return; // No new visible messages
 
       // Update seen messages set
       const seen = seenMessageIdsRef.current;
@@ -336,26 +430,67 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
 
   // Function to handle loading more messages
   const handleLoadMore = useCallback(async () => {
-    if (isLoadingMore || !pagination.hasMore || !messages.length) return;
+    // Strong guard against concurrent requests and edge states
+    if (isLoadingMoreRef.current || isLoadingMore || !pagination.hasMore || !messages.length) return;
 
     try {
       setIsLoadingMore(true);
+      isLoadingMoreRef.current = true;
       const oldestMessage = messages[0];
 
-      // Load older messages
+      // Load older messages (respect page size)
       const url = new URL('/api/chat/firestore-messages', window.location.origin);
-      url.searchParams.append('beforeTimestamp', oldestMessage.timestamp.toISOString());
+      // Ensure we have a stable older cursor; initialize from the minimum timestamp in current list if missing
+      if (!olderCursorRef.current) {
+        let min = oldestMessage.timestamp;
+        for (const m of messages) {
+          if (m.timestamp < min) min = m.timestamp;
+        }
+        olderCursorRef.current = min;
+      }
+      // Use independent older cursor to avoid overlap with replies-only pages
+      const beforeTs = olderCursorRef.current.toISOString();
+      console.debug('ChatView:LoadMore using cursor', { beforeTs, hasMore: pagination.hasMore });
+      url.searchParams.append('beforeTimestamp', beforeTs);
+      url.searchParams.append('limit', pagination.pageSize.toString());
 
       const response = await fetch(url.toString());
 
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data?.messages?.length) {
-          const newMessages = result.data.messages.map((msg: any) => ({
+          const rawLen = result.data.messages.length;
+          const rawMsgs: any[] = result.data.messages;
+
+          // Update global seen set and compute replyCounts only for truly new items
+          const replyCounts: Record<string, number> = {};
+          let minDate: Date | null = null;
+          for (const m of rawMsgs) {
+            const mid = m.id;
+            const ts = new Date(m.timestamp);
+            if (!minDate || ts < minDate) minDate = ts;
+            if (!seenAllMessageIdsRef.current.has(mid)) {
+              const tid = m?.metadata?.threadId;
+              if (tid) replyCounts[tid] = (replyCounts[tid] ?? 0) + 1;
+            }
+          }
+          // Mark all as seen globally to prevent recounting on subsequent loads
+          rawMsgs.forEach(m => seenAllMessageIdsRef.current.add(m.id));
+
+          // Advance independent cursor even if there are no visible messages
+          if (minDate) {
+            if (!olderCursorRef.current || minDate < olderCursorRef.current) {
+              olderCursorRef.current = minDate;
+            }
+          }
+
+          const newMessages = rawMsgs.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
             isOwn: msg.userId === session?.user?.id || msg.userName === session?.user?.name
-          }));
+          }))
+          // Exclude thread replies from the main chat list
+          .filter((m: any) => !m?.metadata?.threadId);
 
           setMessages(prevMessages => {
             // Filter out any duplicates that might already be in the list
@@ -367,18 +502,34 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             return combined.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
           });
 
+          // Merge thread reply counts (computed only from unseen items)
+          if (Object.keys(replyCounts).length) {
+            setThreadReplyCounts(prev => {
+              const next = { ...prev };
+              for (const [tid, c] of Object.entries(replyCounts)) {
+                next[tid] = (next[tid] ?? 0) + (c as number);
+              }
+              return next;
+            });
+          }
+
           // Update pagination state
           setPagination(prev => ({
             ...prev,
-            hasMore: newMessages.length >= prev.pageSize,
+            // Use raw server page length rather than filtered list
+            hasMore: rawLen >= prev.pageSize,
             page: prev.page + 1
           }));
+        } else {
+          // No results, no more pages
+          setPagination(prev => ({ ...prev, hasMore: false }));
         }
       }
     } catch (error) {
       console.error('Error loading more messages:', error);
     } finally {
       setIsLoadingMore(false);
+      isLoadingMoreRef.current = false;
     }
   }, [isLoadingMore, messages, pagination.hasMore, pagination.pageSize, session?.user?.id, session?.user?.name]);
 
@@ -438,8 +589,10 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 userId: replyingTo.userId,
                 userName: replyingTo.userName,
                 snippet: replyingTo.message.slice(0, 140)
-              }
-            } : {})
+              },
+              parentId: replyingTo.id
+            } : {}),
+            ...(threadRoot ? { threadId: threadRoot.id, threadStarterId: threadRoot.id } : {}),
           }
         }),
       });
@@ -448,6 +601,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         // Recargar mensajes después de enviar
         await loadMessages();
         setReplyingTo(null);
+        // si estamos en hilo, mantener hilo abierto pero limpiar input del hilo en su handler
         return true;
       } else {
         setError(tErrors('sendMessageError'));
@@ -731,8 +885,10 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                 userId: replyingTo.userId,
                 userName: replyingTo.userName,
                 snippet: replyingTo.message.slice(0, 140)
-              }
+              },
+              parentId: replyingTo.id
             } : {}),
+            ...(threadRoot ? { threadId: threadRoot.id, threadStarterId: threadRoot.id } : {}),
             media: {
               type: media.type,
               url: media.url,
@@ -788,7 +944,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     // Configurar nuevo timer para long press (500ms)
     const timer = setTimeout(() => {
       setLongPressMessage(message);
-      handlePickReply(message);
+      setActionMenuForId(message.id);
     }, 500);
 
     setLongPressTimer(timer);
@@ -800,7 +956,6 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
-    setLongPressMessage(null);
   };
 
   const handleMessageMouseDown = (message: Message) => {
@@ -823,13 +978,58 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     handleLongPressEnd();
   };
 
+  const openThread = (root: Message) => {
+    setThreadRoot(root);
+    setActionMenuForId(null);
+    setLongPressMessage(null);
+    // opcional: precargar replies
+  };
+
+  const closeThread = () => {
+    setThreadRoot(null);
+    setThreadMessage('');
+    setReplyingTo(null);
+  };
+
+  const handleSendThreadMessage = async () => {
+    if (!threadRoot) return;
+    const ok = await sendMessage(threadMessage);
+    if (ok) {
+      setThreadMessage('');
+    }
+  };
+
+  // Subscribe to thread messages only when a thread is opened
+  useEffect(() => {
+    if (!threadRoot || !chat?.chatId) return;
+    const q = query(
+      collection(firestoreClient, 'chats', chat.chatId, 'messages'),
+      where('metadata.threadId', '==', threadRoot.id),
+      orderBy('timestamp', 'asc')
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as any),
+        timestamp: (d.data() as any).timestamp?.toDate ? (d.data() as any).timestamp.toDate() : new Date((d.data() as any).timestamp)
+      })) as Message[];
+      setThreadMessages(msgs);
+    });
+    return () => {
+      unsub();
+      setThreadMessages([]);
+    };
+  }, [threadRoot, chat?.chatId]);
+
   // Sistema de swipe ultra-simplificado
   const handleSwipeStart = (message: Message, e: React.TouchEvent) => {
+    if (actionMenuForId || longPressMessage) return; // disable swipe when menu or long-press is active
     e.preventDefault();
     const touch = e.touches[0];
     const startX = touch.clientX;
 
     const onMove = (moveEvent: TouchEvent) => {
+      if (actionMenuForId || longPressMessage) return;
       const currentX = moveEvent.touches[0].clientX;
       const offset = Math.max(0, startX - currentX);
 
@@ -841,6 +1041,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
     };
 
     const onEnd = (endEvent: TouchEvent) => {
+      if (actionMenuForId || longPressMessage) {
+        // Clean listeners and exit
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+        return;
+      }
       const endX = endEvent.changedTouches[0].clientX;
       const totalOffset = startX - endX;
 
@@ -1019,8 +1225,81 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       </div>
       {/* #endregion */}
 
+      {/* #region Thread Modal */}
+      <AnimatePresence>
+        {threadRoot && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200, duration: 0.5 }}
+            className="fixed inset-0 bg-gray-900 z-[550] flex flex-col"
+          >
+            <div className="bg-gray-900 border-b border-gray-800/50 px-4 py-4 flex items-center justify-between">
+              <button
+                onClick={closeThread}
+                className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all duration-200"
+              >
+                <FiArrowLeft className="w-5 h-5" />
+              </button>
+              <div className="flex-1 text-center">
+                <div className="text-sm text-gray-300">Hilo</div>
+                <div className="text-white font-semibold truncate max-w-[70vw] mx-auto">{threadRoot.userName}: {threadRoot.message}</div>
+              </div>
+              <div className="w-10" />
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {(() => {
+                const threadMsgs = [threadRoot, ...threadMessages]
+                  .sort((a, b) => new Date(a.timestamp as any).getTime() - new Date(b.timestamp as any).getTime());
+                return threadMsgs.map((m) => (
+                  <div key={m.id} className={`max-w-[85%] ${m.userId === session?.user?.id ? 'ml-auto' : ''}`}>
+                    <div className={`px-3 py-2 rounded-xl ${m.userId === session?.user?.id ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-100'}`}>
+                      {m.metadata?.replyTo && (
+                        <div className={`mb-2 px-2 py-1 rounded ${m.userId === session?.user?.id ? 'bg-blue-500/40' : 'bg-gray-600/50'}`}>
+                          <span className="text-xs font-semibold">{m.metadata.replyTo.userName}</span>
+                          <div className="text-xs opacity-80 truncate">{m.metadata.replyTo.snippet}</div>
+                        </div>
+                      )}
+                      <div className="text-sm">{m.message}</div>
+                      <div className="text-xs opacity-70 mt-1">{formatTime(m.timestamp as any)}</div>
+                    </div>
+                  </div>
+                ));
+              })()}
+              <div className="h-2" />
+            </div>
+
+            <div className="bg-gray-900 border-t border-gray-800/50 px-4 py-3 flex items-center space-x-2">
+              <input
+                value={threadMessage}
+                onChange={(e) => setThreadMessage(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendThreadMessage(); } }}
+                placeholder={`Responder en hilo de ${threadRoot.userName}`}
+                className="flex-1 h-11 px-3 bg-gray-800 rounded-lg text-white outline-none text-sm"
+              />
+              <button
+                onClick={handleSendThreadMessage}
+                className="h-11 w-11 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700"
+              >
+                <FiSend className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* #endregion */}
+
       {/* #region Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide flex flex-col">
+      {/* Overlay and blur when long-press or action menu is open */}
+      {(longPressMessage || actionMenuForId) && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          onClick={() => { setLongPressMessage(null); setActionMenuForId(null); }}
+        />
+      )}
+      <div className={`flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide flex flex-col ${longPressMessage || actionMenuForId ? 'pointer-events-none' : ''}`}>
         {pagination.hasMore && (
           <div className="flex justify-center mb-4">
             <button
@@ -1091,7 +1370,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                   <div className="w-8 h-8 mr-2"></div> // Espacio para mantener alineación
                 ) : null}
 
-                <div className="flex flex-col max-w-[80%]">
+                <div className="flex flex-col max-w-[80%] relative">
                   {/* Mostrar nombre solo en el primer mensaje del grupo para otros usuarios */}
                   {showName && (
                     <span className="text-xs text-gray-400 mb-1 ml-3">
@@ -1107,22 +1386,55 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                           : 'bg-gray-700 text-gray-100'
                       } ${getBorderRadiusClass(isOwn, isFirstInGroup, isLastInGroup)
                       } ${replyingTo?.id === message.id ? 'ring-2 ring-blue-400 ring-opacity-70 shadow-lg shadow-blue-500/25' : ''}
-                      ${longPressMessage?.id === message.id ? 'scale-105 ring-2 ring-yellow-400 ring-opacity-70' : ''}`}
+                      ${longPressMessage?.id === message.id ? 'scale-105 ring-2 ring-yellow-400 ring-opacity-70 z-50 relative pointer-events-auto' : ''}`}
                     style={{
                       transform: swipeMessage?.id === message.id ? `translateX(-${swipeOffset}px)` : 'translateX(0)',
                       transition: isSwiping ? 'none' : 'transform 0.3s ease-out'
                     }}
-                    onClick={() => handlePickReply(message)}
-                    onDoubleClick={() => handlePickReply(message)}
-                    onContextMenu={(e) => { e.preventDefault(); handlePickReply(message); }}
+                    onClick={() => { /* disable single-click reply */ }}
+                    onDoubleClick={() => { if (!actionMenuForId) handlePickReply(message); }}
+                    onContextMenu={(e) => { e.preventDefault(); setActionMenuForId(message.id); }}
                     onMouseDown={() => handleMessageMouseDown(message)}
                     onMouseUp={handleMessageMouseUp}
                     onMouseLeave={handleMessageMouseLeave}
-                    onTouchStart={(e) => handleSwipeStart(message, e)}
+                    onTouchStart={(e) => { if (!actionMenuForId) handleSwipeStart(message, e); }}
                     onTouchMove={(e) => e.preventDefault()}
                     onTouchEnd={(e) => e.preventDefault()}
                     title={replyingTo?.id === message.id ? tChat('clickToDeselect') : tChat('swipeLongPressDoubleClick')}
                   >
+                    {/* Kebab menu */}
+                    <button
+                      className="absolute -top-2 -right-2 p-1 rounded-full bg-black/30 hover:bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => { e.stopPropagation(); setActionMenuForId(actionMenuForId === message.id ? null : message.id); }}
+                      aria-label="acciones"
+                    >
+                      <FiMoreHorizontal className="w-4 h-4" />
+                    </button>
+
+                    {actionMenuForId === message.id && (
+                      <>
+                        {/* Fullscreen backdrop */}
+                        <div className="fixed inset-0 z-30 bg-black/50" onClick={() => setActionMenuForId(null)} />
+                        {/* Context menu positioned depending on ownership */}
+                        <div
+                          className={`menu-container absolute z-50 top-1/2 -translate-y-1/2 ${isOwn ? 'right-full mr-2' : 'left-full ml-2'} bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-44 overflow-hidden`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-700"
+                            onClick={() => { setReplyingTo(message); setActionMenuForId(null); setLongPressMessage(null); }}
+                          >
+                            {tChat('responder')}
+                          </button>
+                          <button
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-700"
+                            onClick={() => { openThread(message); }}
+                          >
+                            Abrir hilo
+                          </button>
+                        </div>
+                      </>
+                    )}
                     {/* Indicador de que es clickeable */}
                     <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <div className="w-2 h-2 bg-current opacity-60 rounded-full"></div>
@@ -1317,6 +1629,21 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                         <span className={`text-xs text-gray-300 mt-1 block ${isOwn ? 'text-right' : 'text-left'}`}>
                           {formatTime(message.timestamp)}
                         </span>
+                        {/* Link para abrir hilo si hay respuestas (usa threadReplyCounts) */}
+                        {(() => {
+                          const count = threadReplyCounts[message.id] ?? 0;
+                          if (count > 0) {
+                            return (
+                              <button
+                                className="mt-1 text-xs text-blue-300 hover:text-blue-200 underline"
+                                onClick={(e) => { e.stopPropagation(); openThread(message); }}
+                              >
+                                Ver hilo ({count})
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
                       </>
                     )}
                   </div>

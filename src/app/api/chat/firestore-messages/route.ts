@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     const lastMessageTimestampParam = searchParams.get('lastMessageTimestamp');
+    const beforeTimestampParam = searchParams.get('beforeTimestamp');
     const lastMessageTimestamp = lastMessageTimestampParam ? new Date(lastMessageTimestampParam) : undefined;
+    const beforeTimestamp = beforeTimestampParam ? new Date(beforeTimestampParam) : undefined;
 
     // Buscar usuario en MongoDB (para obtener chatId, aunque ahora usaremos Firestore para esto)
     // NOTA: Idealmente, el chatId del usuario debería obtenerse de una forma más consistente (ej. del token de sesión o un lookup en Firestore si es el source de verdad)
@@ -45,7 +47,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener mensajes desde Firestore
-    const messages = await getChatMessagesFromFirestore(user.chatId, limit, lastMessageTimestamp);
+    const messages = await getChatMessagesFromFirestore(
+      user.chatId,
+      limit,
+      lastMessageTimestamp,
+      beforeTimestamp
+    );
 
     // Obtener perfiles de los remitentes para incluir la imagen
     const uniqueUserIds = [...new Set(messages.map(msg => msg.userId))];

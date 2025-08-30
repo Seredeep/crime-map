@@ -221,7 +221,9 @@
     "locationPreviewError": "Error generando vista previa de ubicación",
     "googleMapsApiKeyNotConfigured": "Google Maps API key no configurada",
     "error": "Error",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "loadMore": "Cargar más",
+    "loading": "Cargando..."
   },
   "Incidents": {
     "viewOnMap": "Ver en el mapa",

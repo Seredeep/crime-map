@@ -23,6 +23,22 @@ export function formatDate(dateStr: string): string {
 }
 
 /**
+ * Format a Date or date-like value to HH:mm using Intl
+ */
+export function formatHoursMinutes(dateInput: Date | string | number, locale: string = 'es-ES'): string {
+  try {
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (!isFinite(d.getTime())) return '';
+    return new Intl.DateTimeFormat(locale, {
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(d);
+  } catch (e) {
+    return '';
+  }
+}
+
+/**
  * Format a time string (HH:MM) to a more readable format
  */
 export function formatTime(timeStr: string): string {

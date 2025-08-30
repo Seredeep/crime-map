@@ -173,6 +173,12 @@ export interface MessageMetadata {
     snippet: string;
   };
 
+  // Threading
+  threadId?: string; // id del mensaje raíz del hilo
+  parentId?: string; // id del mensaje al que responde dentro del hilo
+  threadStarterId?: string; // redundante con threadId si el mensaje es parte del hilo
+  threadRepliesCount?: number; // contador opcional para mostrar preview en la lista principal
+
   // Media data
   media?: {
     type: 'image' | 'video' | 'audio' | 'document';
