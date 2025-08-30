@@ -176,7 +176,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       isFetchingMessagesRef.current = false;
       lastMessagesFetchAtRef.current = Date.now();
     }
-  }, [userId, tErrors, session?.user?.name]);
+  }, [userId, tErrors, session?.user?.name, chat?._id, addNotification, session?.user?.id]);
 
   // Cargar información del chat y mensajes en paralelo sólo una vez por sesión
   useEffect(() => {
