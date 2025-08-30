@@ -2,7 +2,6 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/auth.config';
 import { firestore } from '@/lib/config/db/firebase';
 import clientPromise from '@/lib/config/db/mongodb';
 import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
-import { handleNewMessage } from '@/lib/services/chat/messageProcessor';
 import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
@@ -52,8 +51,8 @@ export async function POST(req: Request) {
       metadata
     );
 
-    // Process new panic message
-    await handleNewMessage({
+    // Process new panic message asynchronously (fire-and-forget)
+    const processMessagePayload = {
       messageId,
       chatId: chatId.toString(),
       userId: userId.toString(),
@@ -61,7 +60,18 @@ export async function POST(req: Request) {
       message: panicMessageText,
       type: 'panic',
       metadata,
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
+    };
+
+    // Fire and forget - don't await this request
+    fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/chat/process-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(processMessagePayload),
+    }).catch((error) => {
+      console.error('Error calling message processing API:', error);
     });
 
     console.log(`🚨 COMPLETE PANIC ALERT - Neighborhood ${neighborhood}:`, {

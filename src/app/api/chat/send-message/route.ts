@@ -1,7 +1,6 @@
 import { firestore } from '@/lib/config/db/firebase';
 import clientPromise from '@/lib/config/db/mongodb';
 import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
-import { handleNewMessage } from '@/lib/services/chat/messageProcessor';
 import { sendPushToUsers } from '@/lib/services/notifications/pushService';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
@@ -70,17 +69,7 @@ export async function POST(request: NextRequest) {
       finalMetadata
     );
 
-    // Process new message
-    await handleNewMessage({
-      messageId,
-      chatId: user.chatId,
-      userId: user._id.toString(),
-      userName: publicUserName,
-      message: message.trim(),
-      type,
-      metadata: finalMetadata,
-      timestamp: new Date()
-    });
+
 
     console.log(`💬 Mensaje enviado a Firestore: ${user.name || user.email} → ${user.chatId}`);
 
@@ -110,6 +99,28 @@ export async function POST(request: NextRequest) {
       console.warn('No se pudieron enviar notificaciones push:', e);
     }
 
+    // Process new message asynchronously (fire-and-forget)
+    const processMessagePayload = {
+      messageId,
+      chatId: user.chatId,
+      userId: user._id.toString(),
+      userName: publicUserName,
+      message: message.trim(),
+      type,
+      metadata: finalMetadata,
+      timestamp: new Date().toISOString()
+    };
+
+    // Fire and forget - don't await this request
+    fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/chat/process-message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(processMessagePayload),
+    }).catch((error) => {
+      console.error('Error calling message processing API:', error);
+    });
     return NextResponse.json({
       success: true,
       data: {

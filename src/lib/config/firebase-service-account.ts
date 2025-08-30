@@ -49,6 +49,45 @@ export function loadServiceAccountCredentials(): any {
 }
 
 /**
+ * Loads Google Cloud service account credentials for Vertex AI and other Google Cloud services
+ * Uses the same service account as Firebase but provides it in the format expected by Google Cloud clients
+ */
+export function loadGoogleCloudCredentials(): any {
+  // Check if Base64 encoded Google Cloud service account is provided via environment variable
+  const base64ServiceAccount = process.env.GOOGLE_CLOUD_SERVICE_ACCOUNT_BASE64;
+
+  if (base64ServiceAccount) {
+    try {
+      console.log('🔐 Loading Google Cloud service account from Base64 environment variable...');
+      const decodedJson = Buffer.from(base64ServiceAccount, 'base64').toString('utf-8');
+      const serviceAccount = JSON.parse(decodedJson) as any;
+
+      // Validate required fields for Google Cloud
+      if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
+        throw new Error('Invalid Google Cloud service account JSON: missing required fields');
+      }
+
+      console.log('✅ Google Cloud service account loaded successfully from environment variable');
+      return serviceAccount;
+    } catch (error) {
+      console.error('❌ Error parsing Base64 Google Cloud service account:', error);
+      throw new Error(`Failed to parse GOOGLE_CLOUD_SERVICE_ACCOUNT_BASE64: ${error}`);
+    }
+  }
+
+  // Fallback to the same service account used by Firebase
+  try {
+    console.log('🔄 Using Firebase service account for Google Cloud (fallback mode)...');
+    const serviceAccount = loadServiceAccountCredentials();
+    console.log('✅ Google Cloud service account loaded successfully from Firebase credentials');
+    return serviceAccount;
+  } catch (error) {
+    console.error('❌ Error loading Google Cloud service account from Firebase fallback:', error);
+    throw new Error(`Failed to load Google Cloud service account: ${error}`);
+  }
+}
+
+/**
  * Initializes Firebase Admin SDK with service account credentials
  * This function should be called only once per application lifecycle
  */
