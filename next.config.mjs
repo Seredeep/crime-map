@@ -22,7 +22,7 @@ const nextConfig = {
     ignoreDuringBuilds: true, // Temporalmente desactivamos ESLint durante el build
   },
   images: {
-    domains: ['eplgvickazxsrlohrpan.supabase.co', 'maps.googleapis.com'],
+    domains: ['eplgvickazxsrlohrpan.supabase.co', 'maps.googleapis.com', 'storage.googleapis.com'],
     unoptimized: true, // Requerido para export estático
   },
   // Configuración para export estático (requerido por Capacitor)

@@ -1,7 +1,7 @@
 'use client';
 
 import { firestoreClient } from '@/lib/config/firebase-client';
-import { collection, limit as fsLimit, onSnapshot, orderBy, query, where, type DocumentData, type QuerySnapshot } from 'firebase/firestore';
+import { collection, limit as fsLimit, onSnapshot, orderBy, query, where, doc, getDoc, type DocumentData, type QuerySnapshot } from 'firebase/firestore';
 import { AnimatePresence, PanInfo, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
@@ -56,6 +56,9 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const tChat = useTranslations('Chat');
   const [chat, setChat] = useState<ChatInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  // Cache simple para media por incidentId (fallback cuando el mensaje aún no tiene media en metadata)
+  const incidentMediaCacheRef = useRef<Map<string, any[]>>(new Map());
+  const [mediaCacheTick, setMediaCacheTick] = useState(0); // trigger re-render cuando se llena cache
   const [lastMessageTimestamp, setLastMessageTimestamp] = useState<Date | null>(null);
 
   const [newMessage, setNewMessage] = useState('');
@@ -111,6 +114,21 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
   const isFetchingMessagesRef = useRef(false);
   const lastMessagesFetchAtRef = useRef(0);
   const initializedRef = useRef(false);
+
+  const getIncidentMedia = useCallback(async (incidentId: string) => {
+    try {
+      if (!incidentId) return [] as any[];
+      if (incidentMediaCacheRef.current.has(incidentId)) return incidentMediaCacheRef.current.get(incidentId) || [];
+      const ref = doc(firestoreClient, 'incidents', incidentId);
+      const snap = await getDoc(ref);
+      const media = snap.exists() ? ((snap.data() as any)?.media || []) : [];
+      incidentMediaCacheRef.current.set(incidentId, media);
+      setMediaCacheTick((x) => x + 1);
+      return media;
+    } catch {
+      return [] as any[];
+    }
+  }, []);
 
   const loadChatInfo = useCallback(async () => {
     if (!userId) return;
@@ -314,15 +332,12 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
       return;
     }
 
-    // Consulta: mensajes del chat ordenados por timestamp asc
-    // Only get messages newer than our last known message
+    // Nueva consulta: escuchar las últimas 200 entradas por timestamp desc para recibir
+    // también actualizaciones de metadatos en mensajes existentes (sin filtro where)
     const q = query(
       collection(firestoreClient, 'chats', chat.chatId, 'messages'),
-      orderBy('timestamp', 'asc'),
-      lastMessageTimestamp ?
-        where('timestamp', '>', lastMessageTimestamp) :
-        where('timestamp', '>', new Date(0)),
-      fsLimit(500)
+      orderBy('timestamp', 'desc'),
+      fsLimit(200)
     );
     console.info('ChatView:onSnapshot SUBSCRIBE', { chatId: chat.chatId });
 
@@ -349,37 +364,32 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
         });
       }
 
-      // Process only new messages
-      const newMessages = snapshot.docs
-        .filter(doc => !messages.some(m => m.id === doc.id)) // Filter out messages we already have
-        .map((doc) => {
-          const data: any = doc.data();
-          return {
-            id: doc.id,
-            message: data.message,
-            timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp),
-            type: data.type,
-            userId: data.userId,
-            userName: data.userName,
-            metadata: data.metadata || {},
-            isOwn: data.userId === session?.user?.id || data.userName === session?.user?.name,
-          } as Message;
-        })
-        // Exclude thread replies from the main chat list
-        .filter((m) => !(m as any)?.metadata?.threadId);
+      // Mapear snapshot (desc) → invertir a asc para UI y permitir updates de mensajes existentes
+      const incoming = snapshot.docs.map((doc) => {
+        const data: any = doc.data();
+        return {
+          id: doc.id,
+          message: data.message,
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp),
+          type: data.type,
+          userId: data.userId,
+          userName: data.userName,
+          metadata: data.metadata || {},
+          isOwn: data.userId === session?.user?.id || data.userName === session?.user?.name,
+        } as Message;
+      })
+      // Excluir respuestas de hilo del feed principal
+      .filter((m) => !(m as any)?.metadata?.threadId)
+      // Orden ascendente para la UI
+      .reverse();
 
-      // Mark all snapshot docs as seen globally (for both roots and replies)
+      // Marcar todos como vistos globalmente (para raíces y respuestas)
       snapshot.docs.forEach(doc => seenAllMessageIdsRef.current.add(doc.id));
 
-      if (newMessages.length === 0) return; // No new visible messages
-
-      // Update seen messages set
+      // Notificar solo por los que no sean propios y no vistos aún
       const seen = seenMessageIdsRef.current;
-      newMessages.forEach(m => seen.add(m.id));
-
-      // Notify only for new messages from others
-      newMessages
-        .filter(m => !m.isOwn)
+      incoming
+        .filter(m => !m.isOwn && !seen.has(m.id))
         .forEach(m => {
           const isPanic = m.type === 'panic';
           addNotification({
@@ -390,28 +400,15 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
             autoHideMs: isPanic ? 7000 : 4500,
           });
         });
+      incoming.forEach(m => seen.add(m.id));
 
-      // Update messages state with new messages
-      setMessages(prevMessages => {
-        // Create a map of existing messages by ID for quick lookup
-        const messageMap = new Map(prevMessages.map(msg => [msg.id, msg]));
-
-        // Add or update messages from the snapshot
-        newMessages.forEach(msg => {
-          messageMap.set(msg.id, msg);
-        });
-
-        // Convert back to array and sort by timestamp
-        const updatedMessages = Array.from(messageMap.values())
-          .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-
-        // Update last message timestamp if we have messages
-        if (updatedMessages.length > 0) {
-          const latestMessage = updatedMessages[updatedMessages.length - 1];
-          setLastMessageTimestamp(latestMessage.timestamp);
-        }
-
-        return updatedMessages;
+      // Fusionar: actualizar mensajes existentes por ID (para reflejar cambios de metadata/media)
+      setMessages(prev => {
+        const map = new Map(prev.map(m => [m.id, m]));
+        incoming.forEach(m => map.set(m.id, m));
+        const updated = Array.from(map.values()).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        if (updated.length) setLastMessageTimestamp(updated[updated.length - 1].timestamp);
+        return updated;
       });
 
       setIsConnected(true);
@@ -1249,10 +1246,91 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
               <div className="w-10" />
             </div>
 
+            {threadRoot.type === 'incident' && (() => {
+              const inc: any = threadRoot.metadata?.incident || {};
+              const incidentId = (threadRoot as any)?.metadata?.incidentId || (inc as any)?.id;
+              let mediaList = (Array.isArray(inc?.media) ? inc.media : (threadRoot as any)?.metadata?.mediaList) || [];
+              if ((!mediaList || mediaList.length === 0) && incidentId) {
+                const cached = incidentMediaCacheRef.current.get(incidentId) || [];
+                if (cached.length) {
+                  mediaList = cached;
+                } else {
+                  // trigger async load; helper will tick state when ready
+                  getIncidentMedia(incidentId);
+                }
+              }
+              return (
+                <div className="px-4 pt-3">
+                  <div className="bg-gray-800/60 border border-yellow-600/50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold text-yellow-300">Incidente: {inc?.type || '-'}</span>
+                      {/* smaller remaining time if available */}
+                      {(() => {
+                        const activeUntil = tsToDate(inc?.activeUntil) || tsToDate((threadRoot as any)?.metadata?.activeUntil) || null;
+                        return activeUntil ? (
+                          <span className="text-[10px] text-yellow-200/90">⏳ {formatRemaining(activeUntil)}</span>
+                        ) : null;
+                      })()}
+                    </div>
+                    {inc?.description && (
+                      <div className="text-sm text-gray-100 mb-1 line-clamp-3">{inc.description}</div>
+                    )}
+                    {mediaList && mediaList.length > 0 && (() => {
+                      let scrollerRef: HTMLDivElement | null = null;
+                      const scrollBy = (dir: number) => {
+                        if (!scrollerRef) return;
+                        const w = scrollerRef.clientWidth;
+                        scrollerRef.scrollBy({ left: dir * (w * 0.9), behavior: 'smooth' });
+                      };
+                      return (
+                        <div className="mt-2 relative">
+                          <div
+                            ref={(el) => { scrollerRef = el; }}
+                            className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-1"
+                          >
+                            {mediaList.map((m: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className="relative group overflow-hidden rounded-lg border border-gray-700/60 bg-gray-900/40 flex-shrink-0 snap-center"
+                                style={{ width: '70vw', maxWidth: 320 }}
+                              >
+                                {m.type === 'video' ? (
+                                  <div className="aspect-video">
+                                    <video src={m.url} controls className="w-full h-full object-cover" preload="metadata" />
+                                  </div>
+                                ) : (
+                                  <div className="aspect-square">
+                                    <Image src={m.url} alt={m.filename || 'media'} width={640} height={640} className="w-full h-full object-cover" />
+                                  </div>
+                                )}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 text-[10px] text-gray-200 flex items-center justify-between">
+                                  <span className="truncate pr-2">{m.filename || (m.type === 'video' ? 'Video' : 'Imagen')}</span>
+                                  {m.size ? <span className="opacity-75">{(m.size / 1024 / 1024).toFixed(2)} MB</span> : null}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          {mediaList.length > 1 && (
+                            <>
+                              <button className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-900/70 hover:bg-gray-900 text-white px-2 py-1 rounded-r-md" onClick={(e) => { e.stopPropagation(); scrollBy(-1); }} aria-label="Prev">‹</button>
+                              <button className="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-900/70 hover:bg-gray-900 text-white px-2 py-1 rounded-l-md" onClick={(e) => { e.stopPropagation(); scrollBy(1); }} aria-label="Next">›</button>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    {inc?.location?.coordinates && Array.isArray(inc.location.coordinates) && (
+                      <div className="text-[11px] text-gray-400 mt-1">📍 {inc.location.coordinates[1]?.toFixed?.(5)}, {inc.location.coordinates[0]?.toFixed?.(5)}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {(() => {
-                const threadMsgs = [threadRoot, ...threadMessages]
-                  .sort((a, b) => new Date(a.timestamp as any).getTime() - new Date(b.timestamp as any).getTime());
+                const base = threadRoot.type === 'incident' ? [...threadMessages] : [threadRoot, ...threadMessages];
+                const threadMsgs = base.sort((a, b) => new Date(a.timestamp as any).getTime() - new Date(b.timestamp as any).getTime());
                 return threadMsgs.map((m) => (
                   <div key={m.id} className={`max-w-[85%] ${m.userId === session?.user?.id ? 'ml-auto' : ''}`}>
                     <div className={`px-3 py-2 rounded-xl ${m.userId === session?.user?.id ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-100'}`}>
@@ -1391,7 +1469,7 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                       transform: swipeMessage?.id === message.id ? `translateX(-${swipeOffset}px)` : 'translateX(0)',
                       transition: isSwiping ? 'none' : 'transform 0.3s ease-out'
                     }}
-                    onClick={() => { /* disable single-click reply */ }}
+                    onClick={() => { if (message.type === 'incident' && !actionMenuForId) { openThread(message); } }}
                     onDoubleClick={() => { if (!actionMenuForId) handlePickReply(message); }}
                     onContextMenu={(e) => { e.preventDefault(); setActionMenuForId(message.id); }}
                     onMouseDown={() => handleMessageMouseDown(message)}
@@ -1604,6 +1682,90 @@ const MobileFullScreenChatView = ({ onBack, className = '' }: MobileFullScreenCh
                               {inc?.description && (
                                 <div className="text-sm text-gray-100 mb-1">{inc.description}</div>
                               )}
+                              {(() => {
+                                // Prefer incident.media, fallback to message.metadata.mediaList, then fallback to incident doc media via cache
+                                const incidentId = (message as any)?.metadata?.incidentId || (inc as any)?.id;
+                                let mediaList = (Array.isArray(inc?.media) ? inc.media : (message as any)?.metadata?.mediaList) || [];
+                                if ((!mediaList || mediaList.length === 0) && incidentId) {
+                                  const cached = incidentMediaCacheRef.current.get(incidentId) || [];
+                                  if (cached.length) {
+                                    mediaList = cached;
+                                  } else {
+                                    // trigger async load; setState occurs inside helper to re-render when ready
+                                    getIncidentMedia(incidentId);
+                                  }
+                                }
+                                if (!mediaList || mediaList.length === 0) return null;
+                                // Simple carousel using scroll-snap and overflow-x
+                                let scrollerRef: HTMLDivElement | null = null;
+                                const scrollBy = (dir: number) => {
+                                  if (!scrollerRef) return;
+                                  const w = scrollerRef.clientWidth;
+                                  scrollerRef.scrollBy({ left: dir * (w * 0.9), behavior: 'smooth' });
+                                };
+                                return (
+                                  <div className="mt-2 relative">
+                                    <div
+                                      ref={(el) => { scrollerRef = el; }}
+                                      className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-1"
+                                    >
+                                      {mediaList.map((m: any, idx: number) => (
+                                        <div
+                                          key={idx}
+                                          className="relative group overflow-hidden rounded-lg border border-gray-700/60 bg-gray-900/40 flex-shrink-0 snap-center"
+                                          style={{ width: '80vw', maxWidth: 420 }}
+                                        >
+                                          {m.type === 'video' ? (
+                                            <div className="aspect-video">
+                                              <video
+                                                src={m.url}
+                                                controls
+                                                className="w-full h-full object-cover"
+                                                preload="metadata"
+                                              />
+                                            </div>
+                                          ) : (
+                                            <div
+                                              className="aspect-square cursor-pointer"
+                                              onClick={(e) => { e.stopPropagation(); if (!actionMenuForId) openThread(message); }}
+                                            >
+                                              <Image
+                                                src={m.url}
+                                                alt={m.filename || 'media'}
+                                                width={800}
+                                                height={800}
+                                                className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                              />
+                                            </div>
+                                          )}
+                                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 text-xs text-gray-200 flex items-center justify-between">
+                                            <span className="truncate pr-2">{m.filename || (m.type === 'video' ? 'Video' : 'Imagen')}</span>
+                                            {m.size ? <span className="opacity-75">{(m.size / 1024 / 1024).toFixed(2)} MB</span> : null}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    {mediaList.length > 1 && (
+                                      <>
+                                        <button
+                                          className="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-900/70 hover:bg-gray-900 text-white px-2 py-1 rounded-r-md"
+                                          onClick={(e) => { e.stopPropagation(); scrollBy(-1); }}
+                                          aria-label="Prev"
+                                        >
+                                          ‹
+                                        </button>
+                                        <button
+                                          className="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-900/70 hover:bg-gray-900 text-white px-2 py-1 rounded-l-md"
+                                          onClick={(e) => { e.stopPropagation(); scrollBy(1); }}
+                                          aria-label="Next"
+                                        >
+                                          ›
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                               {inc?.location?.coordinates && Array.isArray(inc.location.coordinates) && (
                                 <div className="text-xs text-gray-400">📍 {inc.location.coordinates[1]?.toFixed?.(5)}, {inc.location.coordinates[0]?.toFixed?.(5)}</div>
                               )}
