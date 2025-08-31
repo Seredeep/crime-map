@@ -287,6 +287,65 @@ export async function updateUserChatIdInFirestore(userId: string, chatId: string
   }
 }
 
+/**
+ * Actualiza la metadata de un mensaje de incidente existente en lugar de crear uno nuevo
+ */
+export async function updateIncidentMessageInChat(
+  chatId: string,
+  incidentId: string,
+  updates: {
+    description?: string;
+    type?: string;
+    tags?: string[];
+    activeUntil?: any;
+    updatedAt?: any;
+  }
+): Promise<boolean> {
+  try {
+    // Buscar el mensaje de incidente original en el chat
+    const messagesRef = firestore
+      .collection('chats')
+      .doc(chatId)
+      .collection('messages');
+
+    // Buscar el mensaje con tipo 'incident' y que tenga el incidentId en su metadata
+    const incidentMessagesQuery = await messagesRef
+      .where('type', '==', 'incident')
+      .where('metadata.incident.id', '==', incidentId)
+      .limit(1)
+      .get();
+
+    if (incidentMessagesQuery.empty) {
+      console.log(`No incident message found for incidentId: ${incidentId}`);
+      return false;
+    }
+
+    const incidentMessageDoc = incidentMessagesQuery.docs[0];
+    const messageData = incidentMessageDoc.data();
+
+    // Preparar las actualizaciones para la metadata del incidente
+    const updatedMetadata = {
+      ...messageData.metadata,
+      incident: {
+        ...messageData.metadata?.incident,
+        ...updates,
+        incidentId, // Asegurar que el incidentId esté presente
+      }
+    };
+
+    // Actualizar el mensaje con la nueva metadata
+    await incidentMessageDoc.ref.update({
+      metadata: updatedMetadata
+    });
+
+    console.log(`✅ Incident message updated in chat: ${incidentId}`);
+    return true;
+  } catch (error) {
+    console.error('Error updating incident message in chat:', error);
+    throw error;
+  }
+}
+
 // Placeholder for syncChatToFirestore - needs actual implementation
 export async function syncChatToFirestore(chatId: string): Promise<void> {
   const chatDoc = await firestore.collection('chats').doc(chatId).get();

@@ -1,8 +1,8 @@
 // #region Imports
-import { NextRequest, NextResponse } from 'next/server';
 import admin, { firestore } from '@/lib/config/db/firebase';
-import { isValidIncidentTypeId } from '@/lib/services/incidents/utils';
 import { sendMessageToFirestore } from '@/lib/services/chat/firestoreChatService';
+import { isValidIncidentTypeId } from '@/lib/services/incidents/utils';
+import { NextRequest, NextResponse } from 'next/server';
 // #endregion
 
 // #region Types
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     // #region Post system message in neighborhood chat
     const systemUserId = 'system';
     const systemUserName = 'Sistema';
-    const message = `Nuevo incidente: ${body.type} — ${body.description} (expira en 1h)`;
+    const message = `🚨 ${body.description} (expira en 1h)`;
 
     const metadata = {
       kind: 'incident',
