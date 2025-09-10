@@ -3,17 +3,17 @@
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useMemo } from 'react';
 import {
-  FiActivity,
-  FiCheckCircle,
-  FiCompass,
-  FiSettings,
-  FiUsers
+    FiActivity,
+    FiCheckCircle,
+    FiCompass,
+    FiSettings,
+    FiUsers
 } from 'react-icons/fi';
 interface MobileBottomTabsProps {
   activeTab: string;
-  onTabChange: (tabId: string) => void;
   onReportClick: () => void;
   status: string;
   availableTabs: string[];
@@ -29,7 +29,6 @@ interface TabItem {
 
 const MobileBottomTabs = ({
   activeTab,
-  onTabChange,
   onReportClick,
   status,
   availableTabs
@@ -76,9 +75,7 @@ const MobileBottomTabs = ({
     });
   }, [allTabs, availableTabs, status]);
 
-  const handleTabClick = (tabId: string) => {
-    onTabChange(tabId);
-  };
+  // No need for handleTabClick since we're using Link components
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] md:hidden h-20">
@@ -97,9 +94,9 @@ const MobileBottomTabs = ({
             const isActive = activeTab === tab.id;
 
             return (
-              <button
+              <Link
                 key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
+                href={`/${tab.id}`}
                 className="relative flex flex-col items-center justify-center p-2 min-w-[65px] transition-all duration-300"
               >
                 {/* Active indicator mejorado con layoutId único */}
@@ -188,7 +185,7 @@ const MobileBottomTabs = ({
                     transition: { duration: 0.4 }
                   }}
                 />
-              </button>
+              </Link>
             );
           })}
         </div>

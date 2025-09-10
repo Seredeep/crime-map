@@ -1,10 +1,10 @@
 'use client';
 
+import { ROLES } from '@/lib/config/roles';
+import { usePermissions } from '@/lib/hooks/usePermissions';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { useTranslations } from 'next-intl';
-import { usePermissions } from '@/lib/hooks/usePermissions';
-import { ROLES } from '@/lib/config/roles';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -28,11 +28,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('Auth');
-  const { 
-    hasRole, 
-    can, 
-    isAuthenticated, 
-    isLoading 
+  const {
+    hasRole,
+    can,
+    isAuthenticated,
+    isLoading
   } = usePermissions();
 
   // Redirect to signin if not authenticated (except for onboarding)
@@ -58,9 +58,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check if user has required roles
   const hasRequiredRole = allowedRoles.length === 0 || hasRole(allowedRoles);
-  
+
   // Check if user has required permissions
-  const hasRequiredPermissions = requiredPermissions.length === 0 || 
+  const hasRequiredPermissions = requiredPermissions.length === 0 ||
     requiredPermissions.every(permission => can(permission as any));
 
   // If user doesn't have required roles or permissions
@@ -68,7 +68,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (unauthorizedComponent) {
       return <>{unauthorizedComponent}</>;
     }
-    
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-lg shadow-lg text-center">

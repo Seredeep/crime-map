@@ -10,7 +10,6 @@ import ClaridadLogo from './ClaridadLogo';
 
 interface SidebarProps {
   activeTab: string;
-  onTabChangeAction: (tabId: string) => void;
   onReportClickAction: () => void;
   status: string;
   availableTabs: string[];
@@ -64,7 +63,6 @@ const sampleIncidents: Incident[] = [
 
 const Sidebar = ({
   activeTab,
-  onTabChangeAction,
   onReportClickAction,
   status,
   availableTabs,
@@ -123,10 +121,9 @@ const Sidebar = ({
   const handleTabChange = useCallback((tabId: string) => {
     if (tabId === 'report') {
       onReportClickAction();
-    } else {
-      onTabChangeAction(tabId);
     }
-  }, [onTabChangeAction, onReportClickAction]);
+    // For other tabs, we'll use Link components instead
+  }, [onReportClickAction]);
 
   // Manejar el clic en un tab
   const handleTabClick = useCallback((tabId: string) => {
@@ -237,16 +234,41 @@ const Sidebar = ({
           <ul className="space-y-2 px-2">
             {filteredMenuItems.map((item) => {
               const isActive = activeTab === item.id;
+
+              // For report tab, use button with action
+              if (item.id === 'report') {
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => {
+                        if (item.action) {
+                          item.action();
+                        } else {
+                          handleTabClick(item.id);
+                        }
+                      }}
+                      className={`flex items-center w-full p-2 rounded-lg transition-all duration-200 ${isActive
+                        ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2'
+                        : 'hover:bg-gray-800 hover:text-blue-300 hover:border-l-2 hover:border-blue-500 hover:pl-2'}`}
+                    >
+                      <div className="flex-shrink-0 text-blue-400">{item.icon}</div>
+                      <motion.span
+                        variants={contentVariants}
+                        animate={collapsed ? 'collapsed' : 'expanded'}
+                        className="ml-3 whitespace-nowrap font-medium"
+                      >
+                        {item.label}
+                      </motion.span>
+                    </button>
+                  </li>
+                );
+              }
+
+              // For other tabs, use Link
               return (
                 <li key={item.id}>
-                  <button
-                    onClick={() => {
-                      if (item.action) {
-                        item.action();
-                      } else {
-                        handleTabClick(item.id);
-                      }
-                    }}
+                  <Link
+                    href={`/${item.id}`}
                     className={`flex items-center w-full p-2 rounded-lg transition-all duration-200 ${isActive
                       ? 'bg-blue-900/40 text-blue-300 border-l-2 border-blue-500 pl-2'
                       : 'hover:bg-gray-800 hover:text-blue-300 hover:border-l-2 hover:border-blue-500 hover:pl-2'}`}
@@ -259,7 +281,7 @@ const Sidebar = ({
                     >
                       {item.label}
                     </motion.span>
-                  </button>
+                  </Link>
                 </li>
               );
             })}
