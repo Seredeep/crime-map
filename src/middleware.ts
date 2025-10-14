@@ -1,8 +1,8 @@
 import { getToken } from 'next-auth/jwt';
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import { routing } from '../i18n/routing';
-import { rbacMiddleware } from './rbac';
+import { routing } from './i18n/routing';
+import { rbacMiddleware } from './middleware/rbac';
 
 // Crear el middleware de i18n
 const intlMiddleware = createMiddleware(routing);
