@@ -11,14 +11,14 @@ export default function StatsPage() {
   const isEditorOrAdmin = session?.user?.role === 'editor' || session?.user?.role === 'admin';
   const [showFiltersModal, setShowFiltersModal] = useState(false);
 
-  // Set default date range to last 30 days
+  // Set default date range to last year
   const [filters, setFilters] = useState<IncidentFilters>(() => {
     const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
 
     return {
-      dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
+      dateFrom: oneYearAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
       neighborhoodId: undefined,
       status: 'verified'

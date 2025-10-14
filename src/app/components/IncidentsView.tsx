@@ -459,13 +459,13 @@ export default function IncidentsView({
   const isExternalMode = !!externalIncidents;
 
   const [filters, setFilters] = useState<IncidentFilters>(() => {
-    // Set default date range to last 30 days
+    // Set default date range to last year
     const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
 
     return {
-      dateFrom: thirtyDaysAgo.toISOString().split('T')[0],
+      dateFrom: oneYearAgo.toISOString().split('T')[0],
       dateTo: today.toISOString().split('T')[0],
       neighborhoodId: undefined,
       status: 'verified' // Siempre iniciar con estado 'verified'

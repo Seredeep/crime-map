@@ -124,12 +124,12 @@ export async function fetchStatistics(filters?: IncidentFilters): Promise<Statis
 
     // Required parameters
     if (!filters?.dateFrom || !filters?.dateTo) {
-      // Default to last 30 days if no dates provided
+      // Default to last year if no dates provided
       const today = new Date();
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(today.getDate() - 30);
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(today.getFullYear() - 1);
 
-      params.append('dateFrom', thirtyDaysAgo.toISOString().split('T')[0]);
+      params.append('dateFrom', oneYearAgo.toISOString().split('T')[0]);
       params.append('dateTo', today.toISOString().split('T')[0]);
     } else {
       params.append('dateFrom', filters.dateFrom);

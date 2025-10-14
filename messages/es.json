@@ -690,6 +690,22 @@
     "portonazo": {
       "label": "Portonazo",
       "description": "Robo al ingresar a domicilio"
+    },
+    "lavado_dinero": {
+      "label": "Lavado de Dinero",
+      "description": "Proceso ilegal de hacer que grandes cantidades de dinero generadas por actividades criminales parezcan provenir de una fuente legítima"
+    },
+    "extorsion": {
+      "label": "Extorsión",
+      "description": "Práctica de obtener algo, especialmente dinero, mediante fuerza o amenazas"
+    },
+    "narcotrafico": {
+      "label": "Narcotráfico",
+      "description": "Comercio ilícito global que involucra el cultivo, fabricación, distribución y venta de sustancias sujetas a leyes de prohibición de drogas"
+    },
+    "trata_personas": {
+      "label": "Trata de Personas",
+      "description": "El comercio de seres humanos con el propósito de trabajo forzado, esclavitud sexual o explotación sexual comercial"
     }
   }
 }
