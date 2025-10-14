@@ -1,17 +1,18 @@
 'use client';
 
 // #region External Libraries
+import type { GeoJSON as GeoJSONType } from 'geojson';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GeoJSON, MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet';
-import type { GeoJSON as GeoJSONType } from 'geojson';
+import { GeoJSON, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 // #endregion
 
 // #region Internal Services & Types
 import { reverseGeocode } from '@/lib/services/geo';
 import { updateIncident } from '@/lib/services/incidents/incidentService';
+import { getIncidentTypesForRegion } from '@/lib/services/incidents/utils';
 import { Neighborhood } from '@/lib/services/neighborhoods';
 import { Incident } from '@/lib/types/global';
 import { useSession } from 'next-auth/react';
@@ -239,28 +240,24 @@ const defaultMarkerIcon = createMarkerIcon('#3B82F6', 32);
 const editingMarkerIcon = createMarkerIcon('#3B82F6', 28);
 const hoverMarkerIcon = createMarkerIcon('#EF4444', 28);
 
-// Tags → colors map (hex) normalized for both Spanish and English tags
-const TAG_HEX_COLOR: Record<string, string> = {
-  robbery: '#EF4444',
-  robo: '#EF4444',
-  assault: '#F97316',
-  asalto: '#F97316',
-  theft: '#F59E0B',
-  hurto: '#F59E0B',
-  vandalism: '#22C55E',
-  vandalismo: '#22C55E',
-  suspicious: '#06B6D4',
-  'actividad sospechosa': '#06B6D4',
-  violence: '#6366F1',
-  violencia: '#6366F1',
-  drugs: '#8B5CF6',
-  drogas: '#8B5CF6',
-  noise: '#F59E0B',
-  ruido: '#F59E0B',
-  accident: '#F43F5E',
-  accidente: '#F43F5E',
-  other: '#8B5CF6',
-  otro: '#8B5CF6',
+// Color mapping from incident type colors to hex values
+const INCIDENT_COLOR_TO_HEX: Record<string, string> = {
+  red: '#EF4444',
+  orange: '#F97316',
+  yellow: '#F59E0B',
+  amber: '#F59E0B',
+  blue: '#3B82F6',
+  purple: '#8B5CF6',
+  pink: '#EC4899',
+  gray: '#6B7280',
+  green: '#22C55E',
+  cyan: '#06B6D4',
+  teal: '#14B8A6',
+  indigo: '#6366F1',
+  violet: '#8B5CF6',
+  rose: '#F43F5E',
+  emerald: '#10B981',
+  lime: '#84CC16',
   default: '#6B7280'
 };
 
@@ -270,10 +267,21 @@ const getPrimaryTagId = (incident: Incident): string => {
   return String(tag).toLowerCase();
 };
 
-// Build a marker icon using the primary tag color
+// Build a marker icon using the incident type color
 const getMarkerIconByType = (incident: Incident, size: number = 24) => {
   const tagId = getPrimaryTagId(incident);
-  const color = TAG_HEX_COLOR[tagId] || TAG_HEX_COLOR.default;
+
+  // Get incident types for the current region (default to 'general')
+  const incidentTypes = getIncidentTypesForRegion('general');
+
+  // Find the incident type by id
+  const incidentType = incidentTypes.find(type => type.id === tagId);
+
+  // Get color from incident type or use default
+  const color = incidentType
+    ? INCIDENT_COLOR_TO_HEX[incidentType.color] || INCIDENT_COLOR_TO_HEX.default
+    : INCIDENT_COLOR_TO_HEX.default;
+
   // Use same iconType to render inner glyph according to tagId when possible
   const iconType =
     tagId.includes('robo') || tagId === 'robbery' ? 'robo' :
@@ -1112,7 +1120,18 @@ export default function MapComponent({
                     </span>
                     {(() => {
                       const tagId = getPrimaryTagId(incident);
-                      const color = TAG_HEX_COLOR[tagId] || TAG_HEX_COLOR.default;
+
+                      // Get incident types for the current region (default to 'general')
+                      const incidentTypes = getIncidentTypesForRegion('general');
+
+                      // Find the incident type by id
+                      const incidentType = incidentTypes.find(type => type.id === tagId);
+
+                      // Get color from incident type or use default
+                      const color = incidentType
+                        ? INCIDENT_COLOR_TO_HEX[incidentType.color] || INCIDENT_COLOR_TO_HEX.default
+                        : INCIDENT_COLOR_TO_HEX.default;
+
                       const style = {
                         backgroundColor: `${color}33`,
                         color,
